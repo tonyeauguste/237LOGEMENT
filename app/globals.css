@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS — Immo237
+═══════════════════════════════════════════════ */
+:root {
+  --bg: #07111e;
+  --bg2: #0c1825;
+  --bg3: #111f30;
+  --card: #0e1a28;
+  --card2: #13202f;
+  --border: #1c2e40;
+  --border2: #243548;
+  --gold: #c89b3c;
+  --gold2: #e8c97a;
+  --gold3: rgba(200, 155, 60, 0.12);
+  --text: #ede9e1;
+  --muted: #7a90a8;
+  --dim: #3d5166;
+  --green: #3d9970;
+  --green2: #4fc38a;
+  --red: #e05555;
+  --blue: #63b3ed;
+  --radius: 14px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg2: var(--bg2);
+  --color-bg3: var(--bg3);
+  --color-card: var(--card);
+  --color-card2: var(--card2);
+  --color-border: var(--border);
+  --color-border2: var(--border2);
+  --color-gold: var(--gold);
+  --color-gold2: var(--gold2);
+  --color-gold3: var(--gold3);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-green: var(--green);
+  --color-green2: var(--green2);
+  --color-red: var(--red);
+  --color-blue: var(--blue);
+  --font-display: var(--font-playfair), serif;
+  --font-body: var(--font-outfit), sans-serif;
+  --font-logo: var(--font-cinzel), serif;
+  --radius-immo: var(--radius);
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+img {
+  max-width: 100%;
+  display: block;
+}
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+::selection {
+  background: var(--gold3);
+  color: var(--gold2);
+}
+
+/* ═══════════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════════ */
+@keyframes gradMove {
+  0% {
+    background-position: 0 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes scrollPulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scaleY(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1.2);
+  }
+}
+@keyframes kenburns0 {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.12) translate(-2%, -1%);
+  }
+}
+@keyframes kenburns1 {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.1) translate(2%, 1%);
+  }
+}
+@keyframes kenburns2 {
+  0% {
+    transform: scale(1) translate(0, 0);
+  }
+  100% {
+    transform: scale(1.13) translate(-1%, 2%);
+  }
+}
+.kb-0 {
+  animation: kenburns0 8s ease-out forwards;
+}
+.kb-1 {
+  animation: kenburns1 8s ease-out forwards;
+}
+.kb-2 {
+  animation: kenburns2 8s ease-out forwards;
+}
+
+/* ═══════════════════════════════════════════════
+   REUSABLE PRIMITIVES
+═══════════════════════════════════════════════ */
+.serif {
+  font-family: var(--font-display);
+}
+.gold-bar {
+  width: 48px;
+  height: 2.5px;
+  background: linear-gradient(90deg, var(--gold), transparent);
+  border-radius: 2px;
+}
+.form-control {
+  width: 100%;
+  background: var(--card2);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: 10px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: var(--font-body);
+}
+.form-control:focus {
+  border-color: var(--gold);
+}
+.form-control::placeholder {
+  color: var(--dim);
+}
+.form-control option {
+  background: var(--card);
+}
+.form-control optgroup {
+  background: var(--card2);
+  color: var(--gold);
+  font-weight: 700;
+}
+.btn-gold-anim:hover {
+  animation: gradMove 2s ease infinite;
+}
+.btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(7, 17, 30, 0.4);
+  border-top-color: #07111e;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
