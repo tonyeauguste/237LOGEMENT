@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { List, PlusCircle, BarChart3, MessageSquare, Settings, LogOut } from "lucide-react";
+import { List, PlusCircle, BarChart3, MessageSquare, Settings, LogOut, Eye, Heart } from "lucide-react";
 import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
@@ -13,15 +14,12 @@ import CitySelect from "@/components/ui/CitySelect";
 import ComingSoon from "@/components/ui/ComingSoon";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
+import { rowToProperty } from "@/lib/supabase/mappers";
+import { fmtPrice } from "@/lib/format";
+import type { Property } from "@/lib/types";
 
 type Section = "listings" | "stats" | "messages" | "settings";
-
-const STATS = [
-  { icon: "📊", val: "0", label: "Annonces actives", color: "text-gold" },
-  { icon: "👁", val: "0", label: "Vues ce mois", color: "text-blue" },
-  { icon: "💬", val: "0", label: "Messages reçus", color: "text-green2" },
-  { icon: "❤️", val: "0", label: "Favoris totaux", color: "text-red" },
-];
 
 export default function OwnerDashboard() {
   const user = useAuthGuard();
@@ -29,6 +27,51 @@ export default function OwnerDashboard() {
   const showToast = useAppStore((s) => s.showToast);
   const router = useRouter();
   const [section, setSection] = useState<Section>("listings");
+
+  // Pas d'authentification pour le moment : toutes les annonces publiées
+  // sur la plateforme sont affichées ici (pas de filtrage par propriétaire).
+  const [listings, setListings] = useState<Property[]>([]);
+  const [messages, setMessages] = useState<
+    { id: number; message: string; created_at: string; property_title: string; property_id: number }[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    Promise.all([
+      supabase.from("properties").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("property_messages")
+        .select("id, message, created_at, property_id, properties(title)")
+        .order("created_at", { ascending: false }),
+    ]).then(([propsRes, msgRes]) => {
+      if (cancelled) return;
+      setListings((propsRes.data ?? []).map(rowToProperty));
+      setMessages(
+        (msgRes.data ?? []).map((m) => ({
+          id: m.id,
+          message: m.message,
+          created_at: m.created_at,
+          property_id: m.property_id ?? 0,
+          property_title: (m.properties as { title?: string } | null)?.title ?? "Annonce supprimée",
+        }))
+      );
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const totalViews = listings.reduce((sum, p) => sum + p.views, 0);
+  const totalFavs = listings.reduce((sum, p) => sum + p.favs, 0);
+  const stats = [
+    { icon: "📊", val: String(listings.length), label: "Annonces actives", color: "text-gold" },
+    { icon: "👁", val: String(totalViews), label: "Vues ce mois", color: "text-blue" },
+    { icon: "💬", val: String(messages.length), label: "Messages reçus", color: "text-green2" },
+    { icon: "❤️", val: String(totalFavs), label: "Favoris totaux", color: "text-red" },
+  ];
 
   if (!user) return null;
 
@@ -87,7 +130,7 @@ export default function OwnerDashboard() {
                   </Link>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-                  {STATS.map((s) => (
+                  {stats.map((s) => (
                     <div key={s.label} className="bg-card border border-border rounded-2xl px-5 py-[18px]">
                       <div className="text-[22px] mb-2">{s.icon}</div>
                       <div className={`font-display text-[28px] font-bold mb-1 ${s.color}`}>{s.val}</div>
@@ -95,16 +138,61 @@ export default function OwnerDashboard() {
                     </div>
                   ))}
                 </div>
-                <ComingSoon
-                  title="Aucune annonce publiée pour le moment"
-                  text="La plateforme sera bientôt opérationnelle. Vous pourrez publier vos biens et les gérer depuis ce tableau de bord."
-                  action={
-                    <Link href="/publier">
-                      <Button variant="gold">+ Publier une annonce</Button>
-                    </Link>
-                  }
-                  className="mx-0"
-                />
+                {loading ? null : listings.length === 0 ? (
+                  <ComingSoon
+                    title="Aucune annonce publiée pour le moment"
+                    text="La plateforme sera bientôt opérationnelle. Vous pourrez publier vos biens et les gérer depuis ce tableau de bord."
+                    action={
+                      <Link href="/publier">
+                        <Button variant="gold">+ Publier une annonce</Button>
+                      </Link>
+                    }
+                    className="mx-0"
+                  />
+                ) : (
+                  <div className="flex flex-col gap-3.5">
+                    {listings.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/annonce/${p.id}`}
+                        className="flex flex-col sm:flex-row bg-card border border-border rounded-2xl overflow-hidden hover:border-border2 transition-colors"
+                      >
+                        <div className="relative w-full sm:w-[140px] h-[160px] sm:h-auto shrink-0">
+                          <Image src={p.imgs[0]} alt={p.title} fill sizes="140px" className="object-cover" />
+                        </div>
+                        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
+                          <div className="flex-1">
+                            <div className="flex gap-1.5 mb-1.5">
+                              <Tag color={p.type === "courte" ? "gold" : "green"}>
+                                {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
+                              </Tag>
+                              {!p.available && <Tag color="red">Non disponible</Tag>}
+                            </div>
+                            <div className="font-semibold text-base text-text mb-1">{p.title}</div>
+                            <div className="text-[13px] text-muted">{p.quartier}, {p.city}</div>
+                          </div>
+                          <div className="flex gap-6 shrink-0">
+                            <div className="text-center">
+                              <div className="font-semibold text-base text-text flex items-center gap-1 justify-center">
+                                <Eye size={13} /> {p.views}
+                              </div>
+                              <div className="text-[11px] text-muted">Vues</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-semibold text-base text-text flex items-center gap-1 justify-center">
+                                <Heart size={13} /> {p.favs}
+                              </div>
+                              <div className="text-[11px] text-muted">Favoris</div>
+                            </div>
+                          </div>
+                          <div className="font-display font-bold text-lg text-gold shrink-0">
+                            {fmtPrice(p.price)}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 
@@ -128,13 +216,33 @@ export default function OwnerDashboard() {
             {section === "messages" && (
               <>
                 <Header label="Communication" title="Messages reçus" />
-                <div className="text-center py-[60px] px-5">
-                  <div className="text-[48px] mb-3.5">💬</div>
-                  <h3 className="text-lg font-semibold text-text mb-2">Aucun message pour le moment</h3>
-                  <p className="text-sm text-muted">
-                    Les messages envoyés par les locataires intéressés par vos biens apparaîtront ici.
-                  </p>
-                </div>
+                {loading ? null : messages.length === 0 ? (
+                  <div className="text-center py-[60px] px-5">
+                    <div className="text-[48px] mb-3.5">💬</div>
+                    <h3 className="text-lg font-semibold text-text mb-2">Aucun message pour le moment</h3>
+                    <p className="text-sm text-muted">
+                      Les messages envoyés par les locataires intéressés par vos biens apparaîtront ici.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
+                    {messages.map((m) => (
+                      <Link
+                        key={m.id}
+                        href={`/annonce/${m.property_id}`}
+                        className="block bg-card border border-border rounded-xl px-5 py-4 hover:border-gold transition-colors"
+                      >
+                        <div className="flex justify-between items-center mb-1.5 gap-3">
+                          <span className="font-semibold text-sm text-text">{m.property_title}</span>
+                          <span className="text-xs text-muted shrink-0">
+                            {new Date(m.created_at).toLocaleDateString("fr-FR")}
+                          </span>
+                        </div>
+                        <p className="text-[13px] text-muted leading-relaxed">{m.message}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </>
             )}
 

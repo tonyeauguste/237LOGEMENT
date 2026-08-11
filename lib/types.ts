@@ -68,11 +68,15 @@ export type ListingView = "grid" | "list";
 export interface UploadedPhoto {
   name: string;
   url: string;
+  /** Fichier brut, conservé pour l'upload vers Supabase Storage à la publication. */
+  file?: File;
 }
 
 export interface UploadedVideo {
   name: string;
   size: number;
+  /** Fichier brut, conservé pour l'upload vers Supabase Storage à la publication. */
+  file?: File;
 }
 
 export interface ListingDraft {

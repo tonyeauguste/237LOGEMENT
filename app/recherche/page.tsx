@@ -1,14 +1,16 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import CitySelect from "@/components/ui/CitySelect";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
-import { PROPERTIES, QUARTIERS } from "@/lib/data";
-import type { ListingView, SearchFilters } from "@/lib/types";
+import { QUARTIERS } from "@/lib/data";
+import type { ListingView, Property, SearchFilters } from "@/lib/types";
+import { createClient } from "@/lib/supabase/client";
+import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyCard from "@/components/property/PropertyCard";
 import PropertyListCard from "@/components/property/PropertyListCard";
 
@@ -26,6 +28,25 @@ function SearchPageInner() {
     sort: "recent",
   });
   const [view, setView] = useState<ListingView>("grid");
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setAllProperties((data ?? []).map(rowToProperty));
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function set<K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -44,10 +65,9 @@ function SearchPageInner() {
     });
   }
 
-  // Logique de filtrage / tri — prête à fonctionner dès qu'un vrai
-  // tableau de propriétés sera injecté dans lib/data.ts (PROPERTIES).
+  // Logique de filtrage / tri appliquée aux annonces chargées depuis Supabase.
   const results = useMemo(() => {
-    let list = PROPERTIES.filter((p) => {
+    let list = allProperties.filter((p) => {
       if (
         filters.query &&
         !`${p.title} ${p.city} ${p.quartier}`
@@ -75,7 +95,7 @@ function SearchPageInner() {
         break;
     }
     return list;
-  }, [filters]);
+  }, [filters, allProperties]);
 
   return (
     <div className="pt-[70px]">
@@ -190,7 +210,13 @@ function SearchPageInner() {
         </div>
 
         {/* Results */}
-        {results.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="h-[360px] rounded-2xl bg-card border border-border animate-pulse" />
+            ))}
+          </div>
+        ) : results.length === 0 ? (
           <ComingSoon
             icon="🏗️"
             title="Aucune annonce disponible pour le moment"

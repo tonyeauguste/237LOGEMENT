@@ -7,29 +7,38 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Bed, Bath, Ruler, MapPin, MessageSquare, Phone, Check } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
-import { PROPERTIES } from "@/lib/data";
 import { useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
 import Button from "@/components/ui/Button";
 
 type DetailTab = "desc" | "amenities" | "map";
 
-export default function PropertyDetail({ p }: { p: Property }) {
+export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [tab, setTab] = useState<DetailTab>("desc");
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const isFav = useAppStore((s) => s.isFav(p.id));
   const toggleFav = useAppStore((s) => s.toggleFav);
   const showToast = useAppStore((s) => s.showToast);
 
-  const similar = PROPERTIES.filter((x) => x.id !== p.id && x.city === p.city).slice(0, 3);
-
-  function sendMessage() {
+  async function sendMessage() {
     if (!msg.trim()) {
       showToast("⚠️ Veuillez écrire un message avant d'envoyer.", "error");
+      return;
+    }
+    setSending(true);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("property_messages")
+      .insert({ property_id: p.id, message: msg.trim() });
+    setSending(false);
+    if (error) {
+      showToast("❌ Une erreur est survenue. Veuillez réessayer.", "error");
       return;
     }
     setSent(true);
@@ -255,7 +264,7 @@ export default function PropertyDetail({ p }: { p: Property }) {
                   value={msg}
                   onChange={(e) => setMsg(e.target.value)}
                 />
-                <Button variant="gold" full onClick={sendMessage} className="mb-2.5">
+                <Button variant="gold" full loading={sending} onClick={sendMessage} className="mb-2.5">
                   Envoyer le message
                 </Button>
                 <Button variant="ghost" full onClick={callOwner}>

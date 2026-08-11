@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Button from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 
 const DETAILS = [
   {
@@ -72,10 +73,26 @@ export default function ContactPage() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!fname.trim() || !email.trim() || !subject || !message.trim()) {
       showToast("⚠️ Veuillez remplir tous les champs obligatoires.", "error");
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
+    const { error } = await supabase.from("contact_messages").insert({
+      first_name: fname.trim(),
+      last_name: lname.trim() || null,
+      email: email.trim(),
+      phone: phone.trim() || null,
+      subject,
+      message: message.trim(),
+    });
+    setLoading(false);
+    if (error) {
+      showToast("❌ Une erreur est survenue. Veuillez réessayer.", "error");
       return;
     }
     setSent(true);
@@ -206,7 +223,7 @@ export default function ContactPage() {
                     onChange={(e) => setMessage(e.target.value)}
                   />
                 </div>
-                <Button variant="gold" full size="lg" onClick={handleSubmit}>
+                <Button variant="gold" full size="lg" loading={loading} onClick={handleSubmit}>
                   Envoyer le message
                 </Button>
                 <p className="text-xs text-dim text-center mt-3.5">

@@ -9,9 +9,10 @@ import RoleCard from "@/components/ui/RoleCard";
 import AmenityChip from "@/components/ui/AmenityChip";
 import CitySelect from "@/components/ui/CitySelect";
 import Button from "@/components/ui/Button";
-import { AMENITIES, amenityFull } from "@/lib/data";
+import { AMENITIES, amenityFull, DEFAULT_AVATAR } from "@/lib/data";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import type { ListingKind, UploadedPhoto, UploadedVideo } from "@/lib/types";
 
 const PHOTO_MAX = 15;
@@ -56,6 +57,8 @@ export default function PublierPage() {
   const [charges, setCharges] = useState<"non" | "oui" | "partiel">("non");
   const [minDuration, setMinDuration] = useState("1 mois");
 
+  const [publishing, setPublishing] = useState(false);
+
   if (!user) return null;
 
   function toggleAmenity(full: string) {
@@ -71,17 +74,15 @@ export default function PublierPage() {
     }
     const arr = Array.from(files);
     let error = "";
+    const added: UploadedPhoto[] = [];
     arr.slice(0, remaining).forEach((file) => {
       if (file.size > PHOTO_SIZE_MB * 1024 * 1024) {
         error = `${file.name} dépasse 10 Mo`;
         return;
       }
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPhotos((prev) => [...prev, { name: file.name, url: e.target?.result as string }]);
-      };
-      reader.readAsDataURL(file);
+      added.push({ name: file.name, url: URL.createObjectURL(file), file });
     });
+    if (added.length) setPhotos((prev) => [...prev, ...added]);
     if (arr.length > remaining) {
       showToast(`⚠️ Seules les ${remaining} premières photos ont été ajoutées (limite : 15).`, "info");
     }
@@ -103,7 +104,7 @@ export default function PublierPage() {
         error = file.name;
         return;
       }
-      added.push({ name: file.name, size: file.size });
+      added.push({ name: file.name, size: file.size, file });
     });
     if (added.length) setVideos((prev) => [...prev, ...added]);
     if (arr.length > remaining) {
@@ -142,9 +143,61 @@ export default function PublierPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function publish() {
-    showToast("🚀 Annonce envoyée pour validation ! Publication sous 24h.", "success");
-    setTimeout(() => router.push("/compte/proprietaire"), 1500);
+  async function publish() {
+    setPublishing(true);
+    const supabase = createClient();
+
+    try {
+      const slug = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+      const uploadOne = async (folder: "photos" | "videos", file: File, i: number) => {
+        const ext = file.name.split(".").pop() || "bin";
+        const path = `${folder}/${slug}-${i}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("property-media")
+          .upload(path, file, { contentType: file.type || undefined });
+        if (uploadError) throw uploadError;
+        return supabase.storage.from("property-media").getPublicUrl(path).data.publicUrl;
+      };
+
+      const imageUrls = await Promise.all(
+        photos.map((p, i) => (p.file ? uploadOne("photos", p.file, i) : Promise.resolve(p.url)))
+      );
+      const videoUrls = await Promise.all(
+        videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve("")))
+      );
+
+      const { error: insertError } = await supabase.from("properties").insert({
+        title,
+        city,
+        quartier,
+        address: address || null,
+        precision_desc: precision || null,
+        description: desc,
+        type: listingType,
+        price: price ? Number(price) : 0,
+        deposit: deposit ? Number(deposit) : null,
+        charges,
+        min_duration: minDuration,
+        rooms: Number(rooms),
+        baths: Number(baths),
+        surface: surface ? Number(surface) : null,
+        images: imageUrls,
+        videos: videoUrls.filter(Boolean),
+        amenities,
+        owner_name: user?.name || "Propriétaire",
+        owner_avatar: user?.avatar || DEFAULT_AVATAR,
+        owner_phone: user?.phone || "",
+      });
+      if (insertError) throw insertError;
+
+      showToast("🚀 Annonce publiée avec succès !", "success");
+      setTimeout(() => router.push("/compte/proprietaire"), 1500);
+    } catch (err) {
+      console.error(err);
+      showToast("❌ Une erreur est survenue lors de la publication. Réessayez.", "error");
+      setPublishing(false);
+    }
   }
 
   const variants = {
@@ -525,7 +578,7 @@ export default function PublierPage() {
                     last
                   />
                 </div>
-                <Button variant="gold" full size="lg" onClick={publish} className="mt-6">
+                <Button variant="gold" full size="lg" loading={publishing} onClick={publish} className="mt-6">
                   🚀 Publier l&apos;annonce
                 </Button>
               </div>
