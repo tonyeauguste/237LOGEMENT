@@ -4,7 +4,6 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
-import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
 import RoleCard from "@/components/ui/RoleCard";
 import { useAppStore } from "@/lib/store";
@@ -93,11 +92,14 @@ function AuthPageInner() {
           sizes="50vw"
           className="object-cover"
         />
-        <div className="absolute bottom-9 left-9 flex items-center gap-2.5 bg-[rgba(7,17,30,.7)] backdrop-blur-md border border-[rgba(200,155,60,.3)] rounded-2xl px-4 py-3">
-          <CameroonFlag width={26} height={19} />
-          <span className="font-logo text-lg font-black text-text">
-            <span className="text-gold">237</span>Logement
-          </span>
+        <div className="absolute bottom-9 left-9">
+          <Image
+            src="/badge-237logement.jpg"
+            alt="237Logement"
+            width={128}
+            height={85}
+            className="rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,.6)] border border-[rgba(200,155,60,.3)]"
+          />
         </div>
       </div>
 
