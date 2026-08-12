@@ -170,7 +170,7 @@ export default function ContactPage() {
                   Notre équipe vous répondra sous 24 heures ouvrées.
                   <br />
                   <br />
-                  <strong className="text-gold">Immo237 vous remercie de votre confiance.</strong>
+                  <strong className="text-gold">237Logement vous remercie de votre confiance.</strong>
                 </p>
                 <Link href="/">
                   <Button variant="gold" className="mt-[22px]">

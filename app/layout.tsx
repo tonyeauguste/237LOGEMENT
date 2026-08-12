@@ -29,9 +29,9 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Immo237 – Trouvez votre logement idéal au Cameroun",
+  title: "237Logement – Trouvez votre logement idéal au Cameroun",
   description:
-    "Immo237 – La première plateforme immobilière du Cameroun. Trouvez votre logement à Yaoundé, Douala, Bafoussam et partout au Cameroun.",
+    "237Logement – La première plateforme immobilière du Cameroun. Trouvez votre logement à Yaoundé, Douala, Bafoussam et partout au Cameroun.",
 };
 
 export const viewport: Viewport = {

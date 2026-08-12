@@ -38,7 +38,7 @@ export default function ValuesSection() {
           </Reveal>
           <Reveal delay={0.16}>
             <p className="text-muted text-[15px] mt-3 max-w-[520px] mx-auto">
-              Immo237 sera bientôt opérationnel. Inscrivez-vous maintenant pour accéder en
+              237Logement sera bientôt opérationnel. Inscrivez-vous maintenant pour accéder en
               avant-première à toutes les annonces dès le lancement.
             </p>
           </Reveal>

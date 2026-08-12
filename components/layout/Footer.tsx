@@ -11,7 +11,7 @@ export default function Footer() {
           <div className="flex items-center gap-2.5">
             <CameroonFlag width={26} height={19} />
             <span className="font-logo text-xl font-black tracking-wide text-text">
-              Immo<span className="text-gold">237</span>
+              <span className="text-gold">237</span>Logement
             </span>
           </div>
           <p className="text-muted text-sm leading-relaxed my-3.5 max-w-[260px]">
@@ -72,7 +72,7 @@ export default function Footer() {
 
       <div className="max-w-[1240px] mx-auto pt-6 border-t border-border flex justify-between items-center flex-wrap gap-3">
         <p className="text-dim text-[13px] flex items-center gap-1.5">
-          © 2025 Immo237. Tous droits réservés.
+          © 2025 237Logement. Tous droits réservés.
           <CameroonFlag width={16} height={12} />
           Fait avec ❤️ au Cameroun
         </p>

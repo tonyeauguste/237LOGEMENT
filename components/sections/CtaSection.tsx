@@ -19,7 +19,7 @@ export default function CtaSection() {
               <span className="text-gold">gratuitement</span>
             </h2>
             <p className="text-muted text-[15px] leading-[1.65] mb-7">
-              Rejoignez les premiers propriétaires qui font confiance à Immo237 pour trouver des
+              Rejoignez les premiers propriétaires qui font confiance à 237Logement pour trouver des
               locataires sérieux. Gestion simplifiée, zéro commission, contacts qualifiés
               directement dans votre tableau de bord.
             </p>

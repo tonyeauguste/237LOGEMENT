@@ -65,7 +65,7 @@ export default function Navbar() {
             <span
               className="font-logo text-[22px] font-black tracking-wide text-text"
             >
-              Immo<span className="text-gold">237</span>
+              <span className="text-gold">237</span>Logement
             </span>
           </Link>
 

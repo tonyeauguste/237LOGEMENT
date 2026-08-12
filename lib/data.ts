@@ -113,7 +113,7 @@ export interface FaqItem {
 export const FAQ_ITEMS: FaqItem[] = [
   {
     cat: "compte",
-    q: "La création d'un compte est-elle gratuite sur Immo237 ?",
+    q: "La création d'un compte est-elle gratuite sur 237Logement ?",
     a: "Oui, la création d'un compte est entièrement gratuite, que vous soyez locataire ou propriétaire. Les locataires accèdent à toutes les fonctionnalités (recherche, favoris, alertes, contact des propriétaires) sans aucun frais. Les propriétaires peuvent publier leurs annonces et gérer leurs biens sans commission ni abonnement obligatoire.",
   },
   {
@@ -129,7 +129,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     cat: "locataire",
     q: "Y a-t-il des frais d'agence à payer ?",
-    a: "Non, Immo237 ne prélève aucun frais d'agence sur les transactions entre locataires et propriétaires. Notre modèle est basé sur la mise en relation directe et transparente. Vous négociez directement avec le propriétaire les conditions de location : loyer, caution, charges, durée. Aucun intermédiaire ne se glisse entre vous.",
+    a: "Non, 237Logement ne prélève aucun frais d'agence sur les transactions entre locataires et propriétaires. Notre modèle est basé sur la mise en relation directe et transparente. Vous négociez directement avec le propriétaire les conditions de location : loyer, caution, charges, durée. Aucun intermédiaire ne se glisse entre vous.",
   },
   {
     cat: "securite",
@@ -139,7 +139,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     cat: "locataire",
     q: "Puis-je louer un logement pour une courte durée (week-end, vacances) ?",
-    a: "Absolument ! Immo237 propose deux types de location : la longue durée (location mensuelle classique) et la courte durée (à la nuit ou à la semaine). Utilisez le filtre \"Type de location\" dans la recherche pour n'afficher que les offres de court séjour. Ces logements sont souvent meublés et équipés, idéaux pour les voyageurs d'affaires ou les vacanciers.",
+    a: "Absolument ! 237Logement propose deux types de location : la longue durée (location mensuelle classique) et la courte durée (à la nuit ou à la semaine). Utilisez le filtre \"Type de location\" dans la recherche pour n'afficher que les offres de court séjour. Ces logements sont souvent meublés et équipés, idéaux pour les voyageurs d'affaires ou les vacanciers.",
   },
   {
     cat: "locataire",

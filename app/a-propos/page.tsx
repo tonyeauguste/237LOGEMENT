@@ -6,9 +6,9 @@ import CountUp from "@/components/ui/CountUp";
 import TiltCard from "@/components/ui/TiltCard";
 
 export const metadata = {
-  title: "À propos – Immo237",
+  title: "À propos – 237Logement",
   description:
-    "Immo237 est né d'un constat simple : trouver un logement fiable au Cameroun était un véritable parcours du combattant. Découvrez notre mission.",
+    "237Logement est né d'un constat simple : trouver un logement fiable au Cameroun était un véritable parcours du combattant. Découvrez notre mission.",
 };
 
 const NUMBERS = [
@@ -63,7 +63,7 @@ export default function AboutPage() {
             </Reveal>
             <Reveal delay={0.14}>
               <p className="text-muted text-[15px] leading-[1.8] mb-4">
-                Immo237 est né d&apos;un constat simple : trouver un logement fiable au Cameroun
+                237Logement est né d&apos;un constat simple : trouver un logement fiable au Cameroun
                 était un véritable parcours du combattant. Arnaques, intermédiaires abusifs,
                 annonces obsolètes... Des millions de Camerounais perdaient du temps et de
                 l&apos;argent dans cette jungle immobilière.

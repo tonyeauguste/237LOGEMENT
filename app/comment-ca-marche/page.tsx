@@ -5,9 +5,9 @@ import Button from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 
 export const metadata = {
-  title: "Comment ça marche – Immo237",
+  title: "Comment ça marche – 237Logement",
   description:
-    "Immo237 simplifie la location immobilière au Cameroun. Que vous soyez locataire ou propriétaire, découvrez comment profiter de notre plateforme.",
+    "237Logement simplifie la location immobilière au Cameroun. Que vous soyez locataire ou propriétaire, découvrez comment profiter de notre plateforme.",
 };
 
 const STEPS = [
@@ -94,7 +94,7 @@ export default function HowItWorksPage() {
         </Reveal>
         <Reveal delay={0.14}>
           <p className="text-muted text-base mt-3.5 mb-7 max-w-[560px] mx-auto">
-            Immo237 simplifie la location immobilière au Cameroun. Que vous soyez locataire ou
+            237Logement simplifie la location immobilière au Cameroun. Que vous soyez locataire ou
             propriétaire, voici comment profiter de notre plateforme.
           </p>
         </Reveal>

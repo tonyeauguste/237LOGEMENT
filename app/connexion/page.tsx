@@ -96,7 +96,7 @@ function AuthPageInner() {
         <div className="absolute bottom-9 left-9 flex items-center gap-2.5 bg-[rgba(7,17,30,.7)] backdrop-blur-md border border-[rgba(200,155,60,.3)] rounded-2xl px-4 py-3">
           <CameroonFlag width={26} height={19} />
           <span className="font-logo text-lg font-black text-text">
-            Immo<span className="text-gold">237</span>
+            <span className="text-gold">237</span>Logement
           </span>
         </div>
       </div>
@@ -179,7 +179,7 @@ function AuthPageInner() {
                 transition={{ duration: 0.25 }}
               >
                 <h1 className="font-display text-[28px] font-bold text-text mb-1.5">Créer un compte</h1>
-                <p className="text-muted text-sm mb-[26px]">Rejoignez Immo237 gratuitement.</p>
+                <p className="text-muted text-sm mb-[26px]">Rejoignez 237Logement gratuitement.</p>
                 <p className="text-[13px] text-muted mb-3 font-medium">Je souhaite :</p>
                 <div className="grid grid-cols-2 gap-3 mb-[22px]">
                   <RoleCard

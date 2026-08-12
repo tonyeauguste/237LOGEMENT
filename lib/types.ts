@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════
-// Types partagés — Immo237
+// Types partagés — 237Logement
 // ═══════════════════════════════════════════════
 
 export type ListingKind = "longue" | "courte";
