@@ -94,11 +94,11 @@ function AuthPageInner() {
         />
         <div className="absolute bottom-9 left-9">
           <Image
-            src="/badge-237logement.jpg"
+            src="/badge-237logement.png"
             alt="237Logement"
-            width={128}
-            height={85}
-            className="rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,.6)] border border-[rgba(200,155,60,.3)]"
+            width={814}
+            height={814}
+            className="w-24 h-24 drop-shadow-[0_12px_28px_rgba(0,0,0,.65)]"
           />
         </div>
       </div>
