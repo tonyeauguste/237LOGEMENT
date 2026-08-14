@@ -119,7 +119,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     cat: "locataire",
     q: "Comment rechercher un logement adapté à mes besoins ?",
-    a: "Utilisez la barre de recherche principale et nos filtres avancés : sélectionnez votre ville (Yaoundé, Douala, Bafoussam…), votre quartier, le type de location (courte ou longue durée), votre budget maximum et le nombre de chambres souhaité. Vous pouvez également visualiser les résultats sur la carte interactive pour identifier les logements dans votre zone préférée.",
+    a: "Utilisez la barre de recherche principale et nos filtres avancés : sélectionnez votre ville (Yaoundé, Douala, Bafoussam…), votre quartier, le type de location (courte ou longue durée), votre budget maximum et le nombre de chambres souhaité. Chaque fiche logement affiche ensuite sa localisation précise pour identifier les biens dans votre zone préférée.",
   },
   {
     cat: "proprietaire",
@@ -149,7 +149,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     cat: "securite",
     q: "Comment signaler une annonce frauduleuse ou suspecte ?",
-    a: "Si vous suspectez une annonce frauduleuse (demande de virement avant visite, prix anormalement bas, photos qui semblent copiées d'un autre site…), utilisez le bouton \"Signaler\" sur la fiche de l'annonce, ou contactez notre équipe à securite@immocameroun.cm. Nous traitons chaque signalement sous 24h et supprimons immédiatement les annonces frauduleuses confirmées. Ne versez jamais d'argent sans avoir visité physiquement le logement.",
+    a: "Si vous suspectez une annonce frauduleuse (demande de virement avant visite, prix anormalement bas, photos qui semblent copiées d'un autre site…), contactez notre équipe via le formulaire de la page \"Contact\" (objet \"Signaler une fraude\") ou par téléphone/WhatsApp. Nous traitons chaque signalement sous 24h et supprimons immédiatement les annonces frauduleuses confirmées. Ne versez jamais d'argent sans avoir visité physiquement le logement.",
   },
   {
     cat: "proprietaire",
@@ -159,7 +159,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   {
     cat: "compte",
     q: "Comment modifier ou supprimer mon compte ?",
-    a: "Vous pouvez modifier vos informations personnelles depuis les \"Paramètres\" de votre tableau de bord. Pour supprimer définitivement votre compte, contactez notre support à support@immocameroun.cm avec votre adresse email d'inscription. La suppression est traitée sous 72 heures et entraîne la suppression de toutes vos données et annonces.",
+    a: "Vous pouvez modifier vos informations personnelles depuis les \"Paramètres\" de votre tableau de bord. Pour supprimer définitivement votre compte, contactez notre support via la page \"Contact\" (ou par téléphone/WhatsApp) avec votre adresse email d'inscription. La suppression est traitée sous 72 heures et entraîne la suppression de toutes vos données et annonces.",
   },
 ];
 

@@ -19,13 +19,17 @@ export default function Footer() {
             idéal ou louez votre bien en toute simplicité.
           </p>
           <div className="flex gap-2.5">
+            {/* Pas encore de comptes réseaux sociaux : icônes affichées à
+                titre indicatif seulement (pas de href) — volontairement
+                sans effet cliquable pour ne pas laisser croire à des liens
+                actifs qui ne mènent nulle part. */}
             {["📘", "📸", "🐦", "💬"].map((icon, i) => (
-              <a
+              <span
                 key={i}
-                className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center text-[15px] hover:border-gold transition-colors cursor-pointer"
+                className="w-9 h-9 rounded-lg bg-card border border-border flex items-center justify-center text-[15px] opacity-60"
               >
                 {icon}
-              </a>
+              </span>
             ))}
           </div>
         </div>
@@ -57,8 +61,8 @@ export default function Footer() {
             <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">Centre d&apos;aide (FAQ)</Link></li>
             <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">Contactez-nous</Link></li>
             <li><Link href="/a-propos" className="text-muted text-[13px] hover:text-gold transition-colors">À propos de nous</Link></li>
-            <li><a className="text-muted text-[13px] hover:text-gold transition-colors cursor-pointer">CGU &amp; Politique de confidentialité</a></li>
-            <li><a className="text-muted text-[13px] hover:text-gold transition-colors cursor-pointer">Signaler une fraude</a></li>
+            <li><span className="text-dim text-[13px]">CGU &amp; Politique de confidentialité (bientôt)</span></li>
+            <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">Signaler une fraude</Link></li>
           </ul>
           <div className="mt-[18px] pt-4 border-t border-border">
             <div className="text-xs text-muted leading-relaxed">
@@ -72,14 +76,16 @@ export default function Footer() {
 
       <div className="max-w-[1240px] mx-auto pt-6 border-t border-border flex justify-between items-center flex-wrap gap-3">
         <p className="text-dim text-[13px] flex items-center gap-1.5">
-          © 2025 237Logement. Tous droits réservés.
+          © {new Date().getFullYear()} 237Logement. Tous droits réservés.
           <CameroonFlag width={16} height={12} />
           Fait avec ❤️ au Cameroun
         </p>
+        {/* Pages légales pas encore rédigées — affichées à titre indicatif,
+            sans lien, pour ne pas promettre une page qui n'existe pas. */}
         <div className="flex gap-5">
-          <a className="text-dim text-[13px] hover:text-gold transition-colors cursor-pointer">Confidentialité</a>
-          <a className="text-dim text-[13px] hover:text-gold transition-colors cursor-pointer">CGU</a>
-          <a className="text-dim text-[13px] hover:text-gold transition-colors cursor-pointer">Cookies</a>
+          <span className="text-dim text-[13px]">Confidentialité (bientôt)</span>
+          <span className="text-dim text-[13px]">CGU (bientôt)</span>
+          <span className="text-dim text-[13px]">Cookies (bientôt)</span>
         </div>
       </div>
     </footer>

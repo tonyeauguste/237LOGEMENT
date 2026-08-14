@@ -144,7 +144,9 @@ export default function ContactPage() {
           <div className="mt-6 p-[18px] bg-gold3 border border-[rgba(200,155,60,.25)] rounded-xl">
             <p className="text-sm text-gold font-semibold mb-1">🔒 Signalement de fraude</p>
             <p className="text-[13px] text-muted">
-              Pour signaler une annonce suspecte : <strong className="text-text">securite@immocameroun.cm</strong>
+              Pour signaler une annonce suspecte, utilisez le formulaire ci-contre avec l&apos;objet{" "}
+              <strong className="text-text">« Signaler une fraude »</strong>, ou appelez-nous
+              directement.
               <br />
               Traitement prioritaire sous 24h.
             </p>

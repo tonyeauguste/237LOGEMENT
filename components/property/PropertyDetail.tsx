@@ -6,7 +6,7 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Bed, Bath, Ruler, MapPin, MessageSquare, Phone, Check } from "lucide-react";
 import type { Property } from "@/lib/types";
-import { fmtPrice } from "@/lib/format";
+import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
@@ -174,7 +174,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 <div className="bg-card2 border border-border rounded-xl px-[18px] py-4 mt-[18px] flex gap-5 flex-wrap text-[13px] text-muted">
                   <span>👁 {p.views} vues</span>
                   <span>❤️ {p.favs} favoris</span>
-                  <span>📅 Publié il y a 4 jours</span>
+                  <span>📅 {fmtRelativeDate(p.createdAt)}</span>
                 </div>
               </motion.div>
             )}

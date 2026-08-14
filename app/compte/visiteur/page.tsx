@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Heart, Search, Bell, Settings, LogOut } from "lucide-react";
@@ -9,8 +9,12 @@ import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
 import ToggleRow from "@/components/ui/ToggleRow";
+import PropertyCard from "@/components/property/PropertyCard";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
+import { rowToProperty } from "@/lib/supabase/mappers";
+import type { Property } from "@/lib/types";
 
 type Section = "favoris" | "searches" | "alerts" | "settings";
 
@@ -21,6 +25,37 @@ export default function VisitorDashboard() {
   const favorites = useAppStore((s) => s.favorites);
   const router = useRouter();
   const [section, setSection] = useState<Section>("favoris");
+
+  // Les favoris sont stockés comme une simple liste d'IDs (localStorage) ;
+  // il faut aller chercher les annonces correspondantes chez Supabase pour
+  // les afficher réellement, plutôt que de toujours montrer l'état vide.
+  const [favProperties, setFavProperties] = useState<Property[]>([]);
+  const [favLoading, setFavLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Pas de setFavLoading(true) ici : la liste précédente reste affichée
+    // le temps du refetch (déclenché quand `favorites` change), évitant un
+    // flash à vide. `favLoading` ne sert qu'au tout premier chargement,
+    // via sa valeur initiale ci-dessus.
+    const supabase = createClient();
+    const request =
+      favorites.length === 0
+        ? Promise.resolve<Property[]>([])
+        : supabase
+            .from("properties")
+            .select("*")
+            .in("id", favorites)
+            .then(({ data }) => (data ?? []).map(rowToProperty));
+    request.then((props) => {
+      if (cancelled) return;
+      setFavProperties(props);
+      setFavLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [favorites]);
 
   if (!user) return null;
 
@@ -77,20 +112,26 @@ export default function VisitorDashboard() {
                   title="Mes favoris"
                   sub="Les logements que vous avez sauvegardés."
                 />
-                <div className="text-center py-[60px] px-5">
-                  <div className="text-[48px] mb-3.5">💛</div>
-                  <h3 className="text-lg font-semibold text-text mb-2">
-                    Aucun favori pour l&apos;instant
-                  </h3>
-                  <p className="text-sm text-muted mb-[22px]">
-                    {favorites.length > 0
-                      ? "Les annonces seront disponibles très prochainement. Revenez bientôt !"
-                      : "Explorez les annonces et cliquez sur le cœur pour sauvegarder vos préférées."}
-                  </p>
-                  <Link href="/recherche">
-                    <Button variant="gold">Explorer les annonces</Button>
-                  </Link>
-                </div>
+                {favLoading ? null : favProperties.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {favProperties.map((p) => (
+                      <PropertyCard key={p.id} p={p} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-[60px] px-5">
+                    <div className="text-[48px] mb-3.5">💛</div>
+                    <h3 className="text-lg font-semibold text-text mb-2">
+                      Aucun favori pour l&apos;instant
+                    </h3>
+                    <p className="text-sm text-muted mb-[22px]">
+                      Explorez les annonces et cliquez sur le cœur pour sauvegarder vos préférées.
+                    </p>
+                    <Link href="/recherche">
+                      <Button variant="gold">Explorer les annonces</Button>
+                    </Link>
+                  </div>
+                )}
               </>
             )}
 

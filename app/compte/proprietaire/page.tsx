@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { List, PlusCircle, BarChart3, MessageSquare, Settings, LogOut, Eye, Heart } from "lucide-react";
+import { List, PlusCircle, BarChart3, MessageSquare, Settings, LogOut, Eye, Heart, Trash2 } from "lucide-react";
 import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
@@ -31,6 +31,7 @@ export default function OwnerDashboard() {
   // Pas d'authentification pour le moment : toutes les annonces publiées
   // sur la plateforme sont affichées ici (pas de filtrage par propriétaire).
   const [listings, setListings] = useState<Property[]>([]);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [messages, setMessages] = useState<
     { id: number; message: string; created_at: string; property_title: string; property_id: number }[]
   >([]);
@@ -79,6 +80,27 @@ export default function OwnerDashboard() {
     logout();
     showToast("👋 Déconnexion réussie. À bientôt !", "info");
     router.push("/");
+  }
+
+  async function handleDelete(p: Property) {
+    if (!window.confirm(`Supprimer définitivement l'annonce « ${p.title} » ? Cette action est irréversible.`)) {
+      return;
+    }
+    setDeletingId(p.id);
+    const supabase = createClient();
+    // .select() après le delete() : sans policy RLS "DELETE" sur
+    // `properties`, Postgres refuse silencieusement (0 ligne supprimée,
+    // aucune erreur PostgREST). En vérifiant les lignes réellement
+    // renvoyées, on évite d'afficher "Annonce supprimée" alors que
+    // l'annonce est toujours bien présente en base.
+    const { data, error } = await supabase.from("properties").delete().eq("id", p.id).select();
+    setDeletingId(null);
+    if (error || !data || data.length === 0) {
+      showToast("❌ Impossible de supprimer l'annonce. Réessayez.", "error");
+      return;
+    }
+    setListings((prev) => prev.filter((l) => l.id !== p.id));
+    showToast("🗑️ Annonce supprimée.", "success");
   }
 
   return (
@@ -188,6 +210,18 @@ export default function OwnerDashboard() {
                           <div className="font-display font-bold text-lg text-gold shrink-0">
                             {fmtPrice(p.price)}
                           </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDelete(p);
+                            }}
+                            disabled={deletingId === p.id}
+                            title="Supprimer l'annonce"
+                            className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center text-red hover:bg-red/10 hover:border-red transition-colors disabled:opacity-50"
+                          >
+                            <Trash2 size={15} />
+                          </button>
                         </div>
                       </Link>
                     ))}

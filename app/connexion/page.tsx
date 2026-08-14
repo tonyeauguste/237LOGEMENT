@@ -6,7 +6,7 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import RoleCard from "@/components/ui/RoleCard";
-import { useAppStore } from "@/lib/store";
+import { findAccountByEmail, useAppStore } from "@/lib/store";
 import { DEFAULT_AVATAR } from "@/lib/data";
 import type { UserRole } from "@/lib/types";
 
@@ -18,10 +18,22 @@ function AuthPageInner() {
   const login = useAppStore((s) => s.login);
   const showToast = useAppStore((s) => s.showToast);
 
-  const initialTab = (params.get("tab") as AuthTab) || "login";
-  const [tab, setTab] = useState<AuthTab>(initialTab);
+  const urlTab = params.get("tab") as AuthTab | null;
+  const [tab, setTab] = useState<AuthTab>(urlTab || "login");
   const [role, setRole] = useState<UserRole>("visitor");
   const [loading, setLoading] = useState(false);
+
+  // Si l'utilisateur est déjà sur /connexion et clique un lien
+  // "Connexion"/"Inscription" ailleurs sur le site (navbar, footer, CTA…),
+  // seul le paramètre ?tab= change — le composant n'est pas remonté, donc
+  // sans cet ajustement l'onglet restait bloqué sur sa valeur initiale.
+  // Fait pendant le rendu (pattern recommandé par React) plutôt que dans
+  // un effet, pour éviter un rendu supplémentaire à chaque navigation.
+  const [prevUrlTab, setPrevUrlTab] = useState(urlTab);
+  if (urlTab !== prevUrlTab) {
+    setPrevUrlTab(urlTab);
+    if (urlTab && urlTab !== tab) setTab(urlTab);
+  }
 
   // Login fields
   const [loginEmail, setLoginEmail] = useState("");
@@ -42,16 +54,27 @@ function AuthPageInner() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      const isOwner = loginEmail.toLowerCase().includes("proprio") || loginEmail.toLowerCase().includes("owner");
-      const name = loginEmail
-        .split("@")[0]
-        .replace(/[._]/g, " ")
-        .replace(/\b\w/g, (l) => l.toUpperCase());
+      // Pas de backend d'authentification pour le moment : on retrouve le
+      // profil (et donc le rôle) mémorisé lors de l'inscription sur cet
+      // appareil. Sans ça, le rôle était redéduit d'un indice dans l'email
+      // à chaque connexion et un propriétaire pouvait se retrouver renvoyé
+      // vers l'espace visiteur — voir rememberAccount() dans lib/store.ts.
+      const known = findAccountByEmail(loginEmail);
+      const isOwner = known
+        ? known.role === "owner"
+        : loginEmail.toLowerCase().includes("proprio") || loginEmail.toLowerCase().includes("owner");
+      const name =
+        known?.name ||
+        loginEmail
+          .split("@")[0]
+          .replace(/[._]/g, " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase());
       login({
         name,
         email: loginEmail,
+        phone: known?.phone,
         role: isOwner ? "owner" : "visitor",
-        avatar: DEFAULT_AVATAR,
+        avatar: known?.avatar || DEFAULT_AVATAR,
       });
       showToast(`✅ Bienvenue ${name} !`, "success");
       router.push(isOwner ? "/compte/proprietaire" : "/compte/visiteur");

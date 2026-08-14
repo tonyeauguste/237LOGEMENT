@@ -46,7 +46,23 @@ export default async function AnnonceDetailPage({
 
   if (!row) return notFoundBlock;
 
-  const property = rowToProperty(row);
+  // Compteur de vues : la colonne existe en base mais n'était jamais
+  // incrémentée nulle part, donc le tableau de bord propriétaire affichait
+  // toujours "0 vue" quel que soit le trafic réel sur l'annonce.
+  // Best-effort, et surtout honnête : tant qu'aucune policy RLS "UPDATE"
+  // n'existe sur `properties`, Postgres refuse silencieusement l'écriture
+  // (0 ligne modifiée, sans erreur PostgREST) — on relit la ligne retournée
+  // plutôt que de supposer que l'incrément a réussi, pour ne jamais afficher
+  // un compteur qui n'est pas réellement persisté en base.
+  const { data: updatedRow, error: viewError } = await supabase
+    .from("properties")
+    .update({ views: row.views + 1 })
+    .eq("id", row.id)
+    .select()
+    .maybeSingle();
+  if (viewError) console.error("Échec de l'incrément des vues :", viewError);
+
+  const property = rowToProperty(updatedRow ?? row);
 
   const { data: similarRows } = await supabase
     .from("properties")

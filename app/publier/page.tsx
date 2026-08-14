@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Upload } from "lucide-react";
@@ -59,7 +59,29 @@ export default function PublierPage() {
 
   const [publishing, setPublishing] = useState(false);
 
+  // Les aperçus photo passent par URL.createObjectURL — sans révocation,
+  // chaque photo ajoutée pendant la session laisse un blob en mémoire
+  // jusqu'au rechargement de la page. On garde une ref à jour (l'effet de
+  // nettoyage à deps [] ne verrait sinon que le tableau vide du montage).
+  const photosRef = useRef<UploadedPhoto[]>([]);
+  useEffect(() => {
+    photosRef.current = photos;
+  }, [photos]);
+  useEffect(() => {
+    return () => {
+      photosRef.current.forEach((p) => URL.revokeObjectURL(p.url));
+    };
+  }, []);
+
   if (!user) return null;
+
+  function removePhoto(index: number) {
+    setPhotos((prev) => {
+      const target = prev[index];
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter((_, idx) => idx !== index);
+    });
+  }
 
   function toggleAmenity(full: string) {
     setAmenities((prev) => (prev.includes(full) ? prev.filter((a) => a !== full) : [...prev, full]));
@@ -398,7 +420,7 @@ export default function PublierPage() {
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
                         <button
-                          onClick={() => setPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                          onClick={() => removePhoto(i)}
                           className="absolute top-[5px] right-[5px] w-[22px] h-[22px] rounded-full bg-[rgba(224,85,85,.9)] text-white flex items-center justify-center leading-none"
                         >
                           ×
