@@ -8,7 +8,8 @@ import { Menu } from "lucide-react";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
 import { useAppStore } from "@/lib/store";
-import { useHasHydrated } from "@/lib/useHasHydrated";
+import { useAuthSession } from "@/lib/useAuthSession";
+import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_AVATAR } from "@/lib/data";
 import MobileMenu from "./MobileMenu";
 
@@ -26,15 +27,15 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const currentUser = useAppStore((s) => s.currentUser);
-  const logout = useAppStore((s) => s.logout);
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
   // La navbar est montée sur toutes les pages (layout racine) : c'est
-  // l'endroit le plus fiable pour déclencher la relecture de la session
-  // persistée. Sans cet appel ici, une session existante ne se
+  // l'endroit le plus fiable pour démarrer l'écoute de la session
+  // Supabase Auth. Sans cet appel ici, une session existante ne se
   // rechargeait que sur les pages protégées (via useAuthGuard) — sur
   // /connexion ou toute autre page publique, la navbar restait bloquée
-  // en "déconnecté" même avec une session valide en localStorage.
-  const hydrated = useHasHydrated();
+  // en "déconnecté" même avec une session valide.
+  const ready = useAuthSession();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60);
@@ -52,8 +53,9 @@ export default function Navbar() {
     setMobileOpen(false);
   }
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await createClient().auth.signOut();
+    setCurrentUser(null);
     showToast("👋 Déconnexion réussie. À bientôt !", "info");
     router.push("/");
   }
@@ -106,7 +108,7 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
-            {!hydrated ? null : currentUser ? (
+            {!ready ? null : currentUser ? (
               <>
                 <Link
                   href={dashHref}

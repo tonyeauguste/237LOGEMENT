@@ -1,98 +1,68 @@
 "use client";
 
 import { create } from "zustand";
-import type { ToastItem, ToastType, User } from "./types";
+import type { Session } from "@supabase/supabase-js";
+import { createClient } from "./supabase/client";
+import type { ToastItem, ToastType, User, UserRole } from "./types";
 
-const STORAGE_KEY = "immo237-session";
+const FAVORITES_KEY = "immo237-favorites";
 
-interface PersistedShape {
-  currentUser: User | null;
-  favorites: number[];
-}
-
-function loadPersisted(): PersistedShape {
-  if (typeof window === "undefined") return { currentUser: null, favorites: [] };
+function loadFavorites(): number[] {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { currentUser: null, favorites: [] };
-    const parsed = JSON.parse(raw);
-    // Migration silencieuse : une version antérieure utilisait le
-    // middleware `persist` de zustand, qui enveloppe les données dans
-    // { state: {...}, version }. On lit l'un ou l'autre format pour ne
-    // pas déconnecter les quelques sessions déjà enregistrées ainsi.
-    const source = parsed?.currentUser !== undefined || parsed?.favorites !== undefined
-      ? parsed
-      : parsed?.state;
-    return {
-      currentUser: source?.currentUser ?? null,
-      favorites: Array.isArray(source?.favorites) ? source.favorites : [],
-    };
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return { currentUser: null, favorites: [] };
+    return [];
   }
 }
 
-function savePersisted(state: PersistedShape) {
+function saveFavorites(favorites: number[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
   } catch {
     // Quota dépassé, navigation privée, etc. — on continue sans persister.
   }
 }
 
-const ACCOUNTS_KEY = "immo237-accounts";
-
 /**
- * Annuaire local { email → dernier profil connu (rôle inclus) }.
- *
- * Il n'y a pas de backend d'authentification pour le moment (voir
- * lib/supabase/client.ts) : /connexion ne vérifie aucun mot de passe et
- * déduisait jusqu'ici le rôle ("visiteur" vs "propriétaire") d'un simple
- * indice dans l'adresse email à *chaque* connexion. Un propriétaire
- * inscrit avec une adresse "normale" (sans "proprio"/"owner" dedans) se
- * retrouvait donc reclassé visiteur — et privé de son tableau de bord —
- * dès sa deuxième connexion. On mémorise maintenant le profil choisi à
- * l'inscription pour que le rôle reste stable d'une connexion à l'autre
- * sur le même appareil.
+ * Compose le `User` applicatif à partir de la session Supabase Auth +
+ * de la ligne `profiles` associée (rôle, nom, téléphone, avatar).
+ * Le rôle stocké en profil sert uniquement à l'affichage (quel tableau
+ * de bord montrer) — jamais à l'autorisation côté base, qui repose sur
+ * `owner_id = auth.uid()` dans les policies RLS.
  */
-function loadAccounts(): Record<string, User> {
-  if (typeof window === "undefined") return {};
-  try {
-    const raw = localStorage.getItem(ACCOUNTS_KEY);
-    const parsed = raw ? JSON.parse(raw) : {};
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
+async function buildUserFromSession(session: Session): Promise<User> {
+  const supabase = createClient();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", session.user.id)
+    .maybeSingle();
 
-function rememberAccount(user: User) {
-  if (typeof window === "undefined" || !user.email) return;
-  try {
-    const accounts = loadAccounts();
-    accounts[user.email.trim().toLowerCase()] = user;
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-  } catch {
-    // Quota dépassé, navigation privée, etc. — on continue sans mémoriser.
-  }
-}
-
-/** Retrouve le profil (et donc le rôle) précédemment enregistré pour cet email, s'il existe. */
-export function findAccountByEmail(email: string): User | null {
-  if (!email) return null;
-  return loadAccounts()[email.trim().toLowerCase()] ?? null;
+  return {
+    id: session.user.id,
+    email: session.user.email ?? "",
+    name: profile?.name || session.user.email?.split("@")[0] || "Utilisateur",
+    phone: profile?.phone ?? undefined,
+    role: (profile?.role as UserRole) ?? "visitor",
+    avatar: profile?.avatar || "",
+  };
 }
 
 let toastSeq = 1;
 
 interface AppState {
-  // ── Utilisateur (mock) ──────────────────────────
+  // ── Session (Supabase Auth) ─────────────────────
   currentUser: User | null;
-  login: (user: User) => void;
-  logout: () => void;
+  /** true tant que la session initiale n'a pas encore été relue — voir lib/useAuthSession.ts. */
+  authLoading: boolean;
+  setCurrentUser: (user: User | null) => void;
+  setAuthLoading: (loading: boolean) => void;
 
-  // ── Favoris ──────────────────────────────────────
+  // ── Favoris (locaux à l'appareil, indépendants du compte) ──
   favorites: number[];
   isFav: (id: number) => boolean;
   toggleFav: (id: number) => void;
@@ -103,33 +73,13 @@ interface AppState {
   removeToast: (id: number) => void;
 }
 
-/**
- * currentUser/favorites sont sauvegardés dans localStorage à la main
- * (voir savePersisted, appelé depuis login/logout/toggleFav) plutôt que
- * via le middleware `persist` de zustand : ce dernier réhydratait bien
- * les bonnes données (vérifié via onRehydrateStorage), mais celles-ci
- * n'étaient pas fiablement visibles depuis les composants React au bon
- * moment (souci de timing entre le hook useSyncExternalStore et la fin
- * de la réhydratation) — d'où le bug de "reconnexion" : l'utilisateur
- * se connectait, rechargeait la page, et se retrouvait renvoyé vers
- * /connexion malgré une session pourtant bien enregistrée. Ce chargement
- * manuel réutilise le même `set()` simple qui fonctionne déjà pour
- * login/logout, donc pas de nouvelle source de timing foireux.
- * Voir hydrateFromStorage() + useHasHydrated().
- */
 export const useAppStore = create<AppState>((set, get) => ({
   currentUser: null,
-  login: (user) => {
-    set({ currentUser: user });
-    savePersisted({ currentUser: user, favorites: get().favorites });
-    rememberAccount(user);
-  },
-  logout: () => {
-    set({ currentUser: null });
-    savePersisted({ currentUser: null, favorites: get().favorites });
-  },
+  authLoading: true,
+  setCurrentUser: (user) => set({ currentUser: user }),
+  setAuthLoading: (loading) => set({ authLoading: loading }),
 
-  favorites: [],
+  favorites: loadFavorites(),
   isFav: (id) => get().favorites.includes(id),
   toggleFav: (id) => {
     const has = get().favorites.includes(id);
@@ -137,11 +87,20 @@ export const useAppStore = create<AppState>((set, get) => ({
       ? get().favorites.filter((f) => f !== id)
       : [...get().favorites, id];
     set({ favorites });
-    savePersisted({ currentUser: get().currentUser, favorites });
+    saveFavorites(favorites);
     get().showToast(
       has ? "💔 Retiré des favoris" : "❤️ Ajouté aux favoris !",
       has ? "info" : "success"
     );
+    // Best-effort : fait évoluer le compteur "favoris" affiché au
+    // propriétaire. Une fonction dédiée (plutôt qu'un UPDATE direct sur
+    // `properties`) car les favoris sont utilisables sans compte — voir
+    // la migration add_real_auth_profiles_and_ownership.
+    createClient()
+      .rpc("adjust_property_favs", { prop_id: id, delta: has ? -1 : 1 })
+      .then(({ error }) => {
+        if (error) console.error("Échec de la mise à jour du compteur de favoris :", error);
+      });
   },
 
   toasts: [],
@@ -154,15 +113,4 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ toasts: get().toasts.filter((t) => t.id !== id) }),
 }));
 
-/**
- * Relit localStorage et applique la session trouvée au store. À appeler
- * une seule fois côté client, avant de faire confiance à currentUser —
- * voir useHasHydrated().
- */
-export function hydrateFromStorage() {
-  const persisted = loadPersisted();
-  useAppStore.setState({
-    currentUser: persisted.currentUser,
-    favorites: persisted.favorites,
-  });
-}
+export { buildUserFromSession };

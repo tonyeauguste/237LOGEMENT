@@ -21,7 +21,7 @@ const VIDEO_MAX = 2;
 const VIDEO_SIZE_MB = 100;
 
 export default function PublierPage() {
-  const user = useAuthGuard();
+  const user = useAuthGuard("owner");
   const router = useRouter();
   const showToast = useAppStore((s) => s.showToast);
 
@@ -207,6 +207,7 @@ export default function PublierPage() {
         images: imageUrls,
         videos: videoUrls.filter(Boolean),
         amenities,
+        owner_id: user?.id,
         owner_name: user?.name || "Propriétaire",
         owner_avatar: user?.avatar || DEFAULT_AVATAR,
         owner_phone: user?.phone || "",

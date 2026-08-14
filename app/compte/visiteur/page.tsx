@@ -19,8 +19,8 @@ import type { Property } from "@/lib/types";
 type Section = "favoris" | "searches" | "alerts" | "settings";
 
 export default function VisitorDashboard() {
-  const user = useAuthGuard();
-  const logout = useAppStore((s) => s.logout);
+  const user = useAuthGuard("visitor");
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
   const favorites = useAppStore((s) => s.favorites);
   const router = useRouter();
@@ -59,8 +59,9 @@ export default function VisitorDashboard() {
 
   if (!user) return null;
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await createClient().auth.signOut();
+    setCurrentUser(null);
     showToast("👋 Déconnexion réussie. À bientôt !", "info");
     router.push("/");
   }

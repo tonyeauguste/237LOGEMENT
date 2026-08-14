@@ -6,7 +6,8 @@ import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "@/components/ui/Button";
 import RoleCard from "@/components/ui/RoleCard";
-import { findAccountByEmail, useAppStore } from "@/lib/store";
+import { buildUserFromSession, useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_AVATAR } from "@/lib/data";
 import type { UserRole } from "@/lib/types";
 
@@ -15,7 +16,7 @@ type AuthTab = "login" | "register";
 function AuthPageInner() {
   const params = useSearchParams();
   const router = useRouter();
-  const login = useAppStore((s) => s.login);
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
 
   const urlTab = params.get("tab") as AuthTab | null;
@@ -46,42 +47,29 @@ function AuthPageInner() {
   const [phone, setPhone] = useState("");
   const [regPwd, setRegPwd] = useState("");
 
-  function handleLogin() {
+  async function handleLogin() {
     if (!loginEmail.trim() || !loginPwd) {
       showToast("⚠️ Remplissez tous les champs.", "error");
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      // Pas de backend d'authentification pour le moment : on retrouve le
-      // profil (et donc le rôle) mémorisé lors de l'inscription sur cet
-      // appareil. Sans ça, le rôle était redéduit d'un indice dans l'email
-      // à chaque connexion et un propriétaire pouvait se retrouver renvoyé
-      // vers l'espace visiteur — voir rememberAccount() dans lib/store.ts.
-      const known = findAccountByEmail(loginEmail);
-      const isOwner = known
-        ? known.role === "owner"
-        : loginEmail.toLowerCase().includes("proprio") || loginEmail.toLowerCase().includes("owner");
-      const name =
-        known?.name ||
-        loginEmail
-          .split("@")[0]
-          .replace(/[._]/g, " ")
-          .replace(/\b\w/g, (l) => l.toUpperCase());
-      login({
-        name,
-        email: loginEmail,
-        phone: known?.phone,
-        role: isOwner ? "owner" : "visitor",
-        avatar: known?.avatar || DEFAULT_AVATAR,
-      });
-      showToast(`✅ Bienvenue ${name} !`, "success");
-      router.push(isOwner ? "/compte/proprietaire" : "/compte/visiteur");
-    }, 1200);
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: loginEmail.trim(),
+      password: loginPwd,
+    });
+    setLoading(false);
+    if (error || !data.session) {
+      showToast("❌ Email ou mot de passe incorrect.", "error");
+      return;
+    }
+    const user = await buildUserFromSession(data.session);
+    setCurrentUser(user);
+    showToast(`✅ Bienvenue ${user.name} !`, "success");
+    router.push(user.role === "owner" ? "/compte/proprietaire" : "/compte/visiteur");
   }
 
-  function handleRegister() {
+  async function handleRegister() {
     if (!fname.trim() || !regEmail.trim() || !regPwd) {
       showToast("⚠️ Remplissez tous les champs obligatoires.", "error");
       return;
@@ -91,18 +79,37 @@ function AuthPageInner() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      login({
-        name: `${fname} ${lname}`.trim(),
-        email: regEmail,
-        phone,
-        role,
-        avatar: DEFAULT_AVATAR,
-      });
-      showToast(`🎉 Compte créé ! Bienvenue ${fname} !`, "success");
-      router.push(role === "owner" ? "/compte/proprietaire" : "/compte/visiteur");
-    }, 1400);
+    const supabase = createClient();
+    const name = `${fname} ${lname}`.trim();
+    const { data, error } = await supabase.auth.signUp({
+      email: regEmail.trim(),
+      password: regPwd,
+      options: {
+        data: { role, name, phone: phone.trim() || null, avatar: DEFAULT_AVATAR },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      showToast(
+        error.message.toLowerCase().includes("already registered")
+          ? "❌ Un compte existe déjà avec cet email."
+          : "❌ Une erreur est survenue. Réessayez.",
+        "error"
+      );
+      return;
+    }
+    if (!data.session) {
+      // La confirmation par email est activée sur ce projet : le compte
+      // est créé mais pas encore utilisable tant que le lien reçu par
+      // email n'a pas été cliqué.
+      showToast("📧 Compte créé ! Vérifiez vos emails pour confirmer votre adresse.", "success");
+      setTab("login");
+      return;
+    }
+    const user = await buildUserFromSession(data.session);
+    setCurrentUser(user);
+    showToast(`🎉 Compte créé ! Bienvenue ${fname} !`, "success");
+    router.push(role === "owner" ? "/compte/proprietaire" : "/compte/visiteur");
   }
 
   return (
@@ -181,7 +188,23 @@ function AuthPageInner() {
                   />
                 </div>
                 <div className="flex justify-end mb-[18px]">
-                  <button className="bg-none border-none text-gold text-[13px] cursor-pointer">
+                  <button
+                    className="bg-none border-none text-gold text-[13px] cursor-pointer"
+                    onClick={async () => {
+                      if (!loginEmail.trim()) {
+                        showToast("⚠️ Renseignez d'abord votre adresse email ci-dessus.", "error");
+                        return;
+                      }
+                      const supabase = createClient();
+                      const { error } = await supabase.auth.resetPasswordForEmail(loginEmail.trim());
+                      showToast(
+                        error
+                          ? "❌ Une erreur est survenue. Réessayez."
+                          : "📧 Email de réinitialisation envoyé (si ce compte existe).",
+                        error ? "error" : "success"
+                      );
+                    }}
+                  >
                     Mot de passe oublié ?
                   </button>
                 </div>

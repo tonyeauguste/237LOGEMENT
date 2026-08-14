@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
 
 const LINKS = [
@@ -16,7 +17,7 @@ const LINKS = [
 
 export default function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   const currentUser = useAppStore((s) => s.currentUser);
-  const logout = useAppStore((s) => s.logout);
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
   const dashHref = currentUser?.role === "owner" ? "/compte/proprietaire" : "/compte/visiteur";
 
@@ -58,8 +59,9 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                   variant="danger"
                   size="sm"
                   className="flex-1"
-                  onClick={() => {
-                    logout();
+                  onClick={async () => {
+                    await createClient().auth.signOut();
+                    setCurrentUser(null);
                     showToast("👋 Déconnexion réussie. À bientôt !", "info");
                     onClose();
                   }}

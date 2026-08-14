@@ -22,14 +22,12 @@ import type { Property } from "@/lib/types";
 type Section = "listings" | "stats" | "messages" | "settings";
 
 export default function OwnerDashboard() {
-  const user = useAuthGuard();
-  const logout = useAppStore((s) => s.logout);
+  const user = useAuthGuard("owner");
   const showToast = useAppStore((s) => s.showToast);
+  const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const router = useRouter();
   const [section, setSection] = useState<Section>("listings");
 
-  // Pas d'authentification pour le moment : toutes les annonces publiées
-  // sur la plateforme sont affichées ici (pas de filtrage par propriétaire).
   const [listings, setListings] = useState<Property[]>([]);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [messages, setMessages] = useState<
@@ -38,10 +36,23 @@ export default function OwnerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     let cancelled = false;
     const supabase = createClient();
+    // `properties` est filtré explicitement sur owner_id ; `property_messages`
+    // n'a pas de owner_id direct (il passe par la relation property_id →
+    // properties), donc on s'appuie sur la policy RLS "Owners can read
+    // their property messages" pour ne recevoir que les messages des
+    // annonces de cet utilisateur — voir la migration
+    // add_real_auth_profiles_and_ownership. Avant ce filtrage, chaque
+    // propriétaire voyait TOUTES les annonces et TOUS les messages de
+    // la plateforme, pas seulement les siens.
     Promise.all([
-      supabase.from("properties").select("*").order("created_at", { ascending: false }),
+      supabase
+        .from("properties")
+        .select("*")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false }),
       supabase
         .from("property_messages")
         .select("id, message, created_at, property_id, properties(title)")
@@ -63,7 +74,7 @@ export default function OwnerDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [user]);
 
   const totalViews = listings.reduce((sum, p) => sum + p.views, 0);
   const totalFavs = listings.reduce((sum, p) => sum + p.favs, 0);
@@ -76,8 +87,9 @@ export default function OwnerDashboard() {
 
   if (!user) return null;
 
-  function handleLogout() {
-    logout();
+  async function handleLogout() {
+    await createClient().auth.signOut();
+    setCurrentUser(null);
     showToast("👋 Déconnexion réussie. À bientôt !", "info");
     router.push("/");
   }

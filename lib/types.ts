@@ -37,6 +37,8 @@ export interface Property {
 export type UserRole = "visitor" | "owner";
 
 export interface User {
+  /** auth.uid() Supabase — sert de clé d'appartenance pour les annonces/messages. */
+  id: string;
   name: string;
   email: string;
   phone?: string;

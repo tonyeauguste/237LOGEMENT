@@ -50,6 +50,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          id: string
+          name: string
+          phone: string | null
+          role: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          id: string
+          name?: string
+          phone?: string | null
+          role?: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
       properties: {
         Row: {
           address: string | null
@@ -66,6 +93,7 @@ export type Database = {
           images: string[]
           min_duration: string | null
           owner_avatar: string | null
+          owner_id: string | null
           owner_listings: number
           owner_name: string
           owner_phone: string | null
@@ -96,6 +124,7 @@ export type Database = {
           images?: string[]
           min_duration?: string | null
           owner_avatar?: string | null
+          owner_id?: string | null
           owner_listings?: number
           owner_name?: string
           owner_phone?: string | null
@@ -126,6 +155,7 @@ export type Database = {
           images?: string[]
           min_duration?: string | null
           owner_avatar?: string | null
+          owner_id?: string | null
           owner_listings?: number
           owner_name?: string
           owner_phone?: string | null
@@ -177,7 +207,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      adjust_property_favs: {
+        Args: { delta: number; prop_id: number }
+        Returns: undefined
+      }
+      increment_property_views: {
+        Args: { prop_id: number }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

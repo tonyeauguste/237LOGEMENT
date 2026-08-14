@@ -3,44 +3,57 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "./store";
-import { useHasHydrated } from "./useHasHydrated";
+import { useAuthSession } from "./useAuthSession";
+import type { UserRole } from "./types";
+
+const DASH_BY_ROLE: Record<UserRole, string> = {
+  owner: "/compte/proprietaire",
+  visitor: "/compte/visiteur",
+};
 
 /**
- * Redirige vers /connexion si l'utilisateur n'est pas authentifié —
- * équivalent du "protectedPages" guard de l'original navigate().
+ * Redirige vers /connexion si l'utilisateur n'est pas authentifié, et —
+ * si `requiredRole` est fourni — vers SON tableau de bord si son rôle ne
+ * correspond pas à celui de la page (ex. un visiteur qui arrive sur
+ * /compte/proprietaire par un lien direct). Avant ce garde, n'importe
+ * quel compte connecté pouvait consulter le tableau de bord de l'autre
+ * rôle sans être bloqué.
  *
- * Attend que le store ait fini de relire la session persistée
- * (localStorage) avant de statuer : sinon, sur un rechargement de page,
- * currentUser vaut encore `null` pendant quelques millisecondes et un
- * utilisateur bel et bien connecté se retrouvait renvoyé vers la page
- * de connexion à tort.
+ * Attend que la session Supabase ait fini d'être relue (useAuthSession)
+ * avant de statuer : sinon, sur un rechargement de page, currentUser
+ * vaut encore `null` pendant la vérification asynchrone du cookie de
+ * session et un utilisateur bel et bien connecté se retrouvait renvoyé
+ * vers la page de connexion à tort.
  */
-export function useAuthGuard() {
+export function useAuthGuard(requiredRole?: UserRole) {
   const currentUser = useAppStore((s) => s.currentUser);
   const showToast = useAppStore((s) => s.showToast);
   const router = useRouter();
-  const hydrated = useHasHydrated();
+  const ready = useAuthSession();
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!ready) return;
     if (!currentUser) {
       showToast("🔒 Veuillez vous connecter pour accéder à cette page.", "info");
       router.replace("/connexion?tab=login");
+      return;
     }
-    // Volontairement dépendant de `hydrated` seul : ce garde ne doit jouer
-    // qu'à l'arrivée sur la page (une fois qu'on sait vraiment si une
-    // session persistée existe). Le re-déclencher à chaque changement de
-    // currentUser ferait doublon avec le bouton "Déconnexion" de chaque
-    // page, qui gère déjà lui-même son toast et sa redirection — d'où
-    // un flash de deux toasts contradictoires et une redirection vers
-    // /connexion au lieu de la page attendue après une déconnexion.
+    if (requiredRole && currentUser.role !== requiredRole) {
+      showToast("⛔ Cette page n'est pas accessible depuis ce type de compte.", "info");
+      router.replace(DASH_BY_ROLE[currentUser.role]);
+    }
+    // Volontairement dépendant de `ready`/`requiredRole` seuls (pas de
+    // currentUser) : ce garde ne doit jouer qu'à l'arrivée sur la page,
+    // pas à chaque changement d'utilisateur (le bouton "Déconnexion" de
+    // chaque page gère déjà lui-même son toast et sa redirection).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated]);
+  }, [ready, requiredRole]);
 
-  // Tant que l'hydratation n'est pas terminée, on ne sait pas encore si
-  // l'utilisateur est connecté : renvoyer `undefined` (plutôt que `null`)
-  // permet aux pages de distinguer "en cours de vérification" de
-  // "vraiment déconnecté" si besoin, tout en gardant `if (!user) return null`
-  // valide dans les deux cas pour éviter un flash de contenu protégé.
-  return hydrated ? currentUser : undefined;
+  // `undefined` couvre à la fois "session pas encore confirmée" et "rôle
+  // incorrect, redirection en cours" : dans les deux cas, la page ne doit
+  // rien afficher (`if (!user) return null`) pour éviter un flash du
+  // mauvais tableau de bord avant que la redirection ne s'exécute.
+  if (!ready) return undefined;
+  if (requiredRole && currentUser && currentUser.role !== requiredRole) return undefined;
+  return currentUser;
 }
