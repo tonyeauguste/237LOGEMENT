@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Upload } from "lucide-react";
 import StepIndicator from "@/components/publier/StepIndicator";
@@ -20,10 +20,22 @@ const PHOTO_SIZE_MB = 10;
 const VIDEO_MAX = 2;
 const VIDEO_SIZE_MB = 100;
 
-export default function PublierPage() {
+function PublierPageInner() {
   const user = useAuthGuard("owner");
   const router = useRouter();
   const showToast = useAppStore((s) => s.showToast);
+  const searchParams = useSearchParams();
+
+  // Présent uniquement quand on arrive depuis le bouton "Modifier" du
+  // tableau de bord propriétaire (/publier?edit=123) — le même formulaire
+  // sert alors à corriger une annonce existante plutôt qu'à en créer une
+  // nouvelle : mêmes étapes, mais on pré-remplit les champs et on fait un
+  // UPDATE (RLS "Owners can update their own properties") au lieu d'un
+  // INSERT à l'étape finale.
+  const editParam = searchParams.get("edit");
+  const editId = editParam ? Number(editParam) : null;
+  const isEditMode = editId !== null && Number.isFinite(editId);
+  const [loadingExisting, setLoadingExisting] = useState(isEditMode);
 
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState(1);
@@ -69,16 +81,71 @@ export default function PublierPage() {
   }, [photos]);
   useEffect(() => {
     return () => {
-      photosRef.current.forEach((p) => URL.revokeObjectURL(p.url));
+      // Seuls les aperçus créés localement (blob:) doivent être révoqués —
+      // les photos déjà en ligne (mode édition) sont de vraies URLs
+      // Supabase Storage ; URL.revokeObjectURL() sur ces URLs-là ne ferait
+      // rien de nuisible, mais autant ne l'appeler que là où c'est utile.
+      photosRef.current.forEach((p) => {
+        if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
+      });
     };
   }, []);
 
+  // Pré-remplissage du formulaire en mode édition : on va chercher
+  // l'annonce existante et on vérifie côté client qu'elle appartient bien
+  // à l'utilisateur connecté (la policy RLS "Owners can update their own
+  // properties" l'empêcherait de toute façon à l'enregistrement, mais
+  // autant ne pas le laisser remplir un formulaire pour rien).
+  useEffect(() => {
+    if (!isEditMode || !user) return;
+    let cancelled = false;
+    const supabase = createClient();
+    supabase
+      .from("properties")
+      .select("*")
+      .eq("id", editId as number)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !data || data.owner_id !== user.id) {
+          showToast("⛔ Impossible de modifier cette annonce.", "error");
+          router.replace("/compte/proprietaire");
+          return;
+        }
+        setCity(data.city);
+        setQuartier(data.quartier);
+        setAddress(data.address || "");
+        setPrecision(data.precision_desc || "");
+        setTitle(data.title);
+        setRooms(String(data.rooms));
+        setBaths(String(data.baths));
+        setSurface(data.surface != null ? String(data.surface) : "");
+        setListingType((data.type as ListingKind) || "longue");
+        setDesc(data.description || "");
+        setPhotos((data.images || []).map((url) => ({ name: url.split("/").pop() || "photo", url })));
+        setVideos((data.videos || []).map((url) => ({ name: url.split("/").pop() || "vidéo", size: 0 })));
+        setAmenities(data.amenities || []);
+        setPrice(data.price != null ? String(data.price) : "");
+        setDeposit(data.deposit != null ? String(data.deposit) : "");
+        setCharges((data.charges as "non" | "oui" | "partiel") || "non");
+        setMinDuration(data.min_duration || "1 mois");
+        setLoadingExisting(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editId, user?.id]);
+
   if (!user) return null;
+  if (loadingExisting) {
+    return <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">Chargement de l&apos;annonce…</div>;
+  }
 
   function removePhoto(index: number) {
     setPhotos((prev) => {
       const target = prev[index];
-      if (target) URL.revokeObjectURL(target.url);
+      if (target && target.url.startsWith("blob:")) URL.revokeObjectURL(target.url);
       return prev.filter((_, idx) => idx !== index);
     });
   }
@@ -189,7 +256,7 @@ export default function PublierPage() {
         videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve("")))
       );
 
-      const { error: insertError } = await supabase.from("properties").insert({
+      const payload = {
         title,
         city,
         quartier,
@@ -207,18 +274,35 @@ export default function PublierPage() {
         images: imageUrls,
         videos: videoUrls.filter(Boolean),
         amenities,
-        owner_id: user?.id,
-        owner_name: user?.name || "Propriétaire",
-        owner_avatar: user?.avatar || DEFAULT_AVATAR,
-        owner_phone: user?.phone || "",
-      });
-      if (insertError) throw insertError;
+      };
 
-      showToast("🚀 Annonce publiée avec succès !", "success");
+      if (isEditMode) {
+        const { error: updateError } = await supabase
+          .from("properties")
+          .update(payload)
+          .eq("id", editId as number);
+        if (updateError) throw updateError;
+        showToast("✅ Annonce mise à jour avec succès !", "success");
+      } else {
+        const { error: insertError } = await supabase.from("properties").insert({
+          ...payload,
+          owner_id: user?.id,
+          owner_name: user?.name || "Propriétaire",
+          owner_avatar: user?.avatar || DEFAULT_AVATAR,
+          owner_phone: user?.phone || "",
+        });
+        if (insertError) throw insertError;
+        showToast("🚀 Annonce publiée avec succès !", "success");
+      }
       setTimeout(() => router.push("/compte/proprietaire"), 1500);
     } catch (err) {
       console.error(err);
-      showToast("❌ Une erreur est survenue lors de la publication. Réessayez.", "error");
+      showToast(
+        isEditMode
+          ? "❌ Une erreur est survenue lors de la mise à jour. Réessayez."
+          : "❌ Une erreur est survenue lors de la publication. Réessayez.",
+        "error"
+      );
       setPublishing(false);
     }
   }
@@ -234,11 +318,12 @@ export default function PublierPage() {
       <div className="mb-[30px]">
         <span className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">Propriétaire</span>
         <h1 className="font-display text-[clamp(22px,3vw,36px)] font-bold text-text mt-2.5 mb-1.5">
-          Publier une nouvelle annonce
+          {isEditMode ? "Modifier l'annonce" : "Publier une nouvelle annonce"}
         </h1>
         <p className="text-muted text-[15px]">
-          Remplissez les informations de votre bien en 5 étapes simples. Publication gratuite, sans
-          commission.
+          {isEditMode
+            ? "Corrigez les informations de votre bien ci-dessous, puis enregistrez."
+            : "Remplissez les informations de votre bien en 5 étapes simples. Publication gratuite, sans commission."}
         </p>
       </div>
 
@@ -481,7 +566,7 @@ export default function PublierPage() {
                         <div className="flex-1 min-w-0">
                           <div className="text-[13px] font-semibold text-text truncate">{v.name}</div>
                           <div className="text-[11px] text-muted mt-0.5">
-                            {(v.size / (1024 * 1024)).toFixed(1)} Mo · Vidéo {i + 1}
+                            {v.size > 0 ? `${(v.size / (1024 * 1024)).toFixed(1)} Mo · ` : ""}Vidéo {i + 1}
                           </div>
                         </div>
                         <button
@@ -575,11 +660,12 @@ export default function PublierPage() {
                 <div className="text-center mb-7">
                   <div className="text-[52px] mb-3.5">🏠</div>
                   <h3 className="font-display text-2xl font-bold text-text mb-2">
-                    Votre annonce est prête !
+                    {isEditMode ? "Vos modifications sont prêtes !" : "Votre annonce est prête !"}
                   </h3>
                   <p className="text-muted text-[15px] max-w-[380px] mx-auto">
-                    Vérifiez les informations ci-dessous avant de publier. Notre équipe validera
-                    votre annonce dans les 24h.
+                    {isEditMode
+                      ? "Vérifiez les informations ci-dessous avant d'enregistrer."
+                      : "Vérifiez les informations ci-dessous avant de publier. Notre équipe validera votre annonce dans les 24h."}
                   </p>
                 </div>
                 <div className="bg-bg3 rounded-2xl p-5 border border-border">
@@ -602,7 +688,7 @@ export default function PublierPage() {
                   />
                 </div>
                 <Button variant="gold" full size="lg" loading={publishing} onClick={publish} className="mt-6">
-                  🚀 Publier l&apos;annonce
+                  {isEditMode ? "💾 Enregistrer les modifications" : "🚀 Publier l'annonce"}
                 </Button>
               </div>
             )}
@@ -651,6 +737,14 @@ export default function PublierPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function PublierPage() {
+  return (
+    <Suspense fallback={null}>
+      <PublierPageInner />
+    </Suspense>
   );
 }
 

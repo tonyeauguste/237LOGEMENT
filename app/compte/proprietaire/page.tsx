@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { List, PlusCircle, BarChart3, MessageSquare, Settings, LogOut, Eye, Heart, Trash2 } from "lucide-react";
+import { List, PlusCircle, BarChart3, MessageSquare, Settings, LogOut, Eye, Heart, Trash2, Pencil } from "lucide-react";
 import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
@@ -226,6 +226,17 @@ export default function OwnerDashboard() {
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
+                              router.push(`/publier?edit=${p.id}`);
+                            }}
+                            title="Modifier l'annonce"
+                            className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted hover:bg-gold3 hover:border-gold hover:text-gold transition-colors"
+                          >
+                            <Pencil size={15} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
                               handleDelete(p);
                             }}
                             disabled={deletingId === p.id}
@@ -244,18 +255,57 @@ export default function OwnerDashboard() {
 
             {section === "stats" && (
               <>
-                <Header label="Analytique" title="Statistiques" />
-                <div className="text-center py-[60px] px-5">
-                  <div className="text-[48px] mb-3.5">📊</div>
-                  <h3 className="text-lg font-semibold text-text mb-2">Aucune statistique disponible</h3>
-                  <p className="text-sm text-muted mb-[22px]">
-                    Vos statistiques de vues, contacts et favoris apparaîtront ici une fois vos
-                    premières annonces publiées.
-                  </p>
-                  <Link href="/publier">
-                    <Button variant="gold">Publier une annonce</Button>
-                  </Link>
-                </div>
+                <Header
+                  label="Analytique"
+                  title="Statistiques"
+                  sub={listings.length > 0 ? "Vues et favoris par annonce, mis à jour en temps réel." : undefined}
+                />
+                {loading ? null : listings.length === 0 ? (
+                  <div className="text-center py-[60px] px-5">
+                    <div className="text-[48px] mb-3.5">📊</div>
+                    <h3 className="text-lg font-semibold text-text mb-2">Aucune statistique disponible</h3>
+                    <p className="text-sm text-muted mb-[22px]">
+                      Vos statistiques de vues, contacts et favoris apparaîtront ici une fois vos
+                      premières annonces publiées.
+                    </p>
+                    <Link href="/publier">
+                      <Button variant="gold">Publier une annonce</Button>
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2.5">
+                    {[...listings]
+                      .sort((a, b) => b.views - a.views)
+                      .map((p) => {
+                        const maxViews = Math.max(...listings.map((l) => l.views), 1);
+                        return (
+                          <Link
+                            key={p.id}
+                            href={`/annonce/${p.id}`}
+                            className="block bg-card border border-border rounded-xl px-5 py-4 hover:border-gold transition-colors"
+                          >
+                            <div className="flex justify-between items-center gap-3 mb-2.5">
+                              <span className="font-semibold text-sm text-text truncate">{p.title}</span>
+                              <div className="flex gap-4 shrink-0 text-xs text-muted">
+                                <span className="flex items-center gap-1">
+                                  <Eye size={12} /> {p.views}
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Heart size={12} /> {p.favs}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="h-1.5 rounded-full bg-bg3 overflow-hidden">
+                              <div
+                                className="h-full bg-gold rounded-full"
+                                style={{ width: `${Math.max(4, (p.views / maxViews) * 100)}%` }}
+                              />
+                            </div>
+                          </Link>
+                        );
+                      })}
+                  </div>
+                )}
               </>
             )}
 

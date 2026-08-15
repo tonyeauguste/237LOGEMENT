@@ -45,10 +45,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
     showToast("✅ Message envoyé avec succès !", "success");
   }
 
-  function callOwner() {
-    showToast(`📞 Appel : ${p.owner.phone}`, "info");
-  }
-
   return (
     <div className="pt-[90px] px-[5%] pb-[60px] max-w-[1240px] mx-auto">
       {/* Breadcrumb */}
@@ -267,9 +263,19 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 <Button variant="gold" full loading={sending} onClick={sendMessage} className="mb-2.5">
                   Envoyer le message
                 </Button>
-                <Button variant="ghost" full onClick={callOwner}>
-                  <Phone size={15} /> {p.owner.phone}
-                </Button>
+                {p.owner.phone ? (
+                  // Vrai lien tel: plutôt qu'un simple toast affichant le
+                  // numéro : sur mobile ça lance directement l'appel, et le
+                  // numéro reste sélectionnable/copiable sur desktop.
+                  <a
+                    href={`tel:${p.owner.phone.replace(/[^+\d]/g, "")}`}
+                    className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer w-full px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold"
+                  >
+                    <Phone size={15} /> {p.owner.phone}
+                  </a>
+                ) : (
+                  <p className="text-center text-xs text-dim italic">Numéro non communiqué</p>
+                )}
               </>
             )}
           </div>

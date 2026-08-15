@@ -31,11 +31,14 @@ export default function StatsBar() {
           </div>
         </Reveal>
 
+        {/* Pas de CountUp ici : "100%" affirmait un taux de vérification
+            réel alors qu'aucune annonce n'est encore marquée vérifiée en
+            base (le badge "🛡 Vérifié" existe mais n'est attribué par
+            personne pour l'instant). On décrit la démarche plutôt qu'un
+            chiffre qui serait faux dès la première annonce publiée. */}
         <Reveal delay={0.16} className="text-center px-5 py-4 border-t lg:border-t-0 border-border">
-          <div className="font-display text-[clamp(26px,3vw,42px)] font-bold text-gold">
-            <CountUp value="100%" />
-          </div>
-          <div className="text-[13px] text-muted mt-1">Propriétaires vérifiés</div>
+          <div className="font-display text-[clamp(26px,3vw,42px)] font-bold text-gold">🛡</div>
+          <div className="text-[13px] text-muted mt-1">Vérification manuelle par notre équipe</div>
         </Reveal>
 
         <Reveal
