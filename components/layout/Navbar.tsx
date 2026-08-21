@@ -60,7 +60,8 @@ export default function Navbar() {
     router.push("/");
   }
 
-  const dashHref = currentUser?.role === "owner" ? "/compte/proprietaire" : "/compte/visiteur";
+  // Espace unique pour tous les comptes depuis la fusion visiteur/propriétaire.
+  const dashHref = "/compte";
 
   return (
     <>

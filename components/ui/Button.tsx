@@ -4,7 +4,7 @@ import { motion, type HTMLMotionProps } from "framer-motion";
 import { forwardRef } from "react";
 import clsx from "clsx";
 
-export type ButtonVariant = "gold" | "outline" | "ghost" | "danger" | "green";
+export type ButtonVariant = "gold" | "outline" | "ghost" | "danger" | "green" | "orange" | "blue";
 export type ButtonSize = "md" | "sm" | "lg";
 
 interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
@@ -20,6 +20,8 @@ const variantClasses: Record<ButtonVariant, string> = {
   ghost: "bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold",
   danger: "bg-[rgba(224,85,85,.1)] border border-[rgba(224,85,85,.3)] text-red hover:bg-[rgba(224,85,85,.22)]",
   green: "bg-[rgba(61,153,112,.12)] border border-[rgba(61,153,112,.3)] text-green2 hover:bg-[rgba(61,153,112,.25)]",
+  orange: "bg-[rgba(249,115,22,.12)] border border-[rgba(249,115,22,.3)] text-orange hover:bg-[rgba(249,115,22,.25)]",
+  blue: "bg-[rgba(99,179,237,.12)] border border-[rgba(99,179,237,.3)] text-blue hover:bg-[rgba(99,179,237,.25)]",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

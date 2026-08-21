@@ -51,7 +51,7 @@ export default function Footer() {
             <li><Link href="/connexion?tab=register" className="text-muted text-[13px] hover:text-gold transition-colors">Publier une annonce</Link></li>
             <li><Link href="/comment-ca-marche" className="text-muted text-[13px] hover:text-gold transition-colors">Guide propriétaire</Link></li>
             <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">FAQ propriétaires</Link></li>
-            <li><Link href="/compte/proprietaire" className="text-muted text-[13px] hover:text-gold transition-colors">Tableau de bord</Link></li>
+            <li><Link href="/compte" className="text-muted text-[13px] hover:text-gold transition-colors">Tableau de bord</Link></li>
           </ul>
         </div>
 

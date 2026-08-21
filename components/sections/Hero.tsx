@@ -8,6 +8,7 @@ import { Search, Check } from "lucide-react";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
 import CitySelect from "@/components/ui/CitySelect";
+import { PROPERTY_KINDS } from "@/lib/data";
 
 const SLIDES = [
   {
@@ -29,7 +30,7 @@ export default function Hero() {
   const router = useRouter();
   const cityRef = useRef<HTMLSelectElement>(null);
   const typeRef = useRef<HTMLSelectElement>(null);
-  const roomsRef = useRef<HTMLSelectElement>(null);
+  const kindRef = useRef<HTMLSelectElement>(null);
   const budgetRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function Hero() {
     const params = new URLSearchParams();
     if (cityRef.current?.value) params.set("city", cityRef.current.value);
     if (typeRef.current?.value) params.set("type", typeRef.current.value);
-    if (roomsRef.current?.value) params.set("rooms", roomsRef.current.value);
+    if (kindRef.current?.value) params.set("kind", kindRef.current.value);
     if (budgetRef.current?.value) params.set("maxp", budgetRef.current.value);
     router.push(`/recherche${params.toString() ? `?${params}` : ""}`);
   }
@@ -127,13 +128,16 @@ export default function Hero() {
             </select>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <select ref={roomsRef} className="form-control">
-              <option value="">🛏 Chambres</option>
-              <option value="1">1+</option>
-              <option value="2">2+</option>
-              <option value="3">3+</option>
-              <option value="4">4+</option>
-              <option value="5">5+</option>
+            {/* Type de bien (nature du logement) — remplace l'ancien filtre
+                "Chambres", plus parlant pour choisir ce qu'on cherche. Le
+                nombre de chambres reste filtrable sur la page /recherche. */}
+            <select ref={kindRef} className="form-control">
+              <option value="">🏘 Type de bien</option>
+              {PROPERTY_KINDS.map((k) => (
+                <option key={k.value} value={k.value}>
+                  {k.icon} {k.label}
+                </option>
+              ))}
             </select>
             <select ref={budgetRef} className="form-control">
               <option value="">💰 Budget max</option>

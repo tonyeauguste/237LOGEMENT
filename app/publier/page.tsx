@@ -9,7 +9,7 @@ import RoleCard from "@/components/ui/RoleCard";
 import AmenityChip from "@/components/ui/AmenityChip";
 import CitySelect from "@/components/ui/CitySelect";
 import Button from "@/components/ui/Button";
-import { AMENITIES, amenityFull, DEFAULT_AVATAR } from "@/lib/data";
+import { AMENITIES, amenityFull, DEFAULT_AVATAR, kindLabel, PROPERTY_KINDS } from "@/lib/data";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
@@ -21,7 +21,10 @@ const VIDEO_MAX = 2;
 const VIDEO_SIZE_MB = 100;
 
 function PublierPageInner() {
-  const user = useAuthGuard("owner");
+  // Tout compte connecté peut publier depuis la fusion des espaces : les
+  // objectifs choisis à l'inscription ne verrouillent plus rien (côté base,
+  // la policy RLS d'insertion vérifie seulement owner_id = auth.uid()).
+  const user = useAuthGuard();
   const router = useRouter();
   const showToast = useAppStore((s) => s.showToast);
   const searchParams = useSearchParams();
@@ -52,6 +55,7 @@ function PublierPageInner() {
   const [baths, setBaths] = useState("1");
   const [surface, setSurface] = useState("");
   const [listingType, setListingType] = useState<ListingKind>("longue");
+  const [kind, setKind] = useState("appartement");
   const [desc, setDesc] = useState("");
 
   // Step 3
@@ -107,9 +111,13 @@ function PublierPageInner() {
       .maybeSingle()
       .then(({ data, error }) => {
         if (cancelled) return;
-        if (error || !data || data.owner_id !== user.id) {
+        // L'admin peut modifier n'importe quelle annonce (policy RLS
+        // "Admins can update any property") — seul un propriétaire normal
+        // est restreint à la sienne.
+        const allowed = data && (data.owner_id === user.id || user.role === "admin");
+        if (error || !data || !allowed) {
           showToast("⛔ Impossible de modifier cette annonce.", "error");
-          router.replace("/compte/proprietaire");
+          router.replace("/compte");
           return;
         }
         setCity(data.city);
@@ -121,6 +129,7 @@ function PublierPageInner() {
         setBaths(String(data.baths));
         setSurface(data.surface != null ? String(data.surface) : "");
         setListingType((data.type as ListingKind) || "longue");
+        setKind(data.kind || "appartement");
         setDesc(data.description || "");
         setPhotos((data.images || []).map((url) => ({ name: url.split("/").pop() || "photo", url })));
         setVideos((data.videos || []).map((url) => ({ name: url.split("/").pop() || "vidéo", size: 0 })));
@@ -137,7 +146,15 @@ function PublierPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, editId, user?.id]);
 
-  if (!user) return null;
+  // Voir le commentaire équivalent dans app/compte/proprietaire/page.tsx :
+  // un message plutôt qu'un blanc total pendant la vérification de session.
+  if (!user) {
+    return (
+      <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">
+        Chargement…
+      </div>
+    );
+  }
   if (loadingExisting) {
     return <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">Chargement de l&apos;annonce…</div>;
   }
@@ -224,7 +241,7 @@ function PublierPageInner() {
 
   function goPrev() {
     if (step === 1) {
-      router.push("/compte/proprietaire");
+      router.push("/compte");
       return;
     }
     setDir(-1);
@@ -264,6 +281,7 @@ function PublierPageInner() {
         precision_desc: precision || null,
         description: desc,
         type: listingType,
+        kind,
         price: price ? Number(price) : 0,
         deposit: deposit ? Number(deposit) : null,
         charges,
@@ -294,7 +312,7 @@ function PublierPageInner() {
         if (insertError) throw insertError;
         showToast("🚀 Annonce publiée avec succès !", "success");
       }
-      setTimeout(() => router.push("/compte/proprietaire"), 1500);
+      setTimeout(() => router.push("/compte"), 1500);
     } catch (err) {
       console.error(err);
       showToast(
@@ -390,6 +408,15 @@ function PublierPageInner() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
+                </Field>
+                <Field label="Type de bien *">
+                  <select className="form-control" value={kind} onChange={(e) => setKind(e.target.value)}>
+                    {PROPERTY_KINDS.map((k) => (
+                      <option key={k.value} value={k.value}>
+                        {k.icon} {k.label}
+                      </option>
+                    ))}
+                  </select>
                 </Field>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                   <Field label="Chambres *">
@@ -670,6 +697,7 @@ function PublierPageInner() {
                 </div>
                 <div className="bg-bg3 rounded-2xl p-5 border border-border">
                   <PreviewRow k="Titre" v={title || "—"} />
+                  <PreviewRow k="Type de bien" v={kindLabel(kind)} />
                   <PreviewRow k="Ville" v={city || "—"} />
                   <PreviewRow k="Quartier" v={quartier || "—"} />
                   <PreviewRow k="Type" v={listingType === "courte" ? "Court séjour (nuit)" : "Longue durée (mois)"} />

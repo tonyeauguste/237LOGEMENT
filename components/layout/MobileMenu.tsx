@@ -19,7 +19,8 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
   const currentUser = useAppStore((s) => s.currentUser);
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
-  const dashHref = currentUser?.role === "owner" ? "/compte/proprietaire" : "/compte/visiteur";
+  // Espace unique pour tous les comptes depuis la fusion visiteur/propriétaire.
+  const dashHref = "/compte";
 
   return (
     <AnimatePresence>

@@ -29,12 +29,18 @@ function saveFavorites(favorites: number[]) {
 
 /**
  * Compose le `User` applicatif à partir de la session Supabase Auth +
- * de la ligne `profiles` associée (rôle, nom, téléphone, avatar).
+ * de la ligne `profiles` associée (rôle, statut, nom, téléphone, avatar).
  * Le rôle stocké en profil sert uniquement à l'affichage (quel tableau
  * de bord montrer) — jamais à l'autorisation côté base, qui repose sur
- * `owner_id = auth.uid()` dans les policies RLS.
+ * `owner_id = auth.uid()` (et `is_admin()` pour l'admin) dans les
+ * policies RLS.
+ *
+ * Retourne `null` si le compte est bloqué (`profiles.status = 'blocked'`)
+ * — la session est alors immédiatement fermée : un compte bloqué ne doit
+ * jamais rester connecté, que ce soit à la connexion ou au rafraîchissement
+ * d'un onglet déjà ouvert au moment où un admin le bloque.
  */
-async function buildUserFromSession(session: Session): Promise<User> {
+async function buildUserFromSession(session: Session): Promise<User | null> {
   const supabase = createClient();
   const { data: profile } = await supabase
     .from("profiles")
@@ -42,12 +48,18 @@ async function buildUserFromSession(session: Session): Promise<User> {
     .eq("id", session.user.id)
     .maybeSingle();
 
+  if (profile?.status === "blocked") {
+    await supabase.auth.signOut();
+    return null;
+  }
+
   return {
     id: session.user.id,
     email: session.user.email ?? "",
     name: profile?.name || session.user.email?.split("@")[0] || "Utilisateur",
     phone: profile?.phone ?? undefined,
     role: (profile?.role as UserRole) ?? "visitor",
+    status: (profile?.status as User["status"]) ?? "active",
     avatar: profile?.avatar || "",
   };
 }

@@ -7,7 +7,7 @@ import { Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import CitySelect from "@/components/ui/CitySelect";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
-import { QUARTIERS } from "@/lib/data";
+import { PROPERTY_KINDS, QUARTIERS } from "@/lib/data";
 import type { ListingView, Property, SearchFilters } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
@@ -21,6 +21,7 @@ function SearchPageInner() {
     query: "",
     city: params.get("city") || "",
     type: (params.get("type") as SearchFilters["type"]) || "",
+    kind: params.get("kind") || "",
     quartier: "",
     rooms: params.get("rooms") || "",
     minPrice: "",
@@ -57,6 +58,7 @@ function SearchPageInner() {
       query: "",
       city: "",
       type: "",
+      kind: "",
       quartier: "",
       rooms: "",
       minPrice: "",
@@ -77,6 +79,7 @@ function SearchPageInner() {
         return false;
       if (filters.city && p.city !== filters.city) return false;
       if (filters.type && p.type !== filters.type) return false;
+      if (filters.kind && p.kind !== filters.kind) return false;
       if (filters.quartier && p.quartier !== filters.quartier) return false;
       if (filters.rooms && p.rooms < parseInt(filters.rooms, 10)) return false;
       if (filters.minPrice && p.price < parseInt(filters.minPrice, 10)) return false;
@@ -169,6 +172,20 @@ function SearchPageInner() {
         {/* Filters bar */}
         <div className="bg-card border border-border rounded-xl px-[18px] py-3.5 mb-[18px] flex gap-3 flex-wrap items-center">
           <span className="text-[13px] text-muted font-medium shrink-0">Filtres :</span>
+          {/* Type de bien — alimenté aussi par ?kind= depuis la recherche
+              de la page d'accueil. */}
+          <select
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+            value={filters.kind}
+            onChange={(e) => set("kind", e.target.value)}
+          >
+            <option value="">Tous les types de bien</option>
+            {PROPERTY_KINDS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {k.label}
+              </option>
+            ))}
+          </select>
           <select
             className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
             value={filters.quartier}

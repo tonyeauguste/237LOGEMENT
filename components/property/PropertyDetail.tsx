@@ -1,13 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Bed, Bath, Ruler, MapPin, MessageSquare, Phone, Check } from "lucide-react";
+import {
+  Heart,
+  Bed,
+  Bath,
+  Ruler,
+  MapPin,
+  MessageSquare,
+  Phone,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Share2,
+  Link2,
+  ShieldCheck,
+  ArrowUp,
+  ArrowLeft,
+} from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
+import { kindLabel } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -21,10 +38,58 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   const [msg, setMsg] = useState("");
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showTop, setShowTop] = useState(false);
 
   const isFav = useAppStore((s) => s.isFav(p.id));
   const toggleFav = useAppStore((s) => s.toggleFav);
   const showToast = useAppStore((s) => s.showToast);
+
+  // Bouton "remonter en haut" : la fiche est longue (galerie + onglets +
+  // annonces similaires), on l'affiche dès qu'on a défilé une hauteur d'écran.
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 700);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const prevImg = () => setGalleryIdx((i) => (i - 1 + p.imgs.length) % p.imgs.length);
+  const nextImg = () => setGalleryIdx((i) => (i + 1) % p.imgs.length);
+
+  // L'URL de la page n'est lue qu'au moment du clic, jamais pendant le
+  // rendu : window.location.href n'existe pas côté serveur, et l'injecter
+  // dans un href provoquait une erreur d'hydratation React (attribut
+  // différent entre le rendu serveur et le rendu client).
+  const shareText = `${p.title} — ${fmtPrice(p.price)} · ${p.quartier}, ${p.city}`;
+
+  async function handleShare() {
+    // API de partage native (mobile) si disponible, sinon on retombe sur
+    // la copie du lien — plus utile qu'un bouton qui ne ferait rien.
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: p.title, text: shareText, url: window.location.href });
+        return;
+      } catch {
+        // Partage annulé par l'utilisateur — rien à signaler.
+        return;
+      }
+    }
+    copyLink();
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showToast("🔗 Lien copié dans le presse-papiers !", "success");
+    } catch {
+      showToast("❌ Impossible de copier le lien.", "error");
+    }
+  }
+
+  function shareOnWhatsApp() {
+    const url = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${window.location.href}`)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   async function sendMessage() {
     if (!msg.trim()) {
@@ -47,104 +112,124 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
 
   return (
     <div className="pt-[90px] px-[5%] pb-[60px] max-w-[1240px] mx-auto">
-      {/* Breadcrumb */}
-      <div className="flex gap-2 items-center mb-6 text-[13px] text-muted">
-        <Link href="/" className="hover:text-gold transition-colors">Accueil</Link>
-        <span className="text-dim">›</span>
-        <Link href="/recherche" className="hover:text-gold transition-colors">Annonces</Link>
-        <span className="text-dim">›</span>
-        <span className="text-dim">{p.title}</span>
+      {/* Fil d'ariane + retour aux résultats */}
+      <div className="flex justify-between items-center gap-4 mb-6 flex-wrap">
+        <div className="flex gap-2 items-center text-[13px] text-muted">
+          <Link href="/" className="text-gold hover:underline">Accueil</Link>
+          <span className="text-dim">/</span>
+          <Link href="/recherche" className="text-gold hover:underline">
+            {p.type === "courte" ? "Court séjour" : "Location"}
+          </Link>
+          <span className="text-dim">/</span>
+          <span className="text-muted truncate max-w-[200px] sm:max-w-none">{p.title}</span>
+        </div>
+        <Link href="/recherche">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft size={14} /> Retour aux résultats
+          </Button>
+        </Link>
       </div>
 
-      {/* Header */}
-      <div className="flex justify-between items-start gap-5 mb-6 flex-wrap">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
+        {/* ─── Colonne principale ─── */}
         <div>
-          <div className="flex gap-2 items-center mb-2.5 flex-wrap">
-            <Tag color={p.type === "courte" ? "gold" : "green"}>
-              {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
-            </Tag>
-            {p.verified && <Tag color="blue">🛡 Propriétaire vérifié</Tag>}
-            {p.available ? <Tag color="green">✅ Disponible</Tag> : <Tag color="red">❌ Non disponible</Tag>}
-          </div>
-          <h1 className="font-display text-[clamp(22px,3vw,40px)] font-bold text-text mb-2">{p.title}</h1>
-          <div className="flex items-center gap-1.5 text-muted text-[15px]">
-            <MapPin size={15} />
-            <span>{p.quartier}, {p.city}</span>
-          </div>
-        </div>
-        <div className="text-right shrink-0">
-          <div className="font-display text-[clamp(26px,3vw,42px)] font-bold text-gold leading-none">
-            {fmtPrice(p.price)}
-          </div>
-          <div className="text-[13px] text-muted mt-1">/ {p.type === "courte" ? "nuit" : "mois"}</div>
-          <button
-            onClick={() => toggleFav(p.id)}
-            className={`flex items-center gap-1.5 text-[13px] cursor-pointer mt-2.5 justify-end ml-auto transition-colors ${
-              isFav ? "text-gold" : "text-muted hover:text-gold"
-            }`}
-          >
-            <Heart size={15} className={isFav ? "fill-gold stroke-gold" : "stroke-current fill-none"} />
-            {isFav ? "Sauvegardé ✓" : "Sauvegarder"}
-          </button>
-        </div>
-      </div>
+          {/* Galerie : grande image + flèches + compteur */}
+          <div className="relative rounded-2xl overflow-hidden bg-card2 aspect-[16/10] mb-3">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={galleryIdx}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="absolute inset-0"
+              >
+                <Image
+                  src={p.imgs[galleryIdx]}
+                  alt={`${p.title} — photo ${galleryIdx + 1}`}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                  className="object-cover"
+                  priority
+                />
+              </motion.div>
+            </AnimatePresence>
 
-      {/* Gallery */}
-      <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-1 md:h-[400px] rounded-2xl overflow-hidden mb-9">
-        <div
-          className="relative overflow-hidden cursor-pointer h-[220px] md:h-full"
-          onClick={() => setGalleryIdx((galleryIdx + 1) % p.imgs.length)}
-        >
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={galleryIdx}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="absolute inset-0"
-            >
-              <Image src={p.imgs[galleryIdx]} alt={p.title} fill sizes="70vw" className="object-cover" />
-            </motion.div>
-          </AnimatePresence>
-        </div>
-        <div className="flex md:flex-col gap-1 h-[72px] md:h-full">
-          {p.imgs.map((src, i) => (
-            <button
-              key={i}
-              onClick={() => setGalleryIdx(i)}
-              className={`relative flex-1 overflow-hidden border-2 transition-colors ${
-                i === galleryIdx ? "border-gold" : "border-transparent"
-              }`}
-            >
-              <Image src={src} alt={`Photo ${i + 1}`} fill sizes="200px" className="object-cover" />
-            </button>
-          ))}
-        </div>
-      </div>
+            {p.imgs.length > 1 && (
+              <>
+                <button
+                  onClick={prevImg}
+                  aria-label="Photo précédente"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm border border-white/15 text-white flex items-center justify-center hover:bg-black/65 transition-colors"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={nextImg}
+                  aria-label="Photo suivante"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm border border-white/15 text-white flex items-center justify-center hover:bg-black/65 transition-colors"
+                >
+                  <ChevronRight size={20} />
+                </button>
+                <span className="absolute bottom-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/55 backdrop-blur-sm text-white text-[12px] font-medium">
+                  {galleryIdx + 1} / {p.imgs.length}
+                </span>
+              </>
+            )}
+          </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8">
-        <div>
-          {/* Stats */}
+          {p.imgs.length > 1 && (
+            <div className="flex gap-2 mb-8 overflow-x-auto pb-1">
+              {p.imgs.map((src, i) => (
+                <button
+                  key={i}
+                  onClick={() => setGalleryIdx(i)}
+                  className={`relative w-[92px] h-[68px] rounded-lg overflow-hidden shrink-0 border-2 transition-colors ${
+                    i === galleryIdx ? "border-gold" : "border-transparent hover:border-border2"
+                  }`}
+                >
+                  <Image src={src} alt={`Miniature ${i + 1}`} fill sizes="92px" className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Titre + badges */}
+          <div className="mb-6">
+            <div className="flex gap-2 items-center mb-3 flex-wrap">
+              <Tag color={p.type === "courte" ? "gold" : "green"}>
+                {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
+              </Tag>
+              {p.verified && <Tag color="blue">🛡 Propriétaire vérifié</Tag>}
+              {p.available ? <Tag color="green">✅ Disponible</Tag> : <Tag color="red">❌ Non disponible</Tag>}
+            </div>
+            <h1 className="font-display text-[clamp(22px,3vw,36px)] font-bold text-text mb-2">{p.title}</h1>
+            <div className="flex items-center gap-1.5 text-muted text-[15px]">
+              <MapPin size={15} />
+              <span>{p.quartier}, {p.city}</span>
+            </div>
+          </div>
+
+          {/* Caractéristiques */}
           <div className="grid grid-cols-3 mb-7 bg-card border border-border rounded-2xl overflow-hidden">
             <div className="p-[18px] text-center border-r border-border">
               <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.rooms} chambre{p.rooms > 1 ? "s" : ""}</div>
-              <div className="text-xs text-muted">Chambres</div>
+              <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
+              <div className="text-xs text-muted">Chambre{p.rooms > 1 ? "s" : ""}</div>
             </div>
             <div className="p-[18px] text-center border-r border-border">
               <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.baths} salle{p.baths > 1 ? "s" : ""} de bain</div>
-              <div className="text-xs text-muted">Salles de bain</div>
+              <div className="font-semibold text-[15px] text-text">{p.baths}</div>
+              <div className="text-xs text-muted">Salle{p.baths > 1 ? "s" : ""} de bain</div>
             </div>
             <div className="p-[18px] text-center">
               <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.surface} m²</div>
-              <div className="text-xs text-muted">Surface</div>
+              <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
+              <div className="text-xs text-muted">m² de surface</div>
             </div>
           </div>
 
-          {/* Tabs */}
+          {/* Onglets */}
           <div className="flex border-b border-border mb-6">
             {([
               ["desc", "Description"],
@@ -166,7 +251,9 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           <AnimatePresence mode="wait">
             {tab === "desc" && (
               <motion.div key="desc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <p className="text-muted text-[15px] leading-[1.8]">{p.desc}</p>
+                <p className="text-muted text-[15px] leading-[1.8] whitespace-pre-line">
+                  {p.desc || "Aucune description fournie pour ce bien."}
+                </p>
                 <div className="bg-card2 border border-border rounded-xl px-[18px] py-4 mt-[18px] flex gap-5 flex-wrap text-[13px] text-muted">
                   <span>👁 {p.views} vues</span>
                   <span>❤️ {p.favs} favoris</span>
@@ -182,12 +269,19 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 exit={{ opacity: 0 }}
                 className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
               >
-                {p.amenities.map((a) => (
-                  <div key={a} className="flex items-center gap-2.5 px-3.5 py-3 bg-card border border-border rounded-[10px] text-sm text-text">
-                    <Check size={14} className="text-gold shrink-0" />
-                    {a}
-                  </div>
-                ))}
+                {p.amenities.length === 0 ? (
+                  <p className="text-muted text-sm">Aucun équipement renseigné.</p>
+                ) : (
+                  p.amenities.map((a) => (
+                    <div
+                      key={a}
+                      className="flex items-center gap-2.5 px-3.5 py-3 bg-card border border-border rounded-[10px] text-sm text-text"
+                    >
+                      <Check size={14} className="text-gold shrink-0" />
+                      {a}
+                    </div>
+                  ))
+                )}
               </motion.div>
             )}
             {tab === "map" && (
@@ -218,25 +312,77 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           </AnimatePresence>
         </div>
 
-        {/* Sidebar */}
-        <div>
-          <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
-            <div className="h-[100px] relative overflow-hidden">
-              <Image src={p.owner.avatar} alt={p.owner.name} fill className="object-cover blur-sm brightness-[.4]" />
+        {/* ─── Colonne latérale (collante) ─── */}
+        <div className="lg:sticky lg:top-[90px]">
+          {/* Bloc prix + partage + sauvegarde */}
+          <div className="bg-card border border-border rounded-2xl p-5 mb-5">
+            <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-1">
+              {p.type === "courte" ? "Court séjour" : "Location"} · {kindLabel(p.kind)}
             </div>
-            <div className="px-5 pb-5 -mt-[42px] relative">
-              <div className="w-[70px] h-[70px] rounded-full border-[3px] border-gold overflow-hidden mb-2.5 relative">
+            <div className="text-[13px] text-muted mb-3">{p.quartier}, {p.city}</div>
+
+            <div className="font-display text-[32px] font-bold text-gold leading-none">
+              {fmtPrice(p.price)}
+            </div>
+            <div className="text-[13px] text-muted mt-1 mb-1">
+              / {p.type === "courte" ? "nuit" : "mois"}
+            </div>
+            <div className="text-[12px] text-dim mb-4">{fmtRelativeDate(p.createdAt)}</div>
+
+            <div className="flex gap-2 flex-wrap mb-4">
+              <button
+                onClick={handleShare}
+                className="flex items-center gap-1.5 text-[12px] text-muted hover:text-gold underline underline-offset-2 transition-colors"
+              >
+                <Share2 size={13} /> Partager
+              </button>
+              <button
+                onClick={copyLink}
+                className="flex items-center gap-1.5 text-[12px] text-muted hover:text-gold underline underline-offset-2 transition-colors"
+              >
+                <Link2 size={13} /> Copier le lien
+              </button>
+              <button
+                onClick={shareOnWhatsApp}
+                className="flex items-center gap-1.5 text-[12px] text-muted hover:text-green2 underline underline-offset-2 transition-colors"
+              >
+                💬 WhatsApp
+              </button>
+            </div>
+
+            <Button variant="gold" full size="lg" onClick={() => toggleFav(p.id)}>
+              <Heart size={16} className={isFav ? "fill-current" : ""} />
+              {isFav ? "Annonce sauvegardée ✓" : "Sauvegarder l'annonce"}
+            </Button>
+          </div>
+
+          {/* Proposé par */}
+          <div className="bg-card border border-border rounded-2xl p-5 mb-5">
+            <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-3">
+              Proposé par
+            </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-full border-2 border-gold overflow-hidden relative shrink-0">
                 <Image src={p.owner.avatar} alt={p.owner.name} fill className="object-cover" />
               </div>
-              <div className="font-semibold text-base text-text mb-1">{p.owner.name}</div>
-              <div className="flex gap-2 items-center text-[13px] text-muted flex-wrap">
-                <Stars rating={p.owner.rating} />
-                <span>{p.owner.rating} · {p.owner.listings} annonce{p.owner.listings > 1 ? "s" : ""}</span>
-                {p.verified && <Tag color="blue" className="!text-[11px]">🛡 Vérifié</Tag>}
+              <div className="min-w-0">
+                <div className="font-semibold text-[15px] text-text truncate">{p.owner.name}</div>
+                {p.verified && (
+                  <div className="text-[12px] text-green2 flex items-center gap-1">
+                    <Check size={12} strokeWidth={3} /> Propriétaire vérifié
+                  </div>
+                )}
               </div>
+            </div>
+            <div className="flex gap-2 items-center text-[13px] text-muted flex-wrap">
+              <Stars rating={p.owner.rating} />
+              <span>
+                {p.owner.rating} · {p.owner.listings} annonce{p.owner.listings > 1 ? "s" : ""}
+              </span>
             </div>
           </div>
 
+          {/* Contact */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <h4 className="font-semibold text-base text-text mb-4 flex items-center gap-2">
               <MessageSquare size={16} className="text-gold" /> Contacter le propriétaire
@@ -247,8 +393,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 <h5 className="font-semibold text-[16px] text-text mb-1.5">Message envoyé !</h5>
                 <p className="text-muted text-sm">
                   Le propriétaire vous répondra sous 24h.
-                  <br />
-                  Vérifiez vos notifications régulièrement.
                 </p>
               </div>
             ) : (
@@ -264,9 +408,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                   Envoyer le message
                 </Button>
                 {p.owner.phone ? (
-                  // Vrai lien tel: plutôt qu'un simple toast affichant le
-                  // numéro : sur mobile ça lance directement l'appel, et le
-                  // numéro reste sélectionnable/copiable sur desktop.
                   <a
                     href={`tel:${p.owner.phone.replace(/[^+\d]/g, "")}`}
                     className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer w-full px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold"
@@ -280,10 +421,35 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             )}
           </div>
 
+          {/* Conseils de sécurité — repris du modèle Rent237 : rassure le
+              locataire et limite les arnaques au faux versement d'avance. */}
+          <div className="bg-card border border-border rounded-2xl p-5 mb-5">
+            <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-3 flex items-center gap-1.5">
+              <ShieldCheck size={13} className="text-gold" /> Conseils de sécurité
+            </div>
+            <div className="flex gap-1.5 flex-wrap mb-3">
+              <Tag color="gold">Propriétaire vérifié</Tag>
+              <Tag color="green">Annonce vérifiée</Tag>
+            </div>
+            <ul className="text-[13px] text-muted leading-relaxed flex flex-col gap-1.5">
+              <li>• Visitez toujours le bien avant de payer.</li>
+              <li>• Privilégiez les contacts vérifiés.</li>
+              <li>• Ne versez jamais d&apos;argent à l&apos;avance sans visite.</li>
+              <li>
+                •{" "}
+                <Link href="/contact" className="text-gold hover:underline">
+                  Signalez
+                </Link>{" "}
+                toute annonce suspecte.
+              </li>
+            </ul>
+          </div>
+
+          {/* Annonces similaires */}
           <div className="bg-card border border-border rounded-2xl p-5">
             <h4 className="font-semibold text-sm text-text mb-3.5">Annonces similaires</h4>
             {similar.length === 0 ? (
-              <p className="text-muted text-[13px]">Aucune annonce similaire</p>
+              <p className="text-muted text-[13px]">Aucune annonce similaire pour le moment.</p>
             ) : (
               <div className="flex flex-col gap-1">
                 {similar.map((s) => (
@@ -307,6 +473,22 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           </div>
         </div>
       </div>
+
+      {/* Retour en haut */}
+      <AnimatePresence>
+        {showTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            aria-label="Remonter en haut"
+            className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gold text-[#07111e] shadow-[0_8px_28px_rgba(200,155,60,.4)] flex items-center justify-center hover:brightness-110 transition-[filter]"
+          >
+            <ArrowUp size={20} />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

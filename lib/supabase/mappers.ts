@@ -1,5 +1,5 @@
 import type { Tables } from "./database.types";
-import type { ListingKind, Property } from "@/lib/types";
+import type { ListingKind, ListingStatus, Property } from "@/lib/types";
 import { DEFAULT_AVATAR } from "@/lib/data";
 
 export type PropertyRow = Tables<"properties">;
@@ -16,6 +16,7 @@ export function rowToProperty(row: PropertyRow): Property {
     quartier: row.quartier,
     address: row.address ?? undefined,
     type: (row.type as ListingKind) ?? "longue",
+    kind: row.kind ?? "appartement",
     price: Number(row.price) || 0,
     rooms: row.rooms,
     baths: row.baths,
@@ -34,6 +35,8 @@ export function rowToProperty(row: PropertyRow): Property {
       listings: row.owner_listings ?? 1,
       phone: row.owner_phone || "",
     },
+    ownerId: row.owner_id,
+    status: (row.status as ListingStatus) ?? "active",
     createdAt: row.created_at,
   };
 }

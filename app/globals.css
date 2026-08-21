@@ -21,6 +21,8 @@
   --green2: #4fc38a;
   --red: #e05555;
   --blue: #63b3ed;
+  /* Action "Bloquer" du panneau admin (voir components/dashboard/Admin*.tsx). */
+  --orange: #f97316;
   --radius: 14px;
 }
 
@@ -42,6 +44,7 @@
   --color-green2: var(--green2);
   --color-red: var(--red);
   --color-blue: var(--blue);
+  --color-orange: var(--orange);
   --font-display: var(--font-playfair), serif;
   --font-body: var(--font-outfit), sans-serif;
   --font-logo: var(--font-cinzel), serif;

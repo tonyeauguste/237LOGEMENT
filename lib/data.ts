@@ -63,6 +63,35 @@ export const QUARTIERS = [
 ];
 
 // ═══════════════════════════════════════════════
+// TYPES DE BIEN — nature du logement, à ne pas confondre avec la durée
+// de location ("longue"/"courte"). Source unique utilisée par le filtre
+// de la page d'accueil, celui de la recherche et le formulaire /publier.
+// ═══════════════════════════════════════════════
+export interface PropertyKindDef {
+  value: string;
+  label: string;
+  icon: string;
+}
+
+export const PROPERTY_KINDS: PropertyKindDef[] = [
+  { value: "chambre", label: "Chambre", icon: "🚪" },
+  { value: "studio", label: "Studio", icon: "🛏" },
+  { value: "appartement", label: "Appartement", icon: "🏢" },
+  { value: "duplex", label: "Duplex", icon: "🏘" },
+  { value: "villa", label: "Villa", icon: "🏡" },
+  { value: "maison", label: "Maison", icon: "🏠" },
+  { value: "bureau", label: "Bureau", icon: "💼" },
+  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪" },
+  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦" },
+  { value: "terrain", label: "Terrain", icon: "🌍" },
+];
+
+/** Libellé affichable d'un type de bien (retombe sur la valeur brute si inconnue). */
+export function kindLabel(value: string): string {
+  return PROPERTY_KINDS.find((k) => k.value === value)?.label ?? value;
+}
+
+// ═══════════════════════════════════════════════
 // ÉQUIPEMENTS — chips sélectionnables
 // ═══════════════════════════════════════════════
 export interface AmenityDef {

@@ -58,6 +58,7 @@ export type Database = {
           name: string
           phone: string | null
           role: string
+          status: string
         }
         Insert: {
           avatar?: string | null
@@ -66,6 +67,7 @@ export type Database = {
           name?: string
           phone?: string | null
           role?: string
+          status?: string
         }
         Update: {
           avatar?: string | null
@@ -74,6 +76,7 @@ export type Database = {
           name?: string
           phone?: string | null
           role?: string
+          status?: string
         }
         Relationships: []
       }
@@ -91,6 +94,7 @@ export type Database = {
           favs: number
           id: number
           images: string[]
+          kind: string
           min_duration: string | null
           owner_avatar: string | null
           owner_id: string | null
@@ -102,6 +106,7 @@ export type Database = {
           price: number
           quartier: string
           rooms: number
+          status: string
           surface: number | null
           title: string
           type: string
@@ -122,6 +127,7 @@ export type Database = {
           favs?: number
           id?: never
           images?: string[]
+          kind?: string
           min_duration?: string | null
           owner_avatar?: string | null
           owner_id?: string | null
@@ -133,6 +139,7 @@ export type Database = {
           price?: number
           quartier: string
           rooms?: number
+          status?: string
           surface?: number | null
           title: string
           type?: string
@@ -153,6 +160,7 @@ export type Database = {
           favs?: number
           id?: never
           images?: string[]
+          kind?: string
           min_duration?: string | null
           owner_avatar?: string | null
           owner_id?: string | null
@@ -164,6 +172,7 @@ export type Database = {
           price?: number
           quartier?: string
           rooms?: number
+          status?: string
           surface?: number | null
           title?: string
           type?: string
@@ -211,10 +220,29 @@ export type Database = {
         Args: { delta: number; prop_id: number }
         Returns: undefined
       }
+      admin_delete_user: { Args: { p_id: string }; Returns: undefined }
+      admin_list_users: {
+        Args: { p_limit?: number; p_offset?: number; p_search?: string }
+        Returns: {
+          avatar: string
+          created_at: string
+          email: string
+          id: string
+          last_sign_in_at: string
+          listings_count: number
+          name: string
+          phone: string
+          role: string
+          status: string
+          total_count: number
+        }[]
+      }
       increment_property_views: {
         Args: { prop_id: number }
         Returns: undefined
       }
+      is_active_user: { Args: never; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

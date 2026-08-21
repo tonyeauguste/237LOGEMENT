@@ -2,7 +2,16 @@
 // Types partagés — 237Logement
 // ═══════════════════════════════════════════════
 
+/** Durée de location. */
 export type ListingKind = "longue" | "courte";
+
+/**
+ * Nature du bien (chambre, studio, villa…) — distincte de `ListingKind`
+ * qui porte la durée. Volontairement `string` plutôt qu'une union figée :
+ * les valeurs autorisées vivent dans PROPERTY_KINDS (lib/data.ts) et dans
+ * la contrainte CHECK `properties_kind_check` côté base.
+ */
+export type PropertyKind = string;
 
 export interface Owner {
   name: string;
@@ -12,13 +21,19 @@ export interface Owner {
   phone: string;
 }
 
+/** 'active' = visible publiquement. 'blocked' = masquée par un admin (reste en base). 'pending' = réservé à un futur workflow de modération. */
+export type ListingStatus = "active" | "blocked" | "pending";
+
 export interface Property {
   id: number;
   title: string;
   city: string;
   quartier: string;
   address?: string;
+  /** Durée de location : longue ou courte. */
   type: ListingKind;
+  /** Nature du bien : chambre, studio, villa… */
+  kind: PropertyKind;
   price: number;
   rooms: number;
   baths: number;
@@ -31,10 +46,15 @@ export interface Property {
   views: number;
   favs: number;
   owner: Owner;
+  ownerId?: string | null;
+  status: ListingStatus;
   createdAt?: string;
 }
 
-export type UserRole = "visitor" | "owner";
+export type UserRole = "visitor" | "owner" | "admin";
+
+/** 'active' = peut se connecter. 'blocked' = accès refusé (compte suspendu par un admin). */
+export type AccountStatus = "active" | "blocked";
 
 export interface User {
   /** auth.uid() Supabase — sert de clé d'appartenance pour les annonces/messages. */
@@ -43,7 +63,22 @@ export interface User {
   email: string;
   phone?: string;
   role: UserRole;
+  status: AccountStatus;
   avatar: string;
+}
+
+/** Ligne renvoyée par le RPC `admin_list_users` — un compte vu depuis le panneau admin. */
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  createdAt: string;
+  lastSignInAt: string | null;
+  name: string;
+  phone: string | null;
+  avatar: string | null;
+  role: UserRole;
+  status: AccountStatus;
+  listingsCount: number;
 }
 
 export type ToastType = "success" | "error" | "info";
@@ -58,6 +93,8 @@ export interface SearchFilters {
   query: string;
   city: string;
   type: "" | ListingKind;
+  /** Nature du bien ("" = tous les types). */
+  kind: string;
   quartier: string;
   rooms: string;
   minPrice: string;

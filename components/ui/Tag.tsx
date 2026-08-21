@@ -1,13 +1,14 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 
-export type TagColor = "gold" | "green" | "blue" | "red" | "neutral";
+export type TagColor = "gold" | "green" | "blue" | "red" | "orange" | "neutral";
 
 const colorClasses: Record<TagColor, string> = {
   gold: "bg-gold3 text-gold border border-[rgba(200,155,60,.28)]",
   green: "bg-[rgba(61,153,112,.1)] text-green2 border border-[rgba(61,153,112,.28)]",
   blue: "bg-[rgba(99,179,237,.1)] text-blue border border-[rgba(99,179,237,.28)]",
   red: "bg-[rgba(224,85,85,.1)] text-red border border-[rgba(224,85,85,.28)]",
+  orange: "bg-[rgba(249,115,22,.1)] text-orange border border-[rgba(249,115,22,.28)]",
   neutral: "bg-card2 text-muted border border-border",
 };
 
