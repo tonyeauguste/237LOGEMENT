@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
-import CitySelect from "@/components/ui/CitySelect";
+import CityInput from "@/components/ui/CityInput";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
 import { PROPERTY_KINDS, QUARTIERS } from "@/lib/data";
@@ -13,6 +13,25 @@ import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyCard from "@/components/property/PropertyCard";
 import PropertyListCard from "@/components/property/PropertyListCard";
+
+/**
+ * Tolérance appliquée au budget saisi sur la page d'accueil : on montre
+ * les biens à plus ou moins 25 % du montant, pour ne pas écarter une
+ * annonce à 210 000 FCFA quand l'utilisateur a tapé 200 000.
+ */
+const BUDGET_TOLERANCE = 0.25;
+
+/**
+ * Minuscules + accents retirés : la ville étant saisie librement, une
+ * recherche "yaounde" doit remonter les annonces de "Yaoundé".
+ */
+function normalize(v: string): string {
+  return v
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
 
 function SearchPageInner() {
   const params = useSearchParams();
@@ -26,7 +45,9 @@ function SearchPageInner() {
     rooms: params.get("rooms") || "",
     minPrice: "",
     maxPrice: params.get("maxp") || "",
-    sort: "recent",
+    budget: params.get("budget") || "",
+    // Arrivé avec un budget → on trie spontanément du plus proche du montant.
+    sort: params.get("budget") ? "budget" : "recent",
   });
   const [view, setView] = useState<ListingView>("grid");
   const [allProperties, setAllProperties] = useState<Property[]>([]);
@@ -63,6 +84,7 @@ function SearchPageInner() {
       rooms: "",
       minPrice: "",
       maxPrice: "",
+      budget: "",
       sort: "recent",
     });
   }
@@ -77,13 +99,23 @@ function SearchPageInner() {
           .includes(filters.query.toLowerCase())
       )
         return false;
-      if (filters.city && p.city !== filters.city) return false;
+      if (filters.city && normalize(p.city) !== normalize(filters.city)) return false;
       if (filters.type && p.type !== filters.type) return false;
       if (filters.kind && p.kind !== filters.kind) return false;
       if (filters.quartier && p.quartier !== filters.quartier) return false;
       if (filters.rooms && p.rooms < parseInt(filters.rooms, 10)) return false;
       if (filters.minPrice && p.price < parseInt(filters.minPrice, 10)) return false;
       if (filters.maxPrice && p.price > parseInt(filters.maxPrice, 10)) return false;
+      if (filters.budget) {
+        const target = parseInt(filters.budget, 10);
+        if (Number.isFinite(target) && target > 0) {
+          if (
+            p.price < target * (1 - BUDGET_TOLERANCE) ||
+            p.price > target * (1 + BUDGET_TOLERANCE)
+          )
+            return false;
+        }
+      }
       return true;
     });
     switch (filters.sort) {
@@ -96,6 +128,16 @@ function SearchPageInner() {
       case "rating":
         list = [...list].sort((a, b) => b.owner.rating - a.owner.rating);
         break;
+      case "budget": {
+        // Le plus proche du montant visé d'abord (écart absolu croissant).
+        const target = parseInt(filters.budget, 10);
+        if (Number.isFinite(target)) {
+          list = [...list].sort(
+            (a, b) => Math.abs(a.price - target) - Math.abs(b.price - target)
+          );
+        }
+        break;
+      }
     }
     return list;
   }, [filters, allProperties]);
@@ -114,8 +156,10 @@ function SearchPageInner() {
               onChange={(e) => set("query", e.target.value)}
             />
           </div>
-          <CitySelect
-            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+          {/* Saisie libre : toutes les villes du Cameroun ne figurent pas
+              dans la liste de suggestions. */}
+          <CityInput
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold"
             placeholder="Toutes les villes"
             value={filters.city}
             onChange={(e) => set("city", e.target.value)}
@@ -140,6 +184,13 @@ function SearchPageInner() {
         <div className="flex justify-between items-center flex-wrap gap-3 mb-[18px]">
           <div className="text-[15px] text-text">
             <strong className="font-semibold">{results.length}</strong> logements trouvés
+            {/* Le budget élargit la recherche : on le dit explicitement,
+                sinon un résultat au-dessus du montant saisi surprend. */}
+            {filters.budget && (
+              <span className="text-[13px] text-muted ml-2">
+                autour de {parseInt(filters.budget, 10).toLocaleString("fr-FR")} FCFA (± 25 %)
+              </span>
+            )}
           </div>
           <div className="flex gap-2 items-center">
             <select
@@ -151,6 +202,7 @@ function SearchPageInner() {
               <option value="prix-asc">Prix croissant</option>
               <option value="prix-desc">Prix décroissant</option>
               <option value="rating">Mieux notés</option>
+              <option value="budget">Proche de mon budget</option>
             </select>
             <div className="flex border border-border rounded-lg overflow-hidden">
               <button
@@ -220,6 +272,16 @@ function SearchPageInner() {
             className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold w-[120px]"
             value={filters.maxPrice}
             onChange={(e) => set("maxPrice", e.target.value)}
+          />
+          <input
+            type="number"
+            min={0}
+            step={5000}
+            placeholder="Budget approx."
+            title="Affiche les biens autour de ce montant (± 25 %)"
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold w-[150px]"
+            value={filters.budget}
+            onChange={(e) => set("budget", e.target.value)}
           />
           <Button variant="danger" size="sm" onClick={resetFilters}>
             <X size={13} /> Réinitialiser

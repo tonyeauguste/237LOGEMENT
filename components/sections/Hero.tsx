@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { Search, Check } from "lucide-react";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
-import CitySelect from "@/components/ui/CitySelect";
+import CityInput from "@/components/ui/CityInput";
 import { PROPERTY_KINDS } from "@/lib/data";
 
 const SLIDES = [
@@ -28,10 +28,10 @@ const SLIDES = [
 export default function Hero() {
   const [slide, setSlide] = useState(0);
   const router = useRouter();
-  const cityRef = useRef<HTMLSelectElement>(null);
+  const cityRef = useRef<HTMLInputElement>(null);
   const typeRef = useRef<HTMLSelectElement>(null);
   const kindRef = useRef<HTMLSelectElement>(null);
-  const budgetRef = useRef<HTMLSelectElement>(null);
+  const budgetRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const t = setInterval(() => setSlide((s) => (s + 1) % SLIDES.length), 6000);
@@ -40,10 +40,15 @@ export default function Hero() {
 
   function launchSearch() {
     const params = new URLSearchParams();
-    if (cityRef.current?.value) params.set("city", cityRef.current.value);
+    // .trim() sur la ville : saisie libre désormais, un espace en trop ne
+    // doit pas produire une recherche qui ne remonte rien.
+    const city = cityRef.current?.value.trim();
+    if (city) params.set("city", city);
     if (typeRef.current?.value) params.set("type", typeRef.current.value);
     if (kindRef.current?.value) params.set("kind", kindRef.current.value);
-    if (budgetRef.current?.value) params.set("maxp", budgetRef.current.value);
+    // `budget` (montant cible, élargi par la recherche) et non `maxp`
+    // (plafond strict, qui reste utilisable depuis les filtres avancés).
+    if (budgetRef.current?.value) params.set("budget", budgetRef.current.value);
     router.push(`/recherche${params.toString() ? `?${params}` : ""}`);
   }
 
@@ -120,7 +125,7 @@ export default function Hero() {
           className="bg-[rgba(7,17,30,.75)] border border-[rgba(200,155,60,.25)] rounded-[18px] p-[22px] shadow-[0_32px_80px_rgba(0,0,0,.5)] mb-[26px] backdrop-blur-xl"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <CitySelect ref={cityRef} placeholder="📍 Ville" />
+            <CityInput ref={cityRef} placeholder="📍 Ville (toutes villes acceptées)" />
             <select ref={typeRef} className="form-control">
               <option value="">🏠 Type</option>
               <option value="longue">Long terme</option>
@@ -139,14 +144,18 @@ export default function Hero() {
                 </option>
               ))}
             </select>
-            <select ref={budgetRef} className="form-control">
-              <option value="">💰 Budget max</option>
-              <option value="50000">50 000 FCFA</option>
-              <option value="100000">100 000 FCFA</option>
-              <option value="200000">200 000 FCFA</option>
-              <option value="350000">350 000 FCFA</option>
-              <option value="500000">500 000 FCFA</option>
-            </select>
+            {/* Budget en saisie libre : les paliers figés d'avant obligeaient
+                à arrondir son budget réel. La recherche élargit ensuite
+                autour du montant saisi (voir BUDGET_TOLERANCE). */}
+            <input
+              ref={budgetRef}
+              type="number"
+              min={0}
+              step={5000}
+              inputMode="numeric"
+              className="form-control"
+              placeholder="💰 Budget approximatif (FCFA)"
+            />
           </div>
           <Button variant="gold" full onClick={launchSearch} className="mt-1">
             <Search size={16} />

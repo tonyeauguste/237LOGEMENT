@@ -99,7 +99,13 @@ export interface SearchFilters {
   rooms: string;
   minPrice: string;
   maxPrice: string;
-  sort: "recent" | "prix-asc" | "prix-desc" | "rating";
+  /**
+   * Budget cible saisi librement sur la page d'accueil. Contrairement à
+   * `maxPrice` (plafond strict), la recherche élargit autour de ce montant
+   * pour proposer des approximations — voir BUDGET_TOLERANCE.
+   */
+  budget: string;
+  sort: "recent" | "prix-asc" | "prix-desc" | "rating" | "budget";
 }
 
 export type ListingView = "grid" | "list";

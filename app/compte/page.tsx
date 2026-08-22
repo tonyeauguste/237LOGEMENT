@@ -33,7 +33,7 @@ import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
 import ToggleRow from "@/components/ui/ToggleRow";
-import CitySelect from "@/components/ui/CitySelect";
+import CityInput from "@/components/ui/CityInput";
 import ComingSoon from "@/components/ui/ComingSoon";
 import PropertyCard from "@/components/property/PropertyCard";
 import AdminOverview from "@/components/dashboard/AdminOverview";
@@ -475,7 +475,7 @@ export default function AccountDashboard() {
                     </div>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">Ville</label>
-                      <CitySelect placeholder="Sélectionner une ville" />
+                      <CityInput placeholder="Sélectionner une ville" />
                     </div>
                     <Button
                       variant="gold"

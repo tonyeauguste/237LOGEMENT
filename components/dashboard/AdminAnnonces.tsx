@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Search, Pencil, Trash2, Ban, CheckCircle2 } from "lucide-react";
 import Tag from "@/components/ui/Tag";
-import CitySelect from "@/components/ui/CitySelect";
+import CityInput from "@/components/ui/CityInput";
 import Pagination from "@/components/ui/Pagination";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
@@ -172,7 +172,9 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
             onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
-        <CitySelect
+        {/* Saisie libre : les propriétaires peuvent publier dans une ville
+            absente de la liste, l'admin doit donc pouvoir la filtrer aussi. */}
+        <CityInput
           placeholder="Toutes les villes"
           className="form-control sm:w-[200px]"
           value={city}

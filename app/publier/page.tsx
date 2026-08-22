@@ -7,7 +7,7 @@ import { Upload } from "lucide-react";
 import StepIndicator from "@/components/publier/StepIndicator";
 import RoleCard from "@/components/ui/RoleCard";
 import AmenityChip from "@/components/ui/AmenityChip";
-import CitySelect from "@/components/ui/CitySelect";
+import CityInput from "@/components/ui/CityInput";
 import Button from "@/components/ui/Button";
 import { AMENITIES, amenityFull, DEFAULT_AVATAR, kindLabel, PROPERTY_KINDS } from "@/lib/data";
 import { useAuthGuard } from "@/lib/useAuthGuard";
@@ -275,8 +275,10 @@ function PublierPageInner() {
 
       const payload = {
         title,
-        city,
-        quartier,
+        // .trim() : la ville et le quartier sont saisis librement, un espace
+        // parasite ferait échouer la correspondance avec les recherches.
+        city: city.trim(),
+        quartier: quartier.trim(),
         address: address || null,
         precision_desc: precision || null,
         description: desc,
@@ -363,7 +365,13 @@ function PublierPageInner() {
                 <StepTitle icon="📍" text="Localisation du bien" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <Field label="Ville *">
-                    <CitySelect placeholder="Sélectionner une ville" value={city} onChange={(e) => setCity(e.target.value)} />
+                    {/* Saisie libre : un propriétaire d'une localité absente
+                        de nos suggestions doit pouvoir publier malgré tout. */}
+                    <CityInput
+                      placeholder="Saisir ou choisir une ville"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                    />
                   </Field>
                   <Field label="Quartier *">
                     <input
