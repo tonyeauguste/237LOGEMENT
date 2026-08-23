@@ -52,7 +52,8 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar: string | null
+          avatar: string | null
+          city: string | null
           created_at: string
           id: string
           name: string
@@ -61,7 +62,8 @@ export type Database = {
           status: string
         }
         Insert: {
-          avatar?: string | null
+          avatar?: string | null
+          city?: string | null
           created_at?: string
           id: string
           name?: string
@@ -70,7 +72,8 @@ export type Database = {
           status?: string
         }
         Update: {
-          avatar?: string | null
+          avatar?: string | null
+          city?: string | null
           created_at?: string
           id?: string
           name?: string

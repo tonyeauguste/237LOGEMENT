@@ -62,6 +62,8 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
+  /** Ville renseignée dans les paramètres du compte (saisie libre, facultative). */
+  city?: string;
   role: UserRole;
   status: AccountStatus;
   avatar: string;

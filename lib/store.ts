@@ -58,6 +58,7 @@ async function buildUserFromSession(session: Session): Promise<User | null> {
     email: session.user.email ?? "",
     name: profile?.name || session.user.email?.split("@")[0] || "Utilisateur",
     phone: profile?.phone ?? undefined,
+    city: profile?.city ?? undefined,
     role: (profile?.role as UserRole) ?? "visitor",
     status: (profile?.status as User["status"]) ?? "active",
     avatar: profile?.avatar || "",

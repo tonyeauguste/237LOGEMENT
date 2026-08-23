@@ -77,6 +77,27 @@ export default function AccountDashboard() {
   >([]);
   const [loading, setLoading] = useState(true);
 
+  // ── Formulaire "Paramètres" ──────────────────────
+  // Champs contrôlés initialisés depuis la session. `user` arrive de façon
+  // asynchrone (relecture du cookie), d'où la resynchronisation ci-dessous
+  // plutôt qu'une simple valeur initiale, qui resterait vide.
+  const [formName, setFormName] = useState("");
+  const [formEmail, setFormEmail] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formCity, setFormCity] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  // Recopie les valeurs du compte dans le formulaire dès qu'il est connu,
+  // et à chaque changement de compte — sans écraser une saisie en cours,
+  // d'où la comparaison sur l'identifiant.
+  const [syncedUserId, setSyncedUserId] = useState<string | null>(null);
+  if (user && user.id !== syncedUserId) {
+    setSyncedUserId(user.id);
+    setFormName(user.name ?? "");
+    setFormEmail(user.email ?? "");
+    setFormPhone(user.phone ?? "");
+    setFormCity(user.city ?? "");
+  }
+
   // Annonces publiées par cet utilisateur + messages reçus sur celles-ci.
   useEffect(() => {
     if (!user) return;
@@ -175,6 +196,79 @@ export default function AccountDashboard() {
     }
     setListings((prev) => prev.filter((l) => l.id !== p.id));
     showToast("🗑️ Annonce supprimée.", "success");
+  }
+
+  /**
+   * Enregistre le profil. Deux destinations distinctes :
+   * - nom / téléphone / ville → table `profiles` (policy RLS "Users can
+   *   update own profile") ;
+   * - email → Supabase Auth, qui envoie un lien de confirmation à la
+   *   nouvelle adresse et n'applique le changement qu'après validation.
+   */
+  async function saveProfile() {
+    if (!user) return;
+    if (!formName.trim()) {
+      showToast("⚠️ Le nom ne peut pas être vide.", "error");
+      return;
+    }
+
+    setSavingProfile(true);
+    const supabase = createClient();
+
+    // .select() pour distinguer un refus RLS (0 ligne, sans erreur
+    // PostgREST) d'une vraie mise à jour — sinon on annoncerait un succès
+    // alors que rien n'a changé en base.
+    const { data, error } = await supabase
+      .from("profiles")
+      .update({
+        name: formName.trim(),
+        phone: formPhone.trim() || null,
+        city: formCity.trim() || null,
+      })
+      .eq("id", user.id)
+      .select();
+
+    if (error || !data || data.length === 0) {
+      setSavingProfile(false);
+      showToast("❌ Impossible d'enregistrer le profil. Réessayez.", "error");
+      return;
+    }
+
+    // Le changement d'email est traité à part, et seulement s'il a bougé.
+    const newEmail = formEmail.trim();
+    let emailPending = false;
+    if (newEmail && newEmail !== user.email) {
+      const { error: emailError } = await supabase.auth.updateUser({ email: newEmail });
+      if (emailError) {
+        setSavingProfile(false);
+        showToast(
+          emailError.message.toLowerCase().includes("already")
+            ? "❌ Cette adresse email est déjà utilisée."
+            : "❌ Impossible de changer l'email. Le reste du profil a été enregistré.",
+          "error"
+        );
+        return;
+      }
+      emailPending = true;
+    }
+
+    // Met à jour la session locale pour que la sidebar et le reste de
+    // l'application reflètent immédiatement le nouveau nom. L'email, lui,
+    // ne change qu'une fois le lien de confirmation cliqué.
+    setCurrentUser({
+      ...user,
+      name: data[0].name,
+      phone: data[0].phone ?? undefined,
+      city: data[0].city ?? undefined,
+    });
+
+    setSavingProfile(false);
+    showToast(
+      emailPending
+        ? "✅ Profil enregistré. Confirmez le changement d'email via le lien reçu."
+        : "✅ Profil mis à jour.",
+      "success"
+    );
   }
 
   function goToOwnerListings(ownerName: string) {
@@ -463,25 +557,47 @@ export default function AccountDashboard() {
                     <h4 className="text-[15px] font-semibold text-text mb-[18px]">Mon profil</h4>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">Nom complet</label>
-                      <input className="form-control" defaultValue={user.name} />
+                      <input
+                        className="form-control"
+                        value={formName}
+                        onChange={(e) => setFormName(e.target.value)}
+                      />
                     </div>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">Email</label>
-                      <input className="form-control" type="email" defaultValue={user.email} />
+                      <input
+                        className="form-control"
+                        type="email"
+                        value={formEmail}
+                        onChange={(e) => setFormEmail(e.target.value)}
+                      />
+                      {/* Changer d'email ne se fait pas comme changer un nom :
+                          Supabase envoie un lien à la nouvelle adresse et
+                          n'applique le changement qu'une fois celui-ci cliqué. */}
+                      {formEmail.trim() !== user.email && (
+                        <p className="text-[12px] text-gold mt-1.5">
+                          Un email de confirmation sera envoyé à cette adresse.
+                        </p>
+                      )}
                     </div>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">Téléphone</label>
-                      <input className="form-control" placeholder="+237 6XX XXX XXX" defaultValue={user.phone} />
+                      <input
+                        className="form-control"
+                        placeholder="+237 6XX XXX XXX"
+                        value={formPhone}
+                        onChange={(e) => setFormPhone(e.target.value)}
+                      />
                     </div>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">Ville</label>
-                      <CityInput placeholder="Sélectionner une ville" />
+                      <CityInput
+                        placeholder="Votre ville"
+                        value={formCity}
+                        onChange={(e) => setFormCity(e.target.value)}
+                      />
                     </div>
-                    <Button
-                      variant="gold"
-                      size="sm"
-                      onClick={() => showToast("✅ Profil mis à jour", "success")}
-                    >
+                    <Button variant="gold" size="sm" loading={savingProfile} onClick={saveProfile}>
                       Mettre à jour
                     </Button>
                   </div>
