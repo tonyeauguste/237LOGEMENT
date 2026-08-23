@@ -7,6 +7,7 @@ import Button from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
+import { CONTACT } from "@/lib/data";
 
 const DETAILS = [
   {
@@ -25,9 +26,11 @@ const DETAILS = [
     title: "Téléphone / WhatsApp",
     text: (
       <>
-        +237 679 312 363
+        <a href={`tel:${CONTACT.phoneRaw}`} className="hover:text-gold transition-colors">
+          {CONTACT.phone}
+        </a>
         <br />
-        Lun – Sam, 8h00 – 18h00
+        {CONTACT.hoursShort}
       </>
     ),
   },
@@ -35,11 +38,13 @@ const DETAILS = [
     icon: "✉️",
     title: "Email",
     text: (
-      <span className="text-dim italic">
-        Adresse email indisponible pour le moment.
+      <>
+        <a href={`mailto:${CONTACT.email}`} className="hover:text-gold transition-colors break-all">
+          {CONTACT.email}
+        </a>
         <br />
-        Contactez-nous par téléphone ou WhatsApp.
-      </span>
+        Réponse sous 24h ouvrées.
+      </>
     ),
   },
   {
@@ -47,9 +52,9 @@ const DETAILS = [
     title: "Horaires d'ouverture",
     text: (
       <>
-        Lundi – Vendredi : 8h00 – 18h00
+        {CONTACT.hoursLong}
         <br />
-        Samedi : 9h00 – 14h00
+        <span className="text-dim">Fermé le week-end</span>
       </>
     ),
   },

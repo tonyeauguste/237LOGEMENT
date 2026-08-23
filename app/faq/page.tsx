@@ -7,14 +7,12 @@ import { ChevronDown } from "lucide-react";
 import clsx from "clsx";
 import Button from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
-import { FAQ_ITEMS, FAQ_CATEGORIES } from "@/lib/data";
+import { FAQ_ITEMS, FAQ_CATEGORIES, CONTACT } from "@/lib/data";
 import type { FaqCategory } from "@/lib/data";
-import { useAppStore } from "@/lib/store";
 
 export default function FaqPage() {
   const [cat, setCat] = useState<FaqCategory | "all">("all");
   const [openIdx, setOpenIdx] = useState<number | null>(null);
-  const showToast = useAppStore((s) => s.showToast);
 
   const filtered = FAQ_ITEMS.map((item, i) => ({ ...item, i })).filter(
     (item) => cat === "all" || item.cat === cat
@@ -37,7 +35,7 @@ export default function FaqPage() {
         <Reveal delay={0.14}>
           <p className="text-muted text-[15px] mt-3.5 max-w-[480px] mx-auto">
             Trouvez rapidement les réponses à vos questions. Si vous ne trouvez pas ce que vous
-            cherchez, notre équipe est disponible 7j/7.
+            cherchez, notre équipe vous répond du lundi au vendredi.
           </p>
         </Reveal>
       </div>
@@ -104,19 +102,22 @@ export default function FaqPage() {
           Vous n&apos;avez pas trouvé votre réponse ?
         </h3>
         <p className="text-muted text-sm mb-[22px]">
-          Notre équipe de support est disponible du lundi au samedi, de 8h à 18h (heure de
-          Yaoundé). Réponse garantie sous 24h.
+          Notre équipe de support est disponible du lundi au vendredi, de 9h à 17h (heure de
+          Yaoundé). Réponse garantie sous 24h ouvrées.
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           <Link href="/contact">
             <Button variant="gold">Nous écrire</Button>
           </Link>
-          <Button
-            variant="ghost"
-            onClick={() => showToast("📞 +237 679 312 363 — Disponible Lun–Sam 8h–18h", "info")}
+          {/* Vrai lien tel: plutôt qu'un toast affichant le numéro : sur
+              mobile l'appel se lance directement, et le numéro reste
+              sélectionnable sur ordinateur. */}
+          <a
+            href={`tel:${CONTACT.phoneRaw}`}
+            className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold"
           >
-            📞 Nous appeler
-          </Button>
+            📞 {CONTACT.phone}
+          </a>
         </div>
       </div>
     </div>

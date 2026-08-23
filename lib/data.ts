@@ -63,6 +63,26 @@ export const QUARTIERS = [
 ];
 
 // ═══════════════════════════════════════════════
+// COORDONNÉES — source unique, utilisée par la page Contact, le pied de
+// page et la FAQ. Ces informations étaient auparavant recopiées à quatre
+// endroits, ce qui les faisait diverger à chaque changement.
+// ═══════════════════════════════════════════════
+export const CONTACT = {
+  email: "237logement@gmail.com",
+  /** Affichage lisible, espacé. */
+  phone: "+237 681 240 210",
+  /** Même numéro sans espaces, pour les liens tel: et WhatsApp. */
+  phoneRaw: "+237681240210",
+  whatsapp: "237681240210",
+  /** Version courte, pour le pied de page et les listes. */
+  hoursShort: "Lun – Ven, 9h00 – 17h00",
+  /** Version détaillée, pour la page Contact. */
+  hoursLong: "Lundi – Vendredi : 9h00 – 17h00",
+  addressLine1: "Quartier Ebomé, Avant l'hôpital",
+  addressLine2: "Kribi, Sud, Cameroun",
+} as const;
+
+// ═══════════════════════════════════════════════
 // TYPES DE BIEN — nature du logement, à ne pas confondre avec la durée
 // de location ("longue"/"courte"). Source unique utilisée par le filtre
 // de la page d'accueil, celui de la recherche et le formulaire /publier.
