@@ -1,0 +1,413 @@
+<html><head><meta charset="utf-8"><title>Apercu emails 237Logement</title></head><body style="margin:0;background:#050b14;font-family:Arial,sans-serif"><div style="padding:14px 20px;background:#c89b3c;color:#07111e;font-weight:bold;font-size:14px;">Confirm sign up</div><!--
+  237Logement — Email « Confirmer votre inscription »
+  À coller dans : Supabase → Authentication → Emails → Confirm signup
+  Variable disponible : https://237logement.org/auth/confirm?token=EXEMPLE123
+
+  Contraintes propres à l'email (différentes du site) :
+  - mise en page en <table> et styles en ligne : Outlook et Gmail
+    ignorent les feuilles de style et le CSS moderne (flex/grid)
+  - polices web impossibles : Georgia remplace Playfair Display
+  - bouton « bulletproof » (table + fond) pour s'afficher sous Outlook
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07111e" style="background-color:#07111e;margin:0;padding:0;width:100%;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <!-- Texte d'aperçu affiché dans la liste des mails, masqué à l'ouverture -->
+      <div style="display:none;font-size:1px;color:#07111e;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+        Confirmez votre adresse pour activer votre compte 237Logement.
+      </div>
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">
+
+        <!-- En-tête -->
+        <tr>
+          <td align="center" style="padding:8px 0 28px 0;">
+            <!-- Badge en HTML pur plutot qu une image : Gmail et Outlook
+                 bloquent les images distantes par defaut, l identite visuelle
+                 ne doit donc pas en dependre. -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" width="64" height="64" style="background-color:#c89b3c;width:64px;height:64px;border-radius:14px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:bold;color:#07111e;line-height:64px;text-align:center;">237</td>
+              </tr>
+            </table>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#ede9e1;letter-spacing:1px;padding-top:14px;">
+              <span style="color:#c89b3c;">237</span>LOGEMENT
+            </div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;letter-spacing:2px;text-transform:uppercase;padding-top:6px;">
+              Louer &middot; Publier &middot; Gérer
+            </div>
+          </td>
+        </tr>
+
+        <!-- Carte principale -->
+        <tr>
+          <td bgcolor="#0e1a28" style="background-color:#0e1a28;border:1px solid #1c2e40;border-radius:16px;padding:38px 34px;">
+
+            <h1 style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;color:#ede9e1;">
+              Bienvenue sur 237Logement !
+            </h1>
+
+            <p style="margin:0 0 22px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#a8bccf;">
+              Votre compte est presque prêt. Il ne reste qu'une étape : confirmer votre adresse email
+              pour activer votre accès et commencer à explorer les logements disponibles.
+            </p>
+
+            <!-- Bouton -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" style="background-color:#c89b3c;border-radius:10px;">
+                  <a href="https://237logement.org/auth/confirm?token=EXEMPLE123"
+                     style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#07111e;text-decoration:none;border-radius:10px;">
+                    Confirmer mon adresse
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :
+            </p>
+            <p style="margin:0 0 26px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;">
+              <a href="https://237logement.org/auth/confirm?token=EXEMPLE123" style="color:#c89b3c;text-decoration:underline;">https://237logement.org/auth/confirm?token=EXEMPLE123</a>
+            </p>
+
+            <div style="border-top:1px solid #1c2e40;padding-top:20px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#7a90a8;">
+                Ce lien expire dans 24 heures. Si vous n'êtes pas à l'origine de cette inscription,
+                ignorez simplement ce message — aucun compte ne sera activé.
+              </p>
+            </div>
+
+          </td>
+        </tr>
+
+        <!-- Pied de page -->
+        <tr>
+          <td align="center" style="padding:26px 16px 8px 16px;">
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              La première plateforme immobilière de confiance au Cameroun.
+            </p>
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+              <a href="https://237logement.org" style="color:#c89b3c;text-decoration:none;">237logement.org</a>
+              <span style="color:#3d5166;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://237logement.org/contact" style="color:#7a90a8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<div style="padding:14px 20px;background:#c89b3c;color:#07111e;font-weight:bold;font-size:14px;">Reset password</div><!--
+  237Logement — Email « Réinitialiser son mot de passe »
+  À coller dans : Supabase → Authentication → Emails → Reset Password
+  Variable disponible : https://237logement.org/auth/confirm?token=EXEMPLE123
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07111e" style="background-color:#07111e;margin:0;padding:0;width:100%;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <div style="display:none;font-size:1px;color:#07111e;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+        Réinitialisez le mot de passe de votre compte 237Logement.
+      </div>
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">
+
+        <tr>
+          <td align="center" style="padding:8px 0 28px 0;">
+            <!-- Badge en HTML pur plutot qu une image : Gmail et Outlook
+                 bloquent les images distantes par defaut, l identite visuelle
+                 ne doit donc pas en dependre. -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" width="64" height="64" style="background-color:#c89b3c;width:64px;height:64px;border-radius:14px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:bold;color:#07111e;line-height:64px;text-align:center;">237</td>
+              </tr>
+            </table>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#ede9e1;letter-spacing:1px;padding-top:14px;">
+              <span style="color:#c89b3c;">237</span>LOGEMENT
+            </div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;letter-spacing:2px;text-transform:uppercase;padding-top:6px;">
+              Louer &middot; Publier &middot; Gérer
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td bgcolor="#0e1a28" style="background-color:#0e1a28;border:1px solid #1c2e40;border-radius:16px;padding:38px 34px;">
+
+            <h1 style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;color:#ede9e1;">
+              Réinitialiser votre mot de passe
+            </h1>
+
+            <p style="margin:0 0 22px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#a8bccf;">
+              Vous avez demandé à changer le mot de passe de votre compte 237Logement.
+              Cliquez sur le bouton ci-dessous pour en choisir un nouveau.
+            </p>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" style="background-color:#c89b3c;border-radius:10px;">
+                  <a href="https://237logement.org/auth/confirm?token=EXEMPLE123"
+                     style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#07111e;text-decoration:none;border-radius:10px;">
+                    Choisir un nouveau mot de passe
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :
+            </p>
+            <p style="margin:0 0 26px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;">
+              <a href="https://237logement.org/auth/confirm?token=EXEMPLE123" style="color:#c89b3c;text-decoration:underline;">https://237logement.org/auth/confirm?token=EXEMPLE123</a>
+            </p>
+
+            <!-- Encart d'alerte : rassure et limite le risque d'hameçonnage -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+              <tr>
+                <td bgcolor="#13202f" style="background-color:#13202f;border:1px solid #1c2e40;border-radius:10px;padding:14px 16px;">
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#a8bccf;">
+                    <strong style="color:#e8c97a;">Vous n'avez rien demandé ?</strong><br />
+                    Ignorez ce message : votre mot de passe actuel reste valable et personne
+                    ne peut le modifier sans ce lien.
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <div style="border-top:1px solid #1c2e40;padding-top:20px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#7a90a8;">
+                Ce lien expire dans 1 heure et ne peut être utilisé qu'une seule fois.
+                Ne le transmettez à personne : l'équipe 237Logement ne vous demandera jamais votre mot de passe.
+              </p>
+            </div>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="padding:26px 16px 8px 16px;">
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              La première plateforme immobilière de confiance au Cameroun.
+            </p>
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+              <a href="https://237logement.org" style="color:#c89b3c;text-decoration:none;">237logement.org</a>
+              <span style="color:#3d5166;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://237logement.org/contact" style="color:#7a90a8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<div style="padding:14px 20px;background:#c89b3c;color:#07111e;font-weight:bold;font-size:14px;">Magic link</div><!--
+  237Logement — Email « Lien de connexion » (magic link)
+  À coller dans : Supabase → Authentication → Emails → Magic Link
+  Variable disponible : https://237logement.org/auth/confirm?token=EXEMPLE123
+
+  Non utilisé aujourd'hui (la connexion se fait par mot de passe), mais
+  Supabase envoie ce gabarit si la connexion sans mot de passe est activée
+  un jour — autant qu'il soit déjà à la charte plutôt qu'au format brut.
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07111e" style="background-color:#07111e;margin:0;padding:0;width:100%;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <div style="display:none;font-size:1px;color:#07111e;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+        Votre lien de connexion sécurisé à 237Logement.
+      </div>
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">
+
+        <tr>
+          <td align="center" style="padding:8px 0 28px 0;">
+            <!-- Badge en HTML pur plutot qu une image : Gmail et Outlook
+                 bloquent les images distantes par defaut, l identite visuelle
+                 ne doit donc pas en dependre. -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" width="64" height="64" style="background-color:#c89b3c;width:64px;height:64px;border-radius:14px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:bold;color:#07111e;line-height:64px;text-align:center;">237</td>
+              </tr>
+            </table>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#ede9e1;letter-spacing:1px;padding-top:14px;">
+              <span style="color:#c89b3c;">237</span>LOGEMENT
+            </div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;letter-spacing:2px;text-transform:uppercase;padding-top:6px;">
+              Louer &middot; Publier &middot; Gérer
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td bgcolor="#0e1a28" style="background-color:#0e1a28;border:1px solid #1c2e40;border-radius:16px;padding:38px 34px;">
+
+            <h1 style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;color:#ede9e1;">
+              Votre lien de connexion
+            </h1>
+
+            <p style="margin:0 0 22px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#a8bccf;">
+              Cliquez sur le bouton ci-dessous pour accéder directement à votre espace 237Logement.
+              Aucun mot de passe à saisir.
+            </p>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" style="background-color:#c89b3c;border-radius:10px;">
+                  <a href="https://237logement.org/auth/confirm?token=EXEMPLE123"
+                     style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#07111e;text-decoration:none;border-radius:10px;">
+                    Accéder à mon espace
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :
+            </p>
+            <p style="margin:0 0 26px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;">
+              <a href="https://237logement.org/auth/confirm?token=EXEMPLE123" style="color:#c89b3c;text-decoration:underline;">https://237logement.org/auth/confirm?token=EXEMPLE123</a>
+            </p>
+
+            <div style="border-top:1px solid #1c2e40;padding-top:20px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#7a90a8;">
+                Ce lien est personnel, à usage unique, et expire rapidement.
+                Si vous n'avez pas demandé à vous connecter, ignorez ce message.
+              </p>
+            </div>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="padding:26px 16px 8px 16px;">
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              La première plateforme immobilière de confiance au Cameroun.
+            </p>
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+              <a href="https://237logement.org" style="color:#c89b3c;text-decoration:none;">237logement.org</a>
+              <span style="color:#3d5166;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://237logement.org/contact" style="color:#7a90a8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+<div style="padding:14px 20px;background:#c89b3c;color:#07111e;font-weight:bold;font-size:14px;">Change email</div><!--
+  237Logement — Email « Changement d'adresse email »
+  À coller dans : Supabase → Authentication → Emails → Change Email Address
+  Variables disponibles : https://237logement.org/auth/confirm?token=EXEMPLE123, ancienne@exemple.com (ancienne), nouvelle@exemple.com (nouvelle)
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07111e" style="background-color:#07111e;margin:0;padding:0;width:100%;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <div style="display:none;font-size:1px;color:#07111e;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+        Confirmez votre nouvelle adresse email 237Logement.
+      </div>
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">
+
+        <tr>
+          <td align="center" style="padding:8px 0 28px 0;">
+            <!-- Badge en HTML pur plutot qu une image : Gmail et Outlook
+                 bloquent les images distantes par defaut, l identite visuelle
+                 ne doit donc pas en dependre. -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" width="64" height="64" style="background-color:#c89b3c;width:64px;height:64px;border-radius:14px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:bold;color:#07111e;line-height:64px;text-align:center;">237</td>
+              </tr>
+            </table>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#ede9e1;letter-spacing:1px;padding-top:14px;">
+              <span style="color:#c89b3c;">237</span>LOGEMENT
+            </div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;letter-spacing:2px;text-transform:uppercase;padding-top:6px;">
+              Louer &middot; Publier &middot; Gérer
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td bgcolor="#0e1a28" style="background-color:#0e1a28;border:1px solid #1c2e40;border-radius:16px;padding:38px 34px;">
+
+            <h1 style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;color:#ede9e1;">
+              Confirmer votre nouvelle adresse
+            </h1>
+
+            <p style="margin:0 0 20px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#a8bccf;">
+              Vous avez demandé à modifier l'adresse email associée à votre compte 237Logement.
+            </p>
+
+            <!-- Rappel ancienne / nouvelle adresse -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:24px;">
+              <tr>
+                <td bgcolor="#13202f" style="background-color:#13202f;border:1px solid #1c2e40;border-radius:10px;padding:16px 18px;">
+                  <p style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;text-transform:uppercase;letter-spacing:1px;">
+                    Ancienne adresse
+                  </p>
+                  <p style="margin:0 0 16px 0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#ede9e1;word-break:break-all;">
+                    ancienne@exemple.com
+                  </p>
+                  <p style="margin:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;text-transform:uppercase;letter-spacing:1px;">
+                    Nouvelle adresse
+                  </p>
+                  <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:#e8c97a;word-break:break-all;">
+                    nouvelle@exemple.com
+                  </p>
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" style="background-color:#c89b3c;border-radius:10px;">
+                  <a href="https://237logement.org/auth/confirm?token=EXEMPLE123"
+                     style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#07111e;text-decoration:none;border-radius:10px;">
+                    Confirmer le changement
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :
+            </p>
+            <p style="margin:0 0 26px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;">
+              <a href="https://237logement.org/auth/confirm?token=EXEMPLE123" style="color:#c89b3c;text-decoration:underline;">https://237logement.org/auth/confirm?token=EXEMPLE123</a>
+            </p>
+
+            <div style="border-top:1px solid #1c2e40;padding-top:20px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#7a90a8;">
+                Si vous n'êtes pas à l'origine de cette demande, ignorez ce message et
+                <a href="https://237logement.org/contact" style="color:#c89b3c;text-decoration:underline;">contactez-nous</a> :
+                votre adresse actuelle restera inchangée.
+              </p>
+            </div>
+
+          </td>
+        </tr>
+
+        <tr>
+          <td align="center" style="padding:26px 16px 8px 16px;">
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              La première plateforme immobilière de confiance au Cameroun.
+            </p>
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+              <a href="https://237logement.org" style="color:#c89b3c;text-decoration:none;">237logement.org</a>
+              <span style="color:#3d5166;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://237logement.org/contact" style="color:#7a90a8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+</body></html>

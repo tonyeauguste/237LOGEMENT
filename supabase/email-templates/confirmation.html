@@ -1,0 +1,102 @@
+<!--
+  237Logement — Email « Confirmer votre inscription »
+  À coller dans : Supabase → Authentication → Emails → Confirm signup
+  Variable disponible : {{ .ConfirmationURL }}
+
+  Contraintes propres à l'email (différentes du site) :
+  - mise en page en <table> et styles en ligne : Outlook et Gmail
+    ignorent les feuilles de style et le CSS moderne (flex/grid)
+  - polices web impossibles : Georgia remplace Playfair Display
+  - bouton « bulletproof » (table + fond) pour s'afficher sous Outlook
+-->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#07111e" style="background-color:#07111e;margin:0;padding:0;width:100%;">
+  <tr>
+    <td align="center" style="padding:32px 12px;">
+
+      <!-- Texte d'aperçu affiché dans la liste des mails, masqué à l'ouverture -->
+      <div style="display:none;font-size:1px;color:#07111e;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+        Confirmez votre adresse pour activer votre compte 237Logement.
+      </div>
+
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">
+
+        <!-- En-tête -->
+        <tr>
+          <td align="center" style="padding:8px 0 28px 0;">
+            <!-- Badge en HTML pur plutot qu une image : Gmail et Outlook
+                 bloquent les images distantes par defaut, l identite visuelle
+                 ne doit donc pas en dependre. -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" width="64" height="64" style="background-color:#c89b3c;width:64px;height:64px;border-radius:14px;font-family:Georgia,'Times New Roman',serif;font-size:23px;font-weight:bold;color:#07111e;line-height:64px;text-align:center;">237</td>
+              </tr>
+            </table>
+            <div style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-weight:bold;color:#ede9e1;letter-spacing:1px;padding-top:14px;">
+              <span style="color:#c89b3c;">237</span>LOGEMENT
+            </div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#7a90a8;letter-spacing:2px;text-transform:uppercase;padding-top:6px;">
+              Louer &middot; Publier &middot; Gérer
+            </div>
+          </td>
+        </tr>
+
+        <!-- Carte principale -->
+        <tr>
+          <td bgcolor="#0e1a28" style="background-color:#0e1a28;border:1px solid #1c2e40;border-radius:16px;padding:38px 34px;">
+
+            <h1 style="margin:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:24px;font-weight:bold;color:#ede9e1;">
+              Bienvenue sur 237Logement !
+            </h1>
+
+            <p style="margin:0 0 22px 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#a8bccf;">
+              Votre compte est presque prêt. Il ne reste qu'une étape : confirmer votre adresse email
+              pour activer votre accès et commencer à explorer les logements disponibles.
+            </p>
+
+            <!-- Bouton -->
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px 0;">
+              <tr>
+                <td align="center" bgcolor="#c89b3c" style="background-color:#c89b3c;border-radius:10px;">
+                  <a href="{{ .ConfirmationURL }}"
+                     style="display:inline-block;padding:14px 34px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#07111e;text-decoration:none;border-radius:10px;">
+                    Confirmer mon adresse
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              Le bouton ne fonctionne pas ? Copiez ce lien dans votre navigateur :
+            </p>
+            <p style="margin:0 0 26px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;word-break:break-all;">
+              <a href="{{ .ConfirmationURL }}" style="color:#c89b3c;text-decoration:underline;">{{ .ConfirmationURL }}</a>
+            </p>
+
+            <div style="border-top:1px solid #1c2e40;padding-top:20px;">
+              <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.7;color:#7a90a8;">
+                Ce lien expire dans 24 heures. Si vous n'êtes pas à l'origine de cette inscription,
+                ignorez simplement ce message — aucun compte ne sera activé.
+              </p>
+            </div>
+
+          </td>
+        </tr>
+
+        <!-- Pied de page -->
+        <tr>
+          <td align="center" style="padding:26px 16px 8px 16px;">
+            <p style="margin:0 0 8px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#7a90a8;">
+              La première plateforme immobilière de confiance au Cameroun.
+            </p>
+            <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;">
+              <a href="https://237logement.org" style="color:#c89b3c;text-decoration:none;">237logement.org</a>
+              <span style="color:#3d5166;">&nbsp;&middot;&nbsp;</span>
+              <a href="https://237logement.org/contact" style="color:#7a90a8;text-decoration:none;">Contact</a>
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
