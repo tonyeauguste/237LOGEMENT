@@ -246,7 +246,12 @@ function AuthPageInner() {
                         return;
                       }
                       const supabase = createClient();
-                      const { error } = await supabase.auth.resetPasswordForEmail(loginEmail.trim());
+                      // redirectTo explicite : sans lui, le lien de l'email
+                      // renvoie sur l'accueil, où rien ne permet de saisir un
+                      // nouveau mot de passe — le parcours restait sans issue.
+                      const { error } = await supabase.auth.resetPasswordForEmail(loginEmail.trim(), {
+                        redirectTo: `${window.location.origin}/mot-de-passe`,
+                      });
                       showToast(
                         error
                           ? "❌ Une erreur est survenue. Réessayez."

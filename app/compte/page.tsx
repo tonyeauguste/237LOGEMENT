@@ -28,11 +28,14 @@ import {
   LayoutDashboard,
   Building2,
   Users2,
+  ShieldCheck,
 } from "lucide-react";
 import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
 import ToggleRow from "@/components/ui/ToggleRow";
+import PasswordField from "@/components/auth/PasswordField";
+import PasswordStrength from "@/components/auth/PasswordStrength";
 import CityInput from "@/components/ui/CityInput";
 import ComingSoon from "@/components/ui/ComingSoon";
 import PropertyCard from "@/components/property/PropertyCard";
@@ -86,6 +89,9 @@ export default function AccountDashboard() {
   const [formPhone, setFormPhone] = useState("");
   const [formCity, setFormCity] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [newPwd, setNewPwd] = useState("");
+  const [newPwd2, setNewPwd2] = useState("");
+  const [savingPwd, setSavingPwd] = useState(false);
   // Recopie les valeurs du compte dans le formulaire dès qu'il est connu,
   // et à chaque changement de compte — sans écraser une saisie en cours,
   // d'où la comparaison sur l'identifiant.
@@ -269,6 +275,36 @@ export default function AccountDashboard() {
         : "✅ Profil mis à jour.",
       "success"
     );
+  }
+
+  /** Change le mot de passe de l'utilisateur connecté (sans passer par un email). */
+  async function changePassword() {
+    if (newPwd.length < 8) {
+      showToast("⚠️ Le mot de passe doit contenir au moins 8 caractères.", "error");
+      return;
+    }
+    if (newPwd !== newPwd2) {
+      showToast("⚠️ Les deux mots de passe ne correspondent pas.", "error");
+      return;
+    }
+
+    setSavingPwd(true);
+    const { error } = await createClient().auth.updateUser({ password: newPwd });
+    setSavingPwd(false);
+
+    if (error) {
+      showToast(
+        error.message.toLowerCase().includes("should be different")
+          ? "⚠️ Choisissez un mot de passe différent de l'actuel."
+          : "❌ Impossible de changer le mot de passe. Réessayez.",
+        "error"
+      );
+      return;
+    }
+
+    setNewPwd("");
+    setNewPwd2("");
+    showToast("✅ Mot de passe modifié.", "success");
   }
 
   function goToOwnerListings(ownerName: string) {
@@ -601,6 +637,49 @@ export default function AccountDashboard() {
                       Mettre à jour
                     </Button>
                   </div>
+                  {/* Changement de mot de passe sans passer par l'email :
+                      l'utilisateur est déjà authentifié, Supabase accepte
+                      updateUser({ password }) directement. */}
+                  <div className="bg-card border border-border rounded-2xl p-5">
+                    <h4 className="text-[15px] font-semibold text-text mb-[18px] flex items-center gap-2">
+                      <ShieldCheck size={15} className="text-gold" /> Mot de passe
+                    </h4>
+                    <div className="mb-4">
+                      <label className="block text-[13px] text-muted mb-[7px] font-medium">
+                        Nouveau mot de passe
+                      </label>
+                      <PasswordField
+                        value={newPwd}
+                        onChange={setNewPwd}
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                      />
+                      <PasswordStrength password={newPwd} />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block text-[13px] text-muted mb-[7px] font-medium">
+                        Confirmer
+                      </label>
+                      <PasswordField
+                        value={newPwd2}
+                        onChange={setNewPwd2}
+                        placeholder="••••••••"
+                        autoComplete="new-password"
+                      />
+                      {newPwd2.length > 0 && newPwd !== newPwd2 && (
+                        <p className="text-[12px] text-red mt-1.5">
+                          Les deux mots de passe ne correspondent pas.
+                        </p>
+                      )}
+                    </div>
+                    <Button variant="gold" size="sm" loading={savingPwd} onClick={changePassword}>
+                      Changer le mot de passe
+                    </Button>
+                    <p className="text-[12px] text-dim mt-3 leading-relaxed">
+                      Au moins 8 caractères. Vous resterez connecté après le changement.
+                    </p>
+                  </div>
+
                   <div className="bg-card border border-border rounded-2xl p-5">
                     <h4 className="text-[15px] font-semibold text-text mb-[18px]">Notifications</h4>
                     <ToggleRow label="Nouveau message reçu" defaultOn />
