@@ -68,13 +68,6 @@ export interface Property {
   surface: number;
   desc: string;
   imgs: string[];
-  /**
-   * Vidéos de visite (optionnelles). Existaient déjà en base et dans le
-   * formulaire /publier, mais absentes de ce type : aucun composant
-   * d'affichage ne pouvait donc les montrer nulle part, même pas au
-   * propriétaire sur sa propre fiche.
-   */
-  videos: string[];
   amenities: string[];
   verified: boolean;
   available: boolean;
@@ -154,21 +147,6 @@ export interface UploadedPhoto {
   file?: File;
 }
 
-export interface UploadedVideo {
-  name: string;
-  size: number;
-  /**
-   * URL de la vidéo déjà en ligne (mode édition) — comme `UploadedPhoto.url`.
-   * Sans ce champ, une vidéo existante rechargée en édition n'a nulle part
-   * où conserver son URL : à l'enregistrement, `publish()` ne peut alors ni
-   * la reconnaître comme "déjà en ligne" ni la re-uploader, et elle
-   * disparaît silencieusement de l'annonce.
-   */
-  url?: string;
-  /** Fichier brut, conservé pour l'upload vers Supabase Storage à la publication. */
-  file?: File;
-}
-
 export interface ListingDraft {
   city: string;
   quartier: string;
@@ -181,7 +159,6 @@ export interface ListingDraft {
   type: ListingKind;
   desc: string;
   photos: UploadedPhoto[];
-  videos: UploadedVideo[];
   amenities: string[];
   price: string;
   deposit: string;
