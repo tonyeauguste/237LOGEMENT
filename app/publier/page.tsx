@@ -120,8 +120,6 @@ function PublierPageInner() {
   const [amenities, setAmenities] = useState<string[]>(
     AMENITIES.filter((a) => a.defaultSelected).map((a) => amenityFull(a))
   );
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   // Surbrillance pendant qu'un fichier est glissé au-dessus de la zone —
   // voir handlePhotoDrop/handleVideoDrop : le glisser-déposer annoncé par
   // le texte de la zone ("Glissez-déposez...") n'était pas implémenté du
@@ -235,6 +233,21 @@ function PublierPageInner() {
     setAmenities((prev) => (prev.includes(full) ? prev.filter((a) => a !== full) : [...prev, full]));
   }
 
+  // `accept="image/*"` sur l'input (voir JSX) laisse passer plus de fichiers
+  // au niveau du sélecteur système que ce qu'on supporte réellement — utile
+  // car certains appareils Android renvoient un type MIME non standard
+  // ("image/jpg" au lieu de "image/jpeg") qu'un accept strict aurait pu
+  // filtrer à tort. On revalide donc ici, en étant tolérant : si le type
+  // MIME est absent (arrive aussi sur certains Android selon la source du
+  // fichier), on retombe sur l'extension plutôt que de rejeter la photo.
+  function isSupportedPhoto(file: File): boolean {
+    const type = file.type.toLowerCase();
+    if (["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(type)) return true;
+    if (type) return false;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    return ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "webp";
+  }
+
   function handlePhotoUpload(files: FileList | File[] | null) {
     if (!files) return;
     const remaining = PHOTO_MAX - photos.length;
@@ -244,8 +257,13 @@ function PublierPageInner() {
     }
     const arr = Array.from(files);
     let error = "";
+    let unsupported = 0;
     const added: UploadedPhoto[] = [];
     arr.slice(0, remaining).forEach((file) => {
+      if (!isSupportedPhoto(file)) {
+        unsupported += 1;
+        return;
+      }
       if (file.size > PHOTO_SIZE_MB * 1024 * 1024) {
         error = `${file.name} dépasse 10 Mo`;
         return;
@@ -257,6 +275,18 @@ function PublierPageInner() {
       showToast(`⚠️ Seules les ${remaining} premières photos ont été ajoutées (limite : 15).`, "info");
     }
     if (error) showToast(`❌ ${error} — max 10 Mo par photo.`, "error");
+    if (unsupported > 0) {
+      showToast(`❌ ${unsupported} fichier(s) ignoré(s) — formats acceptés : JPG, PNG, WEBP.`, "error");
+    }
+  }
+
+  // Voir le commentaire équivalent sur isSupportedPhoto.
+  function isSupportedVideo(file: File): boolean {
+    const type = file.type.toLowerCase();
+    if (["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"].includes(type)) return true;
+    if (type) return false;
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    return ext === "mp4" || ext === "mov" || ext === "avi" || ext === "webm";
   }
 
   function handleVideoUpload(files: FileList | File[] | null) {
@@ -268,8 +298,13 @@ function PublierPageInner() {
     }
     const arr = Array.from(files);
     let error = "";
+    let unsupported = 0;
     const added: UploadedVideo[] = [];
     arr.slice(0, remaining).forEach((file) => {
+      if (!isSupportedVideo(file)) {
+        unsupported += 1;
+        return;
+      }
       if (file.size > VIDEO_SIZE_MB * 1024 * 1024) {
         error = file.name;
         return;
@@ -281,24 +316,28 @@ function PublierPageInner() {
       showToast(`⚠️ Seule(s) ${remaining} vidéo(s) supplémentaire(s) ont été ajoutée(s) (limite : 2).`, "info");
     }
     if (error) showToast(`❌ ${error} dépasse 100 Mo — vidéo refusée.`, "error");
+    if (unsupported > 0) {
+      showToast(`❌ ${unsupported} fichier(s) ignoré(s) — formats acceptés : MP4, MOV, AVI, WEBM.`, "error");
+    }
   }
 
   // Glisser-déposer : contrairement au <input type="file" accept="…">, un
   // dépôt n'est pas filtré par le navigateur — on filtre donc nous-mêmes
   // par type MIME pour ne pas router une vidéo déposée sur la zone photo
   // (et inversement) vers le mauvais gestionnaire.
-  function handlePhotoDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handlePhotoDrop(e: React.DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setPhotoDragOver(false);
-    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
-    handlePhotoUpload(files);
+    // Le filtrage par type a lieu dans handlePhotoUpload (isSupportedPhoto),
+    // qui gère aussi le cas d'un type MIME vide — pas besoin de pré-filtrer
+    // ici, et ça évite d'écarter à tort un fichier déposé sans type détecté.
+    handlePhotoUpload(Array.from(e.dataTransfer.files));
   }
 
-  function handleVideoDrop(e: React.DragEvent<HTMLDivElement>) {
+  function handleVideoDrop(e: React.DragEvent<HTMLLabelElement>) {
     e.preventDefault();
     setVideoDragOver(false);
-    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("video/"));
-    handleVideoUpload(files);
+    handleVideoUpload(Array.from(e.dataTransfer.files));
   }
 
   function goNext() {
@@ -670,15 +709,24 @@ function PublierPageInner() {
                     {photos.length} / {PHOTO_MAX}
                   </span>
                 </div>
-                <div
-                  onClick={() => photoInputRef.current?.click()}
+                {/* <label> plutôt que <div onClick={() => ref.click()}> : un
+                    clic/tap JS déclenché par proxy sur un input caché est
+                    connu pour être moins fiable sur certains navigateurs
+                    Android (le sélecteur système s'ouvre, mais la sélection
+                    ne remonte pas toujours) — signalé par un propriétaire
+                    dont les clients téléversent depuis leur téléphone.
+                    <label htmlFor=...> est le mécanisme natif du navigateur
+                    pour ça, pas une simulation JS : le plus robuste possible
+                    sur mobile comme sur desktop, iOS comme Android. */}
+                <label
+                  htmlFor="photo-upload-input"
                   onDragOver={(e) => {
                     e.preventDefault();
                     setPhotoDragOver(true);
                   }}
                   onDragLeave={() => setPhotoDragOver(false)}
                   onDrop={handlePhotoDrop}
-                  className={`border-2 border-dashed rounded-2xl p-11 text-center cursor-pointer transition-colors mb-3 ${
+                  className={`block border-2 border-dashed rounded-2xl p-11 text-center cursor-pointer transition-colors mb-3 ${
                     photos.length >= PHOTO_MAX
                       ? "border-border opacity-50 pointer-events-none"
                       : photoDragOver
@@ -687,19 +735,15 @@ function PublierPageInner() {
                   }`}
                 >
                   <input
-                    ref={photoInputRef}
+                    id="photo-upload-input"
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/*"
                     multiple
                     // `hidden`/display:none : sur Safari iOS et certains
-                    // navigateurs Android, le sélecteur système s'ouvre bien,
-                    // mais l'événement onChange qui récupère les fichiers
-                    // choisis ne se déclenche pas toujours de façon fiable
-                    // pour un <input type="file"> qui n'est pas réellement
-                    // rendu (display:none) — d'où le compteur bloqué à 0
-                    // après sélection, uniquement sur mobile. `sr-only`
-                    // garde l'élément techniquement dans le rendu (juste
-                    // invisible et hors du flux visuel) sans ce problème.
+                    // navigateurs Android, un input file non réellement
+                    // rendu peut ne pas déclencher onChange de façon fiable
+                    // après sélection. `sr-only` le garde dans le rendu
+                    // (juste invisible) sans ce problème.
                     className="sr-only"
                     onChange={(e) => {
                       handlePhotoUpload(e.target.files);
@@ -713,7 +757,7 @@ function PublierPageInner() {
                     Glissez-déposez vos photos ici
                   </div>
                   <div className="text-sm text-muted mb-2.5">
-                    ou cliquez pour sélectionner depuis votre appareil
+                    ou touchez/cliquez pour sélectionner depuis votre appareil
                   </div>
                   <div className="flex gap-2 flex-wrap justify-center mt-2.5">
                     <span className="tag-pill gold">JPG, PNG, WEBP</span>
@@ -721,7 +765,7 @@ function PublierPageInner() {
                     <span className="tag-pill green">15 photos maximum</span>
                     <span className="tag-pill neutral">Minimum 3 photos</span>
                   </div>
-                </div>
+                </label>
                 {photos.length > 0 && (
                   <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2.5 mb-2">
                     {photos.map((p, i) => (
@@ -753,15 +797,15 @@ function PublierPageInner() {
                     {videos.length} / {VIDEO_MAX}
                   </span>
                 </div>
-                <div
-                  onClick={() => videoInputRef.current?.click()}
+                <label
+                  htmlFor="video-upload-input"
                   onDragOver={(e) => {
                     e.preventDefault();
                     setVideoDragOver(true);
                   }}
                   onDragLeave={() => setVideoDragOver(false)}
                   onDrop={handleVideoDrop}
-                  className={`border-2 border-dashed rounded-2xl py-7 px-11 text-center cursor-pointer transition-colors mb-3 ${
+                  className={`block border-2 border-dashed rounded-2xl py-7 px-11 text-center cursor-pointer transition-colors mb-3 ${
                     videos.length >= VIDEO_MAX
                       ? "border-border opacity-50 pointer-events-none"
                       : videoDragOver
@@ -770,11 +814,11 @@ function PublierPageInner() {
                   }`}
                 >
                   <input
-                    ref={videoInputRef}
+                    id="video-upload-input"
                     type="file"
-                    accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
+                    accept="video/*"
                     multiple
-                    // Voir le commentaire équivalent sur l'input photo.
+                    // Voir les commentaires équivalents sur l'input photo.
                     className="sr-only"
                     onChange={(e) => {
                       handleVideoUpload(e.target.files);
@@ -789,7 +833,7 @@ function PublierPageInner() {
                     <span className="tag-pill blue">Max 100 Mo / vidéo</span>
                     <span className="tag-pill green">2 vidéos maximum</span>
                   </div>
-                </div>
+                </label>
                 {videos.length > 0 && (
                   <div className="flex flex-col gap-2.5 mb-2">
                     {videos.map((v, i) => (
