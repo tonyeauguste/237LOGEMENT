@@ -85,7 +85,13 @@ export default function Navbar() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-1">
+          {/* lg: plutôt que md: — à 768px (tablette), les liens + le menu
+              utilisateur (avatar, nom, déconnexion) n'ont structurellement
+              pas la place de tenir sur une seule ligne (mesuré : ~233px
+              needed pour seulement ~117px disponibles), le menu hamburger
+              (déjà bien dimensionné pour cette largeur) prend le relais
+              plus longtemps. */}
+          <div className="hidden lg:flex items-center gap-1">
             {NAV_LINKS.map((l) => {
               const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
               return (
@@ -108,7 +114,7 @@ export default function Navbar() {
             })}
           </div>
 
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             {!ready ? null : currentUser ? (
               <>
                 <Link
@@ -120,7 +126,12 @@ export default function Navbar() {
                     alt={currentUser.name}
                     className="w-[26px] h-[26px] rounded-full border-[1.5px] border-gold"
                   />
-                  <span className="text-[13px] font-medium text-text">
+                  {/* .split(" ")[0] protège des noms à plusieurs mots, mais
+                      pas d'un texte sans espace (nom long en un seul mot,
+                      ou repli sur l'email) — d'où la troncature CSS en plus,
+                      seule protection fiable contre un débordement de la
+                      barre de navigation à largeur tablette. */}
+                  <span className="text-[13px] font-medium text-text max-w-[80px] truncate">
                     {currentUser.name.split(" ")[0]}
                   </span>
                 </Link>
@@ -147,7 +158,10 @@ export default function Navbar() {
           <button
             onClick={() => setMobileOpen((v) => !v)}
             aria-label="Menu"
-            className="md:hidden text-text p-1.5 rounded-lg"
+            // p-2.5 plutôt que p-1.5 : ~42px de zone tactile au lieu de
+            // ~34px, plus proche des ~44px recommandés pour un bouton tapé
+            // au doigt.
+            className="lg:hidden text-text p-2.5 -m-1 rounded-lg"
           >
             <Menu size={22} />
           </button>

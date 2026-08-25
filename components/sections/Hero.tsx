@@ -184,14 +184,23 @@ export default function Hero() {
       {/* Dots */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2 z-[3]">
         {SLIDES.map((_, i) => (
+          // Le point visuel fait 8px, bien en dessous des ~40px recommandés
+          // au tactile — le padding + marge négative agrandit la zone
+          // cliquable réelle sans changer l'apparence ni l'espacement de la
+          // rangée (la marge négative annule juste le surcroît de mise en
+          // page qu'ajouterait le padding).
           <button
             key={i}
             onClick={() => setSlide(i)}
             aria-label={`Image ${i + 1}`}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              i === slide ? "w-7 bg-gold" : "w-2 bg-white/35"
-            }`}
-          />
+            className="p-2.5 -m-2.5 flex items-center justify-center"
+          >
+            <span
+              className={`block h-2 rounded-full transition-all duration-300 ${
+                i === slide ? "w-7 bg-gold" : "w-2 bg-white/35"
+              }`}
+            />
+          </button>
         ))}
       </div>
 

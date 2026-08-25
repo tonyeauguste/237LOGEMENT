@@ -30,7 +30,11 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed top-[70px] left-0 right-0 bottom-0 z-[998] bg-[rgba(7,17,30,.98)] backdrop-blur-xl border-b border-border px-[5%] pt-4 pb-10 overflow-y-auto md:hidden"
+          // lg: pour rester cohérent avec le seuil du menu desktop dans
+          // Navbar.tsx (voir son commentaire) — sinon ce menu se cacherait
+          // dès 768px alors que le bouton "Menu" resterait visible jusqu'à
+          // 1024px, rendant le menu inatteignable entre les deux.
+          className="fixed top-[70px] left-0 right-0 bottom-0 z-[998] bg-[rgba(7,17,30,.98)] backdrop-blur-xl border-b border-border px-[5%] pt-4 pb-10 overflow-y-auto lg:hidden"
         >
           {LINKS.map((l, i) => (
             <motion.div
