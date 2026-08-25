@@ -539,7 +539,8 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             aria-label="Remonter en haut"
-            className="fixed bottom-6 right-6 z-50 w-12 h-12 rounded-full bg-gold text-[#07111e] shadow-[0_8px_28px_rgba(200,155,60,.4)] flex items-center justify-center hover:brightness-110 transition-[filter]"
+            // Voir le commentaire équivalent dans Toaster.tsx (safe-area-inset).
+            className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-50 w-12 h-12 rounded-full bg-gold text-[#07111e] shadow-[0_8px_28px_rgba(200,155,60,.4)] flex items-center justify-center hover:brightness-110 transition-[filter]"
           >
             <ArrowUp size={20} />
           </motion.button>

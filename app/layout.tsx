@@ -38,6 +38,10 @@ export const viewport: Viewport = {
   themeColor: "#07111E",
   width: "device-width",
   initialScale: 1,
+  // Nécessaire pour que env(safe-area-inset-*) renvoie autre chose que 0 —
+  // sans ça, les éléments fixes en bas d'écran (toasts, bouton "remonter")
+  // peuvent chevaucher la barre de geste des iPhone à encoche/Dynamic Island.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

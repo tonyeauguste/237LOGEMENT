@@ -14,7 +14,10 @@ export default function Toaster() {
   const toasts = useAppStore((s) => s.toasts);
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2.5 max-w-[90vw]">
+    // bottom-6 + l'encoche/barre de geste des iPhone récents (voir
+    // viewportFit "cover" dans app/layout.tsx) : sans en tenir compte, les
+    // toasts peuvent chevaucher la zone de geste en bas d'écran.
+    <div className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-[9999] flex flex-col gap-2.5 max-w-[90vw]">
       <AnimatePresence initial={false}>
         {toasts.map((t) => (
           <motion.div
