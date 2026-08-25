@@ -6,12 +6,15 @@ import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
-import { FIELD_VISIBILITY_RULES, listingTypeMeta, propertyGroup } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, propertyGroup, transactionMeta } from "@/lib/data";
 import Tag from "@/components/ui/Tag";
 
 export default function PropertyListCard({ p }: { p: Property }) {
-  const typeMeta = listingTypeMeta(p.type);
-  const rules = FIELD_VISIBILITY_RULES[propertyGroup(p.kind)];
+  const group = propertyGroup(p.kind);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group);
+  const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
+  // Voir le commentaire équivalent dans PropertyCard.tsx.
+  const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
   return (
     <motion.div whileHover={{ borderColor: "rgba(200,155,60,.3)" }}>
       <Link
@@ -19,12 +22,19 @@ export default function PropertyListCard({ p }: { p: Property }) {
         className="bg-card border border-border rounded-2xl overflow-hidden cursor-pointer flex"
       >
         <div className="w-[200px] h-[150px] shrink-0 relative overflow-hidden">
-          <Image src={p.imgs[0]} alt={p.title} fill sizes="200px" className="object-cover" />
+          <Image
+            src={p.imgs[0]}
+            alt={p.title}
+            fill
+            sizes="200px"
+            className={`object-cover ${isOccupied ? "blur-md pointer-events-none scale-105" : ""}`}
+          />
         </div>
         <div className="px-5 py-4 flex-1 flex flex-col justify-between">
           <div>
             <div className="flex gap-1.5 mb-1.5">
               <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
+              {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
               {p.verified && <Tag color="blue">🛡 Vérifié</Tag>}
             </div>
             <div className="font-semibold text-[15px] text-text mb-1">{p.title}</div>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Heart, Bed, Bath, Ruler, MapPin } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
-import { FIELD_VISIBILITY_RULES, listingTypeMeta, propertyGroup } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, propertyGroup, transactionMeta } from "@/lib/data";
 import { useAppStore } from "@/lib/store";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -15,11 +15,17 @@ import { motion } from "framer-motion";
 export default function PropertyCard({ p }: { p: Property }) {
   const isFav = useAppStore((s) => s.isFav(p.id));
   const toggleFav = useAppStore((s) => s.toggleFav);
-  const typeMeta = listingTypeMeta(p.type);
+  const group = propertyGroup(p.kind);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group);
   // Un bureau ou un terrain n'ont pas de "chambres" — même règle que le
   // formulaire /publier (FIELD_VISIBILITY_RULES), pour ne pas afficher
   // "0 ch. · 0 sdb" sur ce type d'annonce.
-  const rules = FIELD_VISIBILITY_RULES[propertyGroup(p.kind)];
+  const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
+  // B.2/B.4 — le flou + badge "Occupé" ne concernent que le court séjour :
+  // en longue durée, marquer un bien occupé le supprime immédiatement (voir
+  // handleMarkAsRented dans app/compte/page.tsx), il ne reste donc jamais
+  // affiché ici avec ce statut.
+  const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
 
   return (
     <TiltCard
@@ -33,7 +39,9 @@ export default function PropertyCard({ p }: { p: Property }) {
             alt={p.title}
             fill
             sizes="(max-width: 768px) 100vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.07]"
+            className={`object-cover transition-transform duration-500 group-hover:scale-[1.07] ${
+              isOccupied ? "blur-md pointer-events-none scale-105" : ""
+            }`}
           />
           <motion.button
             whileTap={{ scale: 0.85 }}
@@ -60,6 +68,7 @@ export default function PropertyCard({ p }: { p: Property }) {
         <div className="px-[18px] pt-4 pb-5">
           <div className="flex gap-1.5 mb-2">
             <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
+            {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
             {p.verified && <Tag color="blue">🛡 Vérifié</Tag>}
           </div>
           <h3 className="font-display text-[17px] font-semibold text-text mb-1.5 leading-tight">

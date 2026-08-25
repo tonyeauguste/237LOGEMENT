@@ -6,9 +6,11 @@ import clsx from "clsx";
 
 export default function Toggle({
   defaultOn = false,
+  disabled = false,
   onChange,
 }: {
   defaultOn?: boolean;
+  disabled?: boolean;
   onChange?: (on: boolean) => void;
 }) {
   const [on, setOn] = useState(defaultOn);
@@ -17,6 +19,7 @@ export default function Toggle({
       type="button"
       role="switch"
       aria-checked={on}
+      disabled={disabled}
       onClick={() => {
         setOn((v) => {
           onChange?.(!v);
@@ -24,7 +27,7 @@ export default function Toggle({
         });
       }}
       className={clsx(
-        "w-11 h-6 rounded-full relative shrink-0 transition-colors duration-300 cursor-pointer",
+        "w-11 h-6 rounded-full relative shrink-0 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
         on ? "bg-gold" : "bg-border2"
       )}
     >

@@ -3,13 +3,31 @@
 // ═══════════════════════════════════════════════
 
 /**
- * Nature de la transaction associée à l'annonce. "longue"/"courte" pour une
- * location (résidentiel, commercial) ; "vente"/"bail" pour un terrain (voir
- * FIELD_VISIBILITY_RULES dans lib/data.ts pour le mapping type de bien →
- * valeurs pertinentes). Reflète la contrainte CHECK `properties_type_check`
- * côté base.
+ * Nature de la transaction : vente définitive ou mise en location. Axe
+ * indépendant du type de bien — voir TYPES_ELIGIBLES_VENTE (lib/data.ts)
+ * pour les types de bien qui excluent la vente (Chambre, Studio).
  */
-export type ListingKind = "longue" | "courte" | "vente" | "bail";
+export type TransactionType = "vente" | "location";
+
+/**
+ * Durée de location — pertinente uniquement quand `transactionType` vaut
+ * "location" ET que le type de bien est résidentiel ou commercial (voir
+ * FIELD_VISIBILITY_RULES dans lib/data.ts). `null` en vente, ou pour un
+ * terrain en location (proposé en bail, sans durée fixe). Reflète la
+ * contrainte CHECK `properties_type_check` côté base.
+ */
+export type ListingKind = "longue" | "courte";
+
+/**
+ * Statut d'occupation d'un bien en location — pertinent uniquement pour une
+ * location résidentielle/commerciale (là où `type` s'applique). `null`
+ * sinon (vente, foncier). Voir PARTIE B du formulaire /publier : en courte
+ * durée c'est un simple statut réversible ; en longue durée, passer à
+ * "occupe" supprime définitivement l'annonce (voir handleMarkAsRented dans
+ * app/compte/page.tsx) — ce statut n'est donc jamais persisté pour une
+ * annonce longue durée.
+ */
+export type OccupancyStatus = "disponible" | "occupe";
 
 /**
  * Nature du bien (chambre, studio, villa…) — distincte de `ListingKind`
@@ -36,10 +54,14 @@ export interface Property {
   city: string;
   quartier: string;
   address?: string;
-  /** Durée de location : longue ou courte. */
-  type: ListingKind;
+  /** Vente ou location. */
+  transactionType: TransactionType;
+  /** Durée de location (longue/courte) — `null` en vente ou pour un terrain en location. */
+  type: ListingKind | null;
   /** Nature du bien : chambre, studio, villa… */
   kind: PropertyKind;
+  /** `null` si non applicable (vente, foncier) — voir OccupancyStatus. */
+  occupancyStatus: OccupancyStatus | null;
   price: number;
   rooms: number;
   baths: number;
