@@ -9,7 +9,17 @@ import RoleCard from "@/components/ui/RoleCard";
 import AmenityChip from "@/components/ui/AmenityChip";
 import CityInput from "@/components/ui/CityInput";
 import Button from "@/components/ui/Button";
-import { AMENITIES, amenityFull, DEFAULT_AVATAR, kindLabel, PROPERTY_KINDS } from "@/lib/data";
+import {
+  AMENITIES,
+  amenityFull,
+  DEFAULT_AVATAR,
+  DEFAULT_LISTING_TYPE,
+  FIELD_VISIBILITY_RULES,
+  kindLabel,
+  listingTypeMeta,
+  PROPERTY_KINDS,
+  propertyGroup,
+} from "@/lib/data";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
@@ -57,6 +67,28 @@ function PublierPageInner() {
   const [listingType, setListingType] = useState<ListingKind>("longue");
   const [kind, setKind] = useState("appartement");
   const [desc, setDesc] = useState("");
+
+  // Groupe du type de bien sélectionné (résidentiel / commercial / foncier)
+  // et champs à afficher pour ce groupe — voir FIELD_VISIBILITY_RULES dans
+  // lib/data.ts, source unique du mapping catégorie → champs visibles.
+  const group = propertyGroup(kind);
+  const rules = FIELD_VISIBILITY_RULES[group];
+
+  // Réinitialise les champs propres à un groupe dès qu'on bascule vers un
+  // groupe différent (ex : Appartement → Terrain) : sans ça, des chambres
+  // ou un type de location résiduels d'un ancien choix pourraient être
+  // envoyés pour un bien qui n'en a pas. Fait pendant le rendu (même
+  // pattern que "prevUrlTab" dans app/connexion/page.tsx) plutôt que dans
+  // un effet, pour éviter un rendu supplémentaire à chaque changement de
+  // catégorie. La confirmation finale à la soumission (voir `publish`)
+  // sert de filet de sécurité supplémentaire.
+  const [prevGroup, setPrevGroup] = useState(group);
+  if (group !== prevGroup) {
+    setPrevGroup(group);
+    if (!rules.rooms) setRooms("1");
+    if (!rules.baths) setBaths("1");
+    setListingType(DEFAULT_LISTING_TYPE[group]);
+  }
 
   // Step 3
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
@@ -273,6 +305,19 @@ function PublierPageInner() {
         videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve("")))
       );
 
+      // Filet de sécurité : quel que soit l'état des champs masqués côté
+      // UI (course entre effets lors d'un changement rapide de type de
+      // bien, données pré-remplies en mode édition, etc.), on n'envoie
+      // jamais à la base une valeur qui n'a pas de sens pour ce groupe.
+      const submittedType =
+        rules.listingTypeKind === "transaction"
+          ? listingType === "vente" || listingType === "bail"
+            ? listingType
+            : DEFAULT_LISTING_TYPE.foncier
+          : listingType === "longue" || listingType === "courte"
+            ? listingType
+            : DEFAULT_LISTING_TYPE.residentiel;
+
       const payload = {
         title,
         // .trim() : la ville et le quartier sont saisis librement, un espace
@@ -282,14 +327,14 @@ function PublierPageInner() {
         address: address || null,
         precision_desc: precision || null,
         description: desc,
-        type: listingType,
+        type: submittedType,
         kind,
         price: price ? Number(price) : 0,
         deposit: deposit ? Number(deposit) : null,
         charges,
         min_duration: minDuration,
-        rooms: Number(rooms),
-        baths: Number(baths),
+        rooms: rules.rooms ? Number(rooms) : 0,
+        baths: rules.baths ? Number(baths) : 0,
         surface: surface ? Number(surface) : null,
         images: imageUrls,
         videos: videoUrls.filter(Boolean),
@@ -426,26 +471,38 @@ function PublierPageInner() {
                     ))}
                   </select>
                 </Field>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  <Field label="Chambres *">
-                    <select className="form-control" value={rooms} onChange={(e) => setRooms(e.target.value)}>
-                      {["1", "2", "3", "4", "5", "6"].map((n) => (
-                        <option key={n} value={n}>
-                          {n === "6" ? "6+" : n}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Salles de bain">
-                    <select className="form-control" value={baths} onChange={(e) => setBaths(e.target.value)}>
-                      {["1", "2", "3", "4"].map((n) => (
-                        <option key={n} value={n}>
-                          {n === "4" ? "4+" : n}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
-                  <Field label="Surface (m²)">
+                {/* Chambres / Salles de bain / Surface — les deux premiers
+                    champs ne s'affichent que pour le groupe résidentiel
+                    (voir FIELD_VISIBILITY_RULES) : ni un bureau, ni un
+                    terrain n'ont de "chambres". */}
+                <div
+                  className={`grid grid-cols-1 gap-3.5 ${
+                    rules.rooms || rules.baths ? "sm:grid-cols-3" : ""
+                  }`}
+                >
+                  {rules.rooms && (
+                    <Field label="Chambres *">
+                      <select className="form-control" value={rooms} onChange={(e) => setRooms(e.target.value)}>
+                        {["1", "2", "3", "4", "5", "6"].map((n) => (
+                          <option key={n} value={n}>
+                            {n === "6" ? "6+" : n}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                  {rules.baths && (
+                    <Field label="Salles de bain">
+                      <select className="form-control" value={baths} onChange={(e) => setBaths(e.target.value)}>
+                        {["1", "2", "3", "4"].map((n) => (
+                          <option key={n} value={n}>
+                            {n === "4" ? "4+" : n}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  )}
+                  <Field label={rules.surfaceLabel}>
                     <input
                       className="form-control"
                       type="number"
@@ -456,22 +513,45 @@ function PublierPageInner() {
                   </Field>
                 </div>
                 <div className="mb-4">
-                  <label className="block text-[13px] text-muted mb-[7px] font-medium">Type de location *</label>
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">
+                    {rules.listingTypeLabel}
+                  </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
-                    <RoleCard
-                      icon="🏡"
-                      title="Longue durée"
-                      desc="Location mensuelle (maison, appartement, villa)"
-                      active={listingType === "longue"}
-                      onClick={() => setListingType("longue")}
-                    />
-                    <RoleCard
-                      icon="🌴"
-                      title="Courte durée"
-                      desc="Location à la nuit ou à la semaine"
-                      active={listingType === "courte"}
-                      onClick={() => setListingType("courte")}
-                    />
+                    {rules.listingTypeKind === "transaction" ? (
+                      <>
+                        <RoleCard
+                          icon="💰"
+                          title="Vente"
+                          desc="Cession définitive du terrain, paiement en une fois."
+                          active={listingType === "vente"}
+                          onClick={() => setListingType("vente")}
+                        />
+                        <RoleCard
+                          icon="📜"
+                          title="Bail"
+                          desc="Mise à disposition longue durée, avec loyer périodique."
+                          active={listingType === "bail"}
+                          onClick={() => setListingType("bail")}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <RoleCard
+                          icon="🏡"
+                          title="Longue durée"
+                          desc="Location mensuelle (maison, appartement, villa)"
+                          active={listingType === "longue"}
+                          onClick={() => setListingType("longue")}
+                        />
+                        <RoleCard
+                          icon="🌴"
+                          title="Courte durée"
+                          desc="Location à la nuit ou à la semaine"
+                          active={listingType === "courte"}
+                          onClick={() => setListingType("courte")}
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
                 <Field label="Description détaillée *">
@@ -641,7 +721,7 @@ function PublierPageInner() {
             {step === 4 && (
               <div>
                 <StepTitle icon="💰" text="Tarification" />
-                <Field label={listingType === "courte" ? "Prix par nuit (FCFA) *" : "Prix mensuel (FCFA) *"}>
+                <Field label={listingTypeMeta(listingType).priceFieldLabel}>
                   <input
                     className="form-control !text-xl !font-semibold !px-[18px] !py-[14px]"
                     type="number"
@@ -708,9 +788,15 @@ function PublierPageInner() {
                   <PreviewRow k="Type de bien" v={kindLabel(kind)} />
                   <PreviewRow k="Ville" v={city || "—"} />
                   <PreviewRow k="Quartier" v={quartier || "—"} />
-                  <PreviewRow k="Type" v={listingType === "courte" ? "Court séjour (nuit)" : "Longue durée (mois)"} />
-                  <PreviewRow k="Chambres" v={`${rooms} chambre(s)`} />
-                  <PreviewRow k="Surface" v={surface ? `${surface} m²` : "—"} />
+                  <PreviewRow
+                    k={rules.listingTypeKind === "transaction" ? "Transaction" : "Location"}
+                    v={listingTypeMeta(listingType).previewLabel}
+                  />
+                  {rules.rooms && <PreviewRow k="Chambres" v={`${rooms} chambre(s)`} />}
+                  <PreviewRow
+                    k={group === "foncier" ? "Contenance" : "Surface"}
+                    v={surface ? `${surface} m²` : "—"}
+                  />
                   <PreviewRow k="Photos" v={`${photos.length} photo${photos.length > 1 ? "s" : ""}`} />
                   <PreviewRow
                     k="Vidéos"

@@ -47,6 +47,7 @@ import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
+import { listingTypeMeta } from "@/lib/data";
 import type { Property } from "@/lib/types";
 
 type UserSection = "favoris" | "listings" | "stats" | "messages" | "settings";
@@ -439,8 +440,8 @@ export default function AccountDashboard() {
                         <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
                           <div className="flex-1">
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
-                              <Tag color={p.type === "courte" ? "gold" : "green"}>
-                                {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
+                              <Tag color={listingTypeMeta(p.type).tagColor}>
+                                {listingTypeMeta(p.type).badgeLabel}
                               </Tag>
                               {!p.available && <Tag color="red">Non disponible</Tag>}
                               {p.status === "blocked" && <Tag color="orange">🚫 Bloqué</Tag>}

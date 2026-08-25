@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Heart, Bed, Bath, Ruler, MapPin } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
+import { FIELD_VISIBILITY_RULES, listingTypeMeta, propertyGroup } from "@/lib/data";
 import { useAppStore } from "@/lib/store";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -14,6 +15,11 @@ import { motion } from "framer-motion";
 export default function PropertyCard({ p }: { p: Property }) {
   const isFav = useAppStore((s) => s.isFav(p.id));
   const toggleFav = useAppStore((s) => s.toggleFav);
+  const typeMeta = listingTypeMeta(p.type);
+  // Un bureau ou un terrain n'ont pas de "chambres" — même règle que le
+  // formulaire /publier (FIELD_VISIBILITY_RULES), pour ne pas afficher
+  // "0 ch. · 0 sdb" sur ce type d'annonce.
+  const rules = FIELD_VISIBILITY_RULES[propertyGroup(p.kind)];
 
   return (
     <TiltCard
@@ -53,9 +59,7 @@ export default function PropertyCard({ p }: { p: Property }) {
         </div>
         <div className="px-[18px] pt-4 pb-5">
           <div className="flex gap-1.5 mb-2">
-            <Tag color={p.type === "courte" ? "gold" : "green"}>
-              {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
-            </Tag>
+            <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
             {p.verified && <Tag color="blue">🛡 Vérifié</Tag>}
           </div>
           <h3 className="font-display text-[17px] font-semibold text-text mb-1.5 leading-tight">
@@ -66,12 +70,16 @@ export default function PropertyCard({ p }: { p: Property }) {
             {p.quartier}, {p.city}
           </div>
           <div className="flex gap-4 mb-3.5 pb-3.5 border-b border-border">
-            <div className="flex items-center gap-1 text-xs text-muted">
-              <Bed size={13} className="text-dim" /> {p.rooms} ch.
-            </div>
-            <div className="flex items-center gap-1 text-xs text-muted">
-              <Bath size={13} className="text-dim" /> {p.baths} sdb
-            </div>
+            {rules.rooms && (
+              <div className="flex items-center gap-1 text-xs text-muted">
+                <Bed size={13} className="text-dim" /> {p.rooms} ch.
+              </div>
+            )}
+            {rules.baths && (
+              <div className="flex items-center gap-1 text-xs text-muted">
+                <Bath size={13} className="text-dim" /> {p.baths} sdb
+              </div>
+            )}
             <div className="flex items-center gap-1 text-xs text-muted">
               <Ruler size={13} className="text-dim" /> {p.surface} m²
             </div>
@@ -79,9 +87,9 @@ export default function PropertyCard({ p }: { p: Property }) {
           <div className="flex justify-between items-end">
             <div className="font-display text-[21px] font-bold text-gold leading-none">
               {fmtPrice(p.price)}
-              <span className="text-xs text-muted font-body font-normal">
-                /{p.type === "courte" ? "nuit" : "mois"}
-              </span>
+              {typeMeta.priceSuffix && (
+                <span className="text-xs text-muted font-body font-normal">{typeMeta.priceSuffix}</span>
+              )}
             </div>
             <div className="flex items-center gap-1 text-xs text-muted">
               <Stars rating={p.owner.rating} /> {p.owner.rating}

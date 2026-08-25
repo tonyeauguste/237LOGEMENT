@@ -6,9 +6,12 @@ import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
+import { FIELD_VISIBILITY_RULES, listingTypeMeta, propertyGroup } from "@/lib/data";
 import Tag from "@/components/ui/Tag";
 
 export default function PropertyListCard({ p }: { p: Property }) {
+  const typeMeta = listingTypeMeta(p.type);
+  const rules = FIELD_VISIBILITY_RULES[propertyGroup(p.kind)];
   return (
     <motion.div whileHover={{ borderColor: "rgba(200,155,60,.3)" }}>
       <Link
@@ -21,9 +24,7 @@ export default function PropertyListCard({ p }: { p: Property }) {
         <div className="px-5 py-4 flex-1 flex flex-col justify-between">
           <div>
             <div className="flex gap-1.5 mb-1.5">
-              <Tag color={p.type === "courte" ? "gold" : "green"}>
-                {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
-              </Tag>
+              <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
               {p.verified && <Tag color="blue">🛡 Vérifié</Tag>}
             </div>
             <div className="font-semibold text-[15px] text-text mb-1">{p.title}</div>
@@ -34,8 +35,8 @@ export default function PropertyListCard({ p }: { p: Property }) {
           </div>
           <div className="flex justify-between items-end">
             <div className="flex gap-3.5 text-xs text-muted">
-              <span>🛏 {p.rooms} ch.</span>
-              <span>🚿 {p.baths} sdb</span>
+              {rules.rooms && <span>🛏 {p.rooms} ch.</span>}
+              {rules.baths && <span>🚿 {p.baths} sdb</span>}
               <span>📐 {p.surface}m²</span>
             </div>
             <div className="font-display text-lg font-bold text-gold">{fmtPrice(p.price)}</div>

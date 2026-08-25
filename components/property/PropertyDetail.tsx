@@ -24,7 +24,7 @@ import {
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import { kindLabel } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, kindLabel, listingTypeMeta, propertyGroup } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -33,6 +33,8 @@ import Button from "@/components/ui/Button";
 type DetailTab = "desc" | "amenities" | "map";
 
 export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
+  const typeMeta = listingTypeMeta(p.type);
+  const rules = FIELD_VISIBILITY_RULES[propertyGroup(p.kind)];
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [tab, setTab] = useState<DetailTab>("desc");
   const [msg, setMsg] = useState("");
@@ -118,7 +120,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           <Link href="/" className="text-gold hover:underline">Accueil</Link>
           <span className="text-dim">/</span>
           <Link href="/recherche" className="text-gold hover:underline">
-            {p.type === "courte" ? "Court séjour" : "Location"}
+            {typeMeta.shortLabel}
           </Link>
           <span className="text-dim">/</span>
           <span className="text-muted truncate max-w-[200px] sm:max-w-none">{p.title}</span>
@@ -197,9 +199,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           {/* Titre + badges */}
           <div className="mb-6">
             <div className="flex gap-2 items-center mb-3 flex-wrap">
-              <Tag color={p.type === "courte" ? "gold" : "green"}>
-                {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
-              </Tag>
+              <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
               {p.verified && <Tag color="blue">🛡 Propriétaire vérifié</Tag>}
               {p.available ? <Tag color="green">✅ Disponible</Tag> : <Tag color="red">❌ Non disponible</Tag>}
             </div>
@@ -210,18 +210,27 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             </div>
           </div>
 
-          {/* Caractéristiques */}
-          <div className="grid grid-cols-3 mb-7 bg-card border border-border rounded-2xl overflow-hidden">
-            <div className="p-[18px] text-center border-r border-border">
-              <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
-              <div className="text-xs text-muted">Chambre{p.rooms > 1 ? "s" : ""}</div>
-            </div>
-            <div className="p-[18px] text-center border-r border-border">
-              <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.baths}</div>
-              <div className="text-xs text-muted">Salle{p.baths > 1 ? "s" : ""} de bain</div>
-            </div>
+          {/* Caractéristiques — chambres/salles de bain masquées pour un
+              bureau, une boutique ou un terrain (voir FIELD_VISIBILITY_RULES). */}
+          <div
+            className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
+              rules.rooms || rules.baths ? "grid-cols-3" : "grid-cols-1"
+            }`}
+          >
+            {rules.rooms && (
+              <div className="p-[18px] text-center border-r border-border">
+                <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
+                <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
+                <div className="text-xs text-muted">Chambre{p.rooms > 1 ? "s" : ""}</div>
+              </div>
+            )}
+            {rules.baths && (
+              <div className="p-[18px] text-center border-r border-border">
+                <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
+                <div className="font-semibold text-[15px] text-text">{p.baths}</div>
+                <div className="text-xs text-muted">Salle{p.baths > 1 ? "s" : ""} de bain</div>
+              </div>
+            )}
             <div className="p-[18px] text-center">
               <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
               <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
@@ -317,16 +326,16 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           {/* Bloc prix + partage + sauvegarde */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-1">
-              {p.type === "courte" ? "Court séjour" : "Location"} · {kindLabel(p.kind)}
+              {typeMeta.shortLabel} · {kindLabel(p.kind)}
             </div>
             <div className="text-[13px] text-muted mb-3">{p.quartier}, {p.city}</div>
 
             <div className="font-display text-[32px] font-bold text-gold leading-none">
               {fmtPrice(p.price)}
             </div>
-            <div className="text-[13px] text-muted mt-1 mb-1">
-              / {p.type === "courte" ? "nuit" : "mois"}
-            </div>
+            {typeMeta.priceSuffix && (
+              <div className="text-[13px] text-muted mt-1 mb-1">{typeMeta.priceSuffix}</div>
+            )}
             <div className="text-[12px] text-dim mb-4">{fmtRelativeDate(p.createdAt)}</div>
 
             <div className="flex gap-2 flex-wrap mb-4">

@@ -20,6 +20,7 @@ import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
+import { listingTypeMeta } from "@/lib/data";
 import type { ListingStatus, Property } from "@/lib/types";
 
 const PAGE_SIZE = 20;
@@ -214,9 +215,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
               <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex gap-1.5 mb-1.5 flex-wrap">
-                    <Tag color={p.type === "courte" ? "gold" : "green"}>
-                      {p.type === "courte" ? "🌴 Court séjour" : "🏡 Long terme"}
-                    </Tag>
+                    <Tag color={listingTypeMeta(p.type).tagColor}>{listingTypeMeta(p.type).badgeLabel}</Tag>
                     {p.status === "blocked" && <Tag color="orange">🚫 Bloqué</Tag>}
                     {p.status === "pending" && <Tag color="blue">⏳ En attente</Tag>}
                   </div>
