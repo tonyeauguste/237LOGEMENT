@@ -190,7 +190,7 @@ function PublierPageInner() {
         setKind(data.kind || "appartement");
         setDesc(data.description || "");
         setPhotos((data.images || []).map((url) => ({ name: url.split("/").pop() || "photo", url })));
-        setVideos((data.videos || []).map((url) => ({ name: url.split("/").pop() || "vidéo", size: 0 })));
+        setVideos((data.videos || []).map((url) => ({ name: url.split("/").pop() || "vidéo", size: 0, url })));
         setAmenities(data.amenities || []);
         setPrice(data.price != null ? String(data.price) : "");
         setDeposit(data.deposit != null ? String(data.deposit) : "");
@@ -327,8 +327,13 @@ function PublierPageInner() {
       const imageUrls = await Promise.all(
         photos.map((p, i) => (p.file ? uploadOne("photos", p.file, i) : Promise.resolve(p.url)))
       );
+      // Bug corrigé : une vidéo déjà en ligne (mode édition, pas de fichier
+      // brut à ré-uploader) retombait sur "" au lieu de conserver son URL
+      // existante — filtrée juste après par `.filter(Boolean)`, elle
+      // disparaissait donc silencieusement de l'annonce à chaque
+      // enregistrement. Même filet que pour les photos : `v.url` si connu.
       const videoUrls = await Promise.all(
-        videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve("")))
+        videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve(v.url ?? "")))
       );
 
       // Filet de sécurité : quel que soit l'état des champs masqués côté UI
