@@ -2,8 +2,14 @@
 // Types partagés — 237Logement
 // ═══════════════════════════════════════════════
 
-/** Durée de location. */
-export type ListingKind = "longue" | "courte";
+/**
+ * Nature de la transaction associée à l'annonce. "longue"/"courte" pour une
+ * location (résidentiel, commercial) ; "vente"/"bail" pour un terrain (voir
+ * FIELD_VISIBILITY_RULES dans lib/data.ts pour le mapping type de bien →
+ * valeurs pertinentes). Reflète la contrainte CHECK `properties_type_check`
+ * côté base.
+ */
+export type ListingKind = "longue" | "courte" | "vente" | "bail";
 
 /**
  * Nature du bien (chambre, studio, villa…) — distincte de `ListingKind`

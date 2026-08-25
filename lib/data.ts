@@ -1,4 +1,4 @@
-import type { Property } from "./types";
+import type { ListingKind, Property } from "./types";
 
 // ═══════════════════════════════════════════════
 // VILLES PAR RÉGION — source unique, utilisée dans
@@ -87,28 +87,154 @@ export const CONTACT = {
 // de location ("longue"/"courte"). Source unique utilisée par le filtre
 // de la page d'accueil, celui de la recherche et le formulaire /publier.
 // ═══════════════════════════════════════════════
+/**
+ * Groupe auquel appartient un type de bien — détermine quels champs du
+ * formulaire /publier ont du sens (ex : une salle de bain n'existe pas
+ * pour un terrain). Voir FIELD_VISIBILITY_RULES ci-dessous.
+ */
+export type PropertyGroup = "residentiel" | "commercial" | "foncier";
+
 export interface PropertyKindDef {
   value: string;
   label: string;
   icon: string;
+  group: PropertyGroup;
 }
 
 export const PROPERTY_KINDS: PropertyKindDef[] = [
-  { value: "chambre", label: "Chambre", icon: "🚪" },
-  { value: "studio", label: "Studio", icon: "🛏" },
-  { value: "appartement", label: "Appartement", icon: "🏢" },
-  { value: "duplex", label: "Duplex", icon: "🏘" },
-  { value: "villa", label: "Villa", icon: "🏡" },
-  { value: "maison", label: "Maison", icon: "🏠" },
-  { value: "bureau", label: "Bureau", icon: "💼" },
-  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪" },
-  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦" },
-  { value: "terrain", label: "Terrain", icon: "🌍" },
+  { value: "chambre", label: "Chambre", icon: "🚪", group: "residentiel" },
+  { value: "studio", label: "Studio", icon: "🛏", group: "residentiel" },
+  { value: "appartement", label: "Appartement", icon: "🏢", group: "residentiel" },
+  { value: "duplex", label: "Duplex", icon: "🏘", group: "residentiel" },
+  { value: "villa", label: "Villa", icon: "🏡", group: "residentiel" },
+  { value: "maison", label: "Maison", icon: "🏠", group: "residentiel" },
+  { value: "bureau", label: "Bureau", icon: "💼", group: "commercial" },
+  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪", group: "commercial" },
+  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦", group: "commercial" },
+  { value: "terrain", label: "Terrain", icon: "🌍", group: "foncier" },
 ];
 
 /** Libellé affichable d'un type de bien (retombe sur la valeur brute si inconnue). */
 export function kindLabel(value: string): string {
   return PROPERTY_KINDS.find((k) => k.value === value)?.label ?? value;
+}
+
+/** Groupe d'un type de bien (retombe sur "residentiel" si la valeur est inconnue). */
+export function propertyGroup(kind: string): PropertyGroup {
+  return PROPERTY_KINDS.find((k) => k.value === kind)?.group ?? "residentiel";
+}
+
+/**
+ * Règles de visibilité des champs de l'étape "Détails du bien" du
+ * formulaire /publier, selon le groupe du type de bien sélectionné.
+ * Centralise le mapping catégorie → champs visibles à un seul endroit :
+ * pour ajouter un nouveau type de bien, il suffit de le rattacher à l'un
+ * de ces 3 groupes dans PROPERTY_KINDS ci-dessus, sans toucher au JSX du
+ * formulaire ni des cartes d'annonce.
+ */
+export interface FieldVisibilityRule {
+  /** Champ "Chambres" pertinent pour ce groupe. */
+  rooms: boolean;
+  /** Champ "Salles de bain" pertinent pour ce groupe. */
+  baths: boolean;
+  /** Libellé du champ Surface — varie pour le foncier (contenance). */
+  surfaceLabel: string;
+  /** "duree" = Longue/Courte durée ; "transaction" = Vente/Bail (foncier). */
+  listingTypeKind: "duree" | "transaction";
+  /** Libellé affiché au-dessus du sélecteur Longue/Courte ou Vente/Bail. */
+  listingTypeLabel: string;
+}
+
+export const FIELD_VISIBILITY_RULES: Record<PropertyGroup, FieldVisibilityRule> = {
+  residentiel: {
+    rooms: true,
+    baths: true,
+    surfaceLabel: "Surface (m²)",
+    listingTypeKind: "duree",
+    listingTypeLabel: "Type de location *",
+  },
+  commercial: {
+    rooms: false,
+    baths: false,
+    surfaceLabel: "Surface (m²)",
+    listingTypeKind: "duree",
+    listingTypeLabel: "Type de location ou d'usage *",
+  },
+  foncier: {
+    rooms: false,
+    baths: false,
+    surfaceLabel: "Surface / Contenance (m² ou Hectares)",
+    listingTypeKind: "transaction",
+    listingTypeLabel: "Type de transaction *",
+  },
+};
+
+/** Type de location/transaction proposé par défaut quand on bascule vers ce groupe. */
+export const DEFAULT_LISTING_TYPE: Record<PropertyGroup, ListingKind> = {
+  residentiel: "longue",
+  commercial: "longue",
+  foncier: "vente",
+};
+
+/**
+ * Métadonnées d'affichage d'un ListingKind — un seul endroit pour le badge
+ * (icône, couleur), le suffixe de prix et les libellés utilisés dans le
+ * formulaire /publier et sur les cartes/fiches d'annonce. Évite de
+ * dupliquer un `type === "courte" ? … : …` dans chaque composant.
+ */
+export interface ListingTypeMeta {
+  /** Texte + emoji du badge affiché sur les cartes/fiches d'annonce. */
+  badgeLabel: string;
+  /** Couleur du badge — mirroir du type TagColor de components/ui/Tag. */
+  tagColor: "gold" | "green" | "blue" | "red" | "orange" | "neutral";
+  /** Suffixe affiché après le prix (ex : "/mois") — vide pour une vente (montant global, non récurrent). */
+  priceSuffix: string;
+  /** Libellé du champ prix à l'étape Tarification du formulaire /publier. */
+  priceFieldLabel: string;
+  /** Libellé court utilisé dans le récapitulatif du formulaire /publier. */
+  previewLabel: string;
+  /** Libellé compact (fil d'ariane, encart prix de la fiche annonce). */
+  shortLabel: string;
+}
+
+export const LISTING_TYPE_META: Record<ListingKind, ListingTypeMeta> = {
+  longue: {
+    badgeLabel: "🏡 Long terme",
+    tagColor: "green",
+    priceSuffix: "/mois",
+    priceFieldLabel: "Prix mensuel (FCFA) *",
+    previewLabel: "Longue durée (mois)",
+    shortLabel: "Location",
+  },
+  courte: {
+    badgeLabel: "🌴 Court séjour",
+    tagColor: "gold",
+    priceSuffix: "/nuit",
+    priceFieldLabel: "Prix par nuit (FCFA) *",
+    previewLabel: "Court séjour (nuit)",
+    shortLabel: "Court séjour",
+  },
+  vente: {
+    badgeLabel: "💰 À vendre",
+    tagColor: "blue",
+    priceSuffix: "",
+    priceFieldLabel: "Prix de vente (FCFA) *",
+    previewLabel: "Vente",
+    shortLabel: "Vente",
+  },
+  bail: {
+    badgeLabel: "📜 Bail",
+    tagColor: "orange",
+    priceSuffix: "/mois",
+    priceFieldLabel: "Loyer de bail (FCFA) *",
+    previewLabel: "Bail",
+    shortLabel: "Bail",
+  },
+};
+
+/** Métadonnées d'un ListingKind (retombe sur "longue" si la valeur est inconnue). */
+export function listingTypeMeta(type: string): ListingTypeMeta {
+  return LISTING_TYPE_META[type as ListingKind] ?? LISTING_TYPE_META.longue;
 }
 
 // ═══════════════════════════════════════════════
