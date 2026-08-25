@@ -25,6 +25,7 @@ export function rowToProperty(row: PropertyRow): Property {
     surface: row.surface ? Number(row.surface) : 0,
     desc: row.description ?? "",
     imgs: row.images && row.images.length > 0 ? row.images : [FALLBACK_IMG],
+    videos: row.videos ?? [],
     amenities: row.amenities ?? [],
     verified: row.verified,
     available: row.available,

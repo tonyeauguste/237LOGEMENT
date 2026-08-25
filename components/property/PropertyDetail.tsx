@@ -30,7 +30,7 @@ import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
 import Button from "@/components/ui/Button";
 
-type DetailTab = "desc" | "amenities" | "map";
+type DetailTab = "desc" | "video" | "amenities" | "map";
 
 export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
   const group = propertyGroup(p.kind);
@@ -261,10 +261,13 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             </div>
           </div>
 
-          {/* Onglets */}
+          {/* Onglets — "Vidéo" seulement s'il y en a une (voir Property.videos,
+              longtemps absent de ce type : les vidéos uploadées via /publier
+              n'apparaissaient donc jamais nulle part). */}
           <div className="flex border-b border-border mb-6">
             {([
               ["desc", "Description"],
+              ...(p.videos.length > 0 && !isOccupied ? [["video", "Vidéo"]] : []),
               ["amenities", "Équipements"],
               ["map", "Localisation"],
             ] as [DetailTab, string][]).map(([key, label]) => (
@@ -291,6 +294,27 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                   <span>❤️ {p.favs} favoris</span>
                   <span>📅 {fmtRelativeDate(p.createdAt)}</span>
                 </div>
+              </motion.div>
+            )}
+            {tab === "video" && (
+              <motion.div
+                key="video"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col gap-4"
+              >
+                {p.videos.map((src, i) => (
+                  <video
+                    key={src}
+                    src={src}
+                    controls
+                    playsInline
+                    preload="metadata"
+                    aria-label={`Vidéo de visite ${i + 1}`}
+                    className="w-full rounded-2xl bg-black aspect-video"
+                  />
+                ))}
               </motion.div>
             )}
             {tab === "amenities" && (
