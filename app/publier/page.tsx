@@ -691,7 +691,16 @@ function PublierPageInner() {
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
                     multiple
-                    className="hidden"
+                    // `hidden`/display:none : sur Safari iOS et certains
+                    // navigateurs Android, le sélecteur système s'ouvre bien,
+                    // mais l'événement onChange qui récupère les fichiers
+                    // choisis ne se déclenche pas toujours de façon fiable
+                    // pour un <input type="file"> qui n'est pas réellement
+                    // rendu (display:none) — d'où le compteur bloqué à 0
+                    // après sélection, uniquement sur mobile. `sr-only`
+                    // garde l'élément techniquement dans le rendu (juste
+                    // invisible et hors du flux visuel) sans ce problème.
+                    className="sr-only"
                     onChange={(e) => {
                       handlePhotoUpload(e.target.files);
                       e.target.value = "";
@@ -765,7 +774,8 @@ function PublierPageInner() {
                     type="file"
                     accept="video/mp4,video/quicktime,video/x-msvideo,video/webm"
                     multiple
-                    className="hidden"
+                    // Voir le commentaire équivalent sur l'input photo.
+                    className="sr-only"
                     onChange={(e) => {
                       handleVideoUpload(e.target.files);
                       e.target.value = "";
