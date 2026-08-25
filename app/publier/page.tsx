@@ -122,6 +122,12 @@ function PublierPageInner() {
   );
   const photoInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  // Surbrillance pendant qu'un fichier est glissé au-dessus de la zone —
+  // voir handlePhotoDrop/handleVideoDrop : le glisser-déposer annoncé par
+  // le texte de la zone ("Glissez-déposez...") n'était pas implémenté du
+  // tout, seul le clic ouvrant le sélecteur de fichiers fonctionnait.
+  const [photoDragOver, setPhotoDragOver] = useState(false);
+  const [videoDragOver, setVideoDragOver] = useState(false);
 
   // Step 4
   const [price, setPrice] = useState("");
@@ -229,7 +235,7 @@ function PublierPageInner() {
     setAmenities((prev) => (prev.includes(full) ? prev.filter((a) => a !== full) : [...prev, full]));
   }
 
-  function handlePhotoUpload(files: FileList | null) {
+  function handlePhotoUpload(files: FileList | File[] | null) {
     if (!files) return;
     const remaining = PHOTO_MAX - photos.length;
     if (remaining <= 0) {
@@ -253,7 +259,7 @@ function PublierPageInner() {
     if (error) showToast(`❌ ${error} — max 10 Mo par photo.`, "error");
   }
 
-  function handleVideoUpload(files: FileList | null) {
+  function handleVideoUpload(files: FileList | File[] | null) {
     if (!files) return;
     const remaining = VIDEO_MAX - videos.length;
     if (remaining <= 0) {
@@ -275,6 +281,24 @@ function PublierPageInner() {
       showToast(`⚠️ Seule(s) ${remaining} vidéo(s) supplémentaire(s) ont été ajoutée(s) (limite : 2).`, "info");
     }
     if (error) showToast(`❌ ${error} dépasse 100 Mo — vidéo refusée.`, "error");
+  }
+
+  // Glisser-déposer : contrairement au <input type="file" accept="…">, un
+  // dépôt n'est pas filtré par le navigateur — on filtre donc nous-mêmes
+  // par type MIME pour ne pas router une vidéo déposée sur la zone photo
+  // (et inversement) vers le mauvais gestionnaire.
+  function handlePhotoDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setPhotoDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    handlePhotoUpload(files);
+  }
+
+  function handleVideoDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setVideoDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("video/"));
+    handleVideoUpload(files);
   }
 
   function goNext() {
@@ -648,10 +672,18 @@ function PublierPageInner() {
                 </div>
                 <div
                   onClick={() => photoInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setPhotoDragOver(true);
+                  }}
+                  onDragLeave={() => setPhotoDragOver(false)}
+                  onDrop={handlePhotoDrop}
                   className={`border-2 border-dashed rounded-2xl p-11 text-center cursor-pointer transition-colors mb-3 ${
                     photos.length >= PHOTO_MAX
                       ? "border-border opacity-50 pointer-events-none"
-                      : "border-border2 hover:border-gold hover:bg-gold3/20"
+                      : photoDragOver
+                        ? "border-gold bg-gold3/20"
+                        : "border-border2 hover:border-gold hover:bg-gold3/20"
                   }`}
                 >
                   <input
@@ -714,10 +746,18 @@ function PublierPageInner() {
                 </div>
                 <div
                   onClick={() => videoInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setVideoDragOver(true);
+                  }}
+                  onDragLeave={() => setVideoDragOver(false)}
+                  onDrop={handleVideoDrop}
                   className={`border-2 border-dashed rounded-2xl py-7 px-11 text-center cursor-pointer transition-colors mb-3 ${
                     videos.length >= VIDEO_MAX
                       ? "border-border opacity-50 pointer-events-none"
-                      : "border-border2 hover:border-gold hover:bg-gold3/20"
+                      : videoDragOver
+                        ? "border-gold bg-gold3/20"
+                        : "border-border2 hover:border-gold hover:bg-gold3/20"
                   }`}
                 >
                   <input
