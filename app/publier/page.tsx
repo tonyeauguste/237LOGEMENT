@@ -3,8 +3,8 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Upload } from "lucide-react";
 import StepIndicator from "@/components/publier/StepIndicator";
+import PhotoUploader from "@/components/publier/PhotoUploader";
 import RoleCard from "@/components/ui/RoleCard";
 import AmenityChip from "@/components/ui/AmenityChip";
 import CityInput from "@/components/ui/CityInput";
@@ -23,12 +23,7 @@ import {
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
-import type { ListingKind, OccupancyStatus, TransactionType, UploadedPhoto, UploadedVideo } from "@/lib/types";
-
-const PHOTO_MAX = 15;
-const PHOTO_SIZE_MB = 10;
-const VIDEO_MAX = 2;
-const VIDEO_SIZE_MB = 100;
+import type { ListingKind, OccupancyStatus, TransactionType, UploadedPhoto } from "@/lib/types";
 
 function PublierPageInner() {
   // Tout compte connecté peut publier depuis la fusion des espaces : les
@@ -115,17 +110,14 @@ function PublierPageInner() {
   }
 
   // Step 3
+  // Toute la logique d'upload (validation, glisser-déposer, aperçus,
+  // suppression) vit dans <PhotoUploader> (components/publier/) — la page
+  // ne garde que l'état lui-même, dont publish() et goNext() ont besoin.
+  // Pas de vidéo : le site ne gère que les photos.
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
-  const [videos, setVideos] = useState<UploadedVideo[]>([]);
   const [amenities, setAmenities] = useState<string[]>(
     AMENITIES.filter((a) => a.defaultSelected).map((a) => amenityFull(a))
   );
-  // Surbrillance pendant qu'un fichier est glissé au-dessus de la zone —
-  // voir handlePhotoDrop/handleVideoDrop : le glisser-déposer annoncé par
-  // le texte de la zone ("Glissez-déposez...") n'était pas implémenté du
-  // tout, seul le clic ouvrant le sélecteur de fichiers fonctionnait.
-  const [photoDragOver, setPhotoDragOver] = useState(false);
-  const [videoDragOver, setVideoDragOver] = useState(false);
 
   // Step 4
   const [price, setPrice] = useState("");
@@ -135,20 +127,25 @@ function PublierPageInner() {
 
   const [publishing, setPublishing] = useState(false);
 
-  // Les aperçus photo passent par URL.createObjectURL — sans révocation,
-  // chaque photo ajoutée pendant la session laisse un blob en mémoire
-  // jusqu'au rechargement de la page. On garde une ref à jour (l'effet de
-  // nettoyage à deps [] ne verrait sinon que le tableau vide du montage).
+  // Les aperçus photo (voir PhotoUploader) passent par URL.createObjectURL
+  // — sans révocation, chaque photo ajoutée pendant la session laisse un
+  // blob en mémoire jusqu'au rechargement de la page. Ce nettoyage final
+  // vit ici (page) et pas dans <PhotoUploader> : ce composant est
+  // masqué/affiché au fil des étapes du formulaire sans que ça signifie
+  // que l'utilisateur abandonne — seul le démontage de la PAGE (vraie
+  // sortie de /publier) doit déclencher la révocation. Ref à jour car
+  // l'effet de nettoyage à deps [] ne verrait sinon que le tableau vide
+  // du montage.
   const photosRef = useRef<UploadedPhoto[]>([]);
   useEffect(() => {
     photosRef.current = photos;
   }, [photos]);
   useEffect(() => {
     return () => {
-      // Seuls les aperçus créés localement (blob:) doivent être révoqués —
-      // les photos déjà en ligne (mode édition) sont de vraies URLs
-      // Supabase Storage ; URL.revokeObjectURL() sur ces URLs-là ne ferait
-      // rien de nuisible, mais autant ne l'appeler que là où c'est utile.
+      // Seules les photos déjà en ligne (mode édition) sont de vraies URLs
+      // Supabase Storage ; URL.revokeObjectURL() dessus ne ferait rien de
+      // nuisible, mais autant ne l'appeler que là où c'est utile — seuls
+      // les aperçus créés localement (blob:) doivent être révoqués.
       photosRef.current.forEach((p) => {
         if (p.url.startsWith("blob:")) URL.revokeObjectURL(p.url);
       });
@@ -194,7 +191,6 @@ function PublierPageInner() {
         setKind(data.kind || "appartement");
         setDesc(data.description || "");
         setPhotos((data.images || []).map((url) => ({ name: url.split("/").pop() || "photo", url })));
-        setVideos((data.videos || []).map((url) => ({ name: url.split("/").pop() || "vidéo", size: 0, url })));
         setAmenities(data.amenities || []);
         setPrice(data.price != null ? String(data.price) : "");
         setDeposit(data.deposit != null ? String(data.deposit) : "");
@@ -221,123 +217,8 @@ function PublierPageInner() {
     return <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">Chargement de l&apos;annonce…</div>;
   }
 
-  function removePhoto(index: number) {
-    setPhotos((prev) => {
-      const target = prev[index];
-      if (target && target.url.startsWith("blob:")) URL.revokeObjectURL(target.url);
-      return prev.filter((_, idx) => idx !== index);
-    });
-  }
-
   function toggleAmenity(full: string) {
     setAmenities((prev) => (prev.includes(full) ? prev.filter((a) => a !== full) : [...prev, full]));
-  }
-
-  // `accept="image/*"` sur l'input (voir JSX) laisse passer plus de fichiers
-  // au niveau du sélecteur système que ce qu'on supporte réellement — utile
-  // car certains appareils Android renvoient un type MIME non standard
-  // ("image/jpg" au lieu de "image/jpeg") qu'un accept strict aurait pu
-  // filtrer à tort. On revalide donc ici, en étant tolérant : si le type
-  // MIME est absent (arrive aussi sur certains Android selon la source du
-  // fichier), on retombe sur l'extension plutôt que de rejeter la photo.
-  function isSupportedPhoto(file: File): boolean {
-    const type = file.type.toLowerCase();
-    if (["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(type)) return true;
-    if (type) return false;
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    return ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "webp";
-  }
-
-  function handlePhotoUpload(files: FileList | File[] | null) {
-    if (!files) return;
-    const remaining = PHOTO_MAX - photos.length;
-    if (remaining <= 0) {
-      showToast("⚠️ Limite atteinte : 15 photos maximum.", "error");
-      return;
-    }
-    const arr = Array.from(files);
-    let error = "";
-    let unsupported = 0;
-    const added: UploadedPhoto[] = [];
-    arr.slice(0, remaining).forEach((file) => {
-      if (!isSupportedPhoto(file)) {
-        unsupported += 1;
-        return;
-      }
-      if (file.size > PHOTO_SIZE_MB * 1024 * 1024) {
-        error = `${file.name} dépasse 10 Mo`;
-        return;
-      }
-      added.push({ name: file.name, url: URL.createObjectURL(file), file });
-    });
-    if (added.length) setPhotos((prev) => [...prev, ...added]);
-    if (arr.length > remaining) {
-      showToast(`⚠️ Seules les ${remaining} premières photos ont été ajoutées (limite : 15).`, "info");
-    }
-    if (error) showToast(`❌ ${error} — max 10 Mo par photo.`, "error");
-    if (unsupported > 0) {
-      showToast(`❌ ${unsupported} fichier(s) ignoré(s) — formats acceptés : JPG, PNG, WEBP.`, "error");
-    }
-  }
-
-  // Voir le commentaire équivalent sur isSupportedPhoto.
-  function isSupportedVideo(file: File): boolean {
-    const type = file.type.toLowerCase();
-    if (["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm"].includes(type)) return true;
-    if (type) return false;
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    return ext === "mp4" || ext === "mov" || ext === "avi" || ext === "webm";
-  }
-
-  function handleVideoUpload(files: FileList | File[] | null) {
-    if (!files) return;
-    const remaining = VIDEO_MAX - videos.length;
-    if (remaining <= 0) {
-      showToast("⚠️ Limite atteinte : 2 vidéos maximum.", "error");
-      return;
-    }
-    const arr = Array.from(files);
-    let error = "";
-    let unsupported = 0;
-    const added: UploadedVideo[] = [];
-    arr.slice(0, remaining).forEach((file) => {
-      if (!isSupportedVideo(file)) {
-        unsupported += 1;
-        return;
-      }
-      if (file.size > VIDEO_SIZE_MB * 1024 * 1024) {
-        error = file.name;
-        return;
-      }
-      added.push({ name: file.name, size: file.size, file });
-    });
-    if (added.length) setVideos((prev) => [...prev, ...added]);
-    if (arr.length > remaining) {
-      showToast(`⚠️ Seule(s) ${remaining} vidéo(s) supplémentaire(s) ont été ajoutée(s) (limite : 2).`, "info");
-    }
-    if (error) showToast(`❌ ${error} dépasse 100 Mo — vidéo refusée.`, "error");
-    if (unsupported > 0) {
-      showToast(`❌ ${unsupported} fichier(s) ignoré(s) — formats acceptés : MP4, MOV, AVI, WEBM.`, "error");
-    }
-  }
-
-  // Glisser-déposer : contrairement au <input type="file" accept="…">, un
-  // dépôt n'est pas filtré par le navigateur — on filtre donc nous-mêmes
-  // par type MIME pour ne pas router une vidéo déposée sur la zone photo
-  // (et inversement) vers le mauvais gestionnaire.
-  function handlePhotoDrop(e: React.DragEvent<HTMLLabelElement>) {
-    e.preventDefault();
-    setPhotoDragOver(false);
-    // Le filtrage par type a lieu dans handlePhotoUpload (isSupportedPhoto),
-    // qui gère aussi le cas d'un type MIME vide — pas besoin de pré-filtrer
-    // ici, et ça évite d'écarter à tort un fichier déposé sans type détecté.
-    handlePhotoUpload(Array.from(e.dataTransfer.files));
-  }
-
-  function handleVideoDrop(e: React.DragEvent<HTMLLabelElement>) {
-    e.preventDefault();
-    setVideoDragOver(false);
-    handleVideoUpload(Array.from(e.dataTransfer.files));
   }
 
   function goNext() {
@@ -377,9 +258,9 @@ function PublierPageInner() {
     try {
       const slug = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-      const uploadOne = async (folder: "photos" | "videos", file: File, i: number) => {
+      const uploadOne = async (file: File, i: number) => {
         const ext = file.name.split(".").pop() || "bin";
-        const path = `${folder}/${slug}-${i}.${ext}`;
+        const path = `photos/${slug}-${i}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("property-media")
           .upload(path, file, { contentType: file.type || undefined });
@@ -388,15 +269,7 @@ function PublierPageInner() {
       };
 
       const imageUrls = await Promise.all(
-        photos.map((p, i) => (p.file ? uploadOne("photos", p.file, i) : Promise.resolve(p.url)))
-      );
-      // Bug corrigé : une vidéo déjà en ligne (mode édition, pas de fichier
-      // brut à ré-uploader) retombait sur "" au lieu de conserver son URL
-      // existante — filtrée juste après par `.filter(Boolean)`, elle
-      // disparaissait donc silencieusement de l'annonce à chaque
-      // enregistrement. Même filet que pour les photos : `v.url` si connu.
-      const videoUrls = await Promise.all(
-        videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve(v.url ?? "")))
+        photos.map((p, i) => (p.file ? uploadOne(p.file, i) : Promise.resolve(p.url)))
       );
 
       // Filet de sécurité : quel que soit l'état des champs masqués côté UI
@@ -442,7 +315,6 @@ function PublierPageInner() {
         baths: rules.baths ? Number(baths) : 0,
         surface: surface ? Number(surface) : null,
         images: imageUrls,
-        videos: videoUrls.filter(Boolean),
         amenities,
       };
 
@@ -701,163 +573,9 @@ function PublierPageInner() {
 
             {step === 3 && (
               <div>
-                <StepTitle icon="📸" text="Photos & Vidéos du bien" />
+                <StepTitle icon="📸" text="Photos du bien" />
 
-                <div className="flex justify-between items-center mb-2.5">
-                  <span className="font-semibold text-[15px] text-text">Photos du bien</span>
-                  <span className="text-[13px] font-bold text-gold bg-gold3 border border-[rgba(200,155,60,.3)] px-3 py-0.5 rounded-full">
-                    {photos.length} / {PHOTO_MAX}
-                  </span>
-                </div>
-                {/* <label> plutôt que <div onClick={() => ref.click()}> : un
-                    clic/tap JS déclenché par proxy sur un input caché est
-                    connu pour être moins fiable sur certains navigateurs
-                    Android (le sélecteur système s'ouvre, mais la sélection
-                    ne remonte pas toujours) — signalé par un propriétaire
-                    dont les clients téléversent depuis leur téléphone.
-                    <label htmlFor=...> est le mécanisme natif du navigateur
-                    pour ça, pas une simulation JS : le plus robuste possible
-                    sur mobile comme sur desktop, iOS comme Android. */}
-                <label
-                  htmlFor="photo-upload-input"
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setPhotoDragOver(true);
-                  }}
-                  onDragLeave={() => setPhotoDragOver(false)}
-                  onDrop={handlePhotoDrop}
-                  className={`block border-2 border-dashed rounded-2xl p-11 text-center cursor-pointer transition-colors mb-3 ${
-                    photos.length >= PHOTO_MAX
-                      ? "border-border opacity-50 pointer-events-none"
-                      : photoDragOver
-                        ? "border-gold bg-gold3/20"
-                        : "border-border2 hover:border-gold hover:bg-gold3/20"
-                  }`}
-                >
-                  <input
-                    id="photo-upload-input"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    // `hidden`/display:none : sur Safari iOS et certains
-                    // navigateurs Android, un input file non réellement
-                    // rendu peut ne pas déclencher onChange de façon fiable
-                    // après sélection. `sr-only` le garde dans le rendu
-                    // (juste invisible) sans ce problème.
-                    className="sr-only"
-                    onChange={(e) => {
-                      handlePhotoUpload(e.target.files);
-                      e.target.value = "";
-                    }}
-                  />
-                  <div className="flex justify-center mb-3 text-gold">
-                    <Upload size={36} />
-                  </div>
-                  <div className="font-semibold text-base text-text mb-1.5">
-                    Glissez-déposez vos photos ici
-                  </div>
-                  <div className="text-sm text-muted mb-2.5">
-                    ou touchez/cliquez pour sélectionner depuis votre appareil
-                  </div>
-                  <div className="flex gap-2 flex-wrap justify-center mt-2.5">
-                    <span className="tag-pill gold">JPG, PNG, WEBP</span>
-                    <span className="tag-pill blue">Max 10 Mo / photo</span>
-                    <span className="tag-pill green">15 photos maximum</span>
-                    <span className="tag-pill neutral">Minimum 3 photos</span>
-                  </div>
-                </label>
-                {photos.length > 0 && (
-                  <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2.5 mb-2">
-                    {photos.map((p, i) => (
-                      <div
-                        key={i}
-                        className="relative rounded-[10px] overflow-hidden border-[1.5px] border-border aspect-[4/3] bg-card2"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={p.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => removePhoto(i)}
-                          className="absolute top-[5px] right-[5px] w-[22px] h-[22px] rounded-full bg-[rgba(224,85,85,.9)] text-white flex items-center justify-center leading-none"
-                        >
-                          ×
-                        </button>
-                        <span className="absolute bottom-[5px] left-[7px] text-[10px] font-bold text-white bg-black/55 px-1.5 rounded">
-                          {i + 1}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center mb-2.5 mt-7">
-                  <span className="font-semibold text-[15px] text-text">
-                    Vidéo de visite <span className="text-muted font-normal text-[13px]">(optionnel)</span>
-                  </span>
-                  <span className="text-[13px] font-bold text-gold bg-gold3 border border-[rgba(200,155,60,.3)] px-3 py-0.5 rounded-full">
-                    {videos.length} / {VIDEO_MAX}
-                  </span>
-                </div>
-                <label
-                  htmlFor="video-upload-input"
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setVideoDragOver(true);
-                  }}
-                  onDragLeave={() => setVideoDragOver(false)}
-                  onDrop={handleVideoDrop}
-                  className={`block border-2 border-dashed rounded-2xl py-7 px-11 text-center cursor-pointer transition-colors mb-3 ${
-                    videos.length >= VIDEO_MAX
-                      ? "border-border opacity-50 pointer-events-none"
-                      : videoDragOver
-                        ? "border-gold bg-gold3/20"
-                        : "border-border2 hover:border-gold hover:bg-gold3/20"
-                  }`}
-                >
-                  <input
-                    id="video-upload-input"
-                    type="file"
-                    accept="video/*"
-                    multiple
-                    // Voir les commentaires équivalents sur l'input photo.
-                    className="sr-only"
-                    onChange={(e) => {
-                      handleVideoUpload(e.target.files);
-                      e.target.value = "";
-                    }}
-                  />
-                  <div className="text-[32px] mb-3">🎬</div>
-                  <div className="font-semibold text-base text-text mb-1.5">Ajouter une vidéo de visite</div>
-                  <div className="text-sm text-muted mb-2.5">Donnez une vue immersive de votre bien</div>
-                  <div className="flex gap-2 flex-wrap justify-center mt-2.5">
-                    <span className="tag-pill gold">MP4, MOV, AVI, WEBM</span>
-                    <span className="tag-pill blue">Max 100 Mo / vidéo</span>
-                    <span className="tag-pill green">2 vidéos maximum</span>
-                  </div>
-                </label>
-                {videos.length > 0 && (
-                  <div className="flex flex-col gap-2.5 mb-2">
-                    {videos.map((v, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center gap-3 px-3.5 py-3 bg-card2 border-[1.5px] border-border rounded-[10px]"
-                      >
-                        <span className="text-[22px] shrink-0">🎬</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[13px] font-semibold text-text truncate">{v.name}</div>
-                          <div className="text-[11px] text-muted mt-0.5">
-                            {v.size > 0 ? `${(v.size / (1024 * 1024)).toFixed(1)} Mo · ` : ""}Vidéo {i + 1}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setVideos((prev) => prev.filter((_, idx) => idx !== i))}
-                          className="text-red text-lg leading-none shrink-0"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <PhotoUploader photos={photos} onPhotosChange={setPhotos} />
 
                 <div className="mt-7">
                   <label className="block text-[13px] text-muted mb-[7px] font-medium">Équipements disponibles</label>
@@ -965,10 +683,6 @@ function PublierPageInner() {
                     v={surface ? `${surface} m²` : "—"}
                   />
                   <PreviewRow k="Photos" v={`${photos.length} photo${photos.length > 1 ? "s" : ""}`} />
-                  <PreviewRow
-                    k="Vidéos"
-                    v={videos.length > 0 ? `${videos.length} vidéo${videos.length > 1 ? "s" : ""}` : "Aucune vidéo"}
-                  />
                   <PreviewRow
                     k="Prix"
                     v={price ? `${parseInt(price, 10).toLocaleString("fr-FR")} FCFA` : "—"}
