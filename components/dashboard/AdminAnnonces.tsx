@@ -20,7 +20,7 @@ import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
-import { listingTypeMeta } from "@/lib/data";
+import { propertyGroup, transactionMeta } from "@/lib/data";
 import type { ListingStatus, Property } from "@/lib/types";
 
 const PAGE_SIZE = 20;
@@ -204,7 +204,9 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
         </div>
       ) : (
         <div className="flex flex-col gap-3">
-          {properties.map((p) => (
+          {properties.map((p) => {
+            const meta = transactionMeta(p.transactionType, p.type, propertyGroup(p.kind));
+            return (
             <div
               key={p.id}
               className="flex flex-col sm:flex-row bg-card border border-border rounded-2xl overflow-hidden"
@@ -215,7 +217,10 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
               <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex gap-1.5 mb-1.5 flex-wrap">
-                    <Tag color={listingTypeMeta(p.type).tagColor}>{listingTypeMeta(p.type).badgeLabel}</Tag>
+                    <Tag color={meta.tagColor}>{meta.badgeLabel}</Tag>
+                    {p.type === "courte" && p.occupancyStatus === "occupe" && (
+                      <Tag color="red">🔴 Occupé</Tag>
+                    )}
                     {p.status === "blocked" && <Tag color="orange">🚫 Bloqué</Tag>}
                     {p.status === "pending" && <Tag color="blue">⏳ En attente</Tag>}
                   </div>
@@ -256,7 +261,8 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

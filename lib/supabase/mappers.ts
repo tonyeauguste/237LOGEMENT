@@ -1,5 +1,5 @@
 import type { Tables } from "./database.types";
-import type { ListingKind, ListingStatus, Property } from "@/lib/types";
+import type { ListingKind, ListingStatus, OccupancyStatus, Property, TransactionType } from "@/lib/types";
 import { DEFAULT_AVATAR } from "@/lib/data";
 
 export type PropertyRow = Tables<"properties">;
@@ -15,8 +15,10 @@ export function rowToProperty(row: PropertyRow): Property {
     city: row.city,
     quartier: row.quartier,
     address: row.address ?? undefined,
-    type: (row.type as ListingKind) ?? "longue",
+    transactionType: (row.transaction_type as TransactionType) ?? "location",
+    type: (row.type as ListingKind | null) ?? null,
     kind: row.kind ?? "appartement",
+    occupancyStatus: (row.occupancy_status as OccupancyStatus | null) ?? null,
     price: Number(row.price) || 0,
     rooms: row.rooms,
     baths: row.baths,

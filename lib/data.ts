@@ -1,4 +1,4 @@
-import type { ListingKind, Property } from "./types";
+import type { ListingKind, Property, TransactionType } from "./types";
 
 // ═══════════════════════════════════════════════
 // VILLES PAR RÉGION — source unique, utilisée dans
@@ -99,19 +99,23 @@ export interface PropertyKindDef {
   label: string;
   icon: string;
   group: PropertyGroup;
+  /** false = ce type de bien n'est proposé qu'à la location, jamais à la vente. */
+  saleEligible: boolean;
 }
 
+// Chambre et Studio sont volontairement exclus de la vente : ce sont des
+// logements meublés loués à la chambre/à l'unité, pas des biens qu'on cède.
 export const PROPERTY_KINDS: PropertyKindDef[] = [
-  { value: "chambre", label: "Chambre", icon: "🚪", group: "residentiel" },
-  { value: "studio", label: "Studio", icon: "🛏", group: "residentiel" },
-  { value: "appartement", label: "Appartement", icon: "🏢", group: "residentiel" },
-  { value: "duplex", label: "Duplex", icon: "🏘", group: "residentiel" },
-  { value: "villa", label: "Villa", icon: "🏡", group: "residentiel" },
-  { value: "maison", label: "Maison", icon: "🏠", group: "residentiel" },
-  { value: "bureau", label: "Bureau", icon: "💼", group: "commercial" },
-  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪", group: "commercial" },
-  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦", group: "commercial" },
-  { value: "terrain", label: "Terrain", icon: "🌍", group: "foncier" },
+  { value: "chambre", label: "Chambre", icon: "🚪", group: "residentiel", saleEligible: false },
+  { value: "studio", label: "Studio", icon: "🛏", group: "residentiel", saleEligible: false },
+  { value: "appartement", label: "Appartement", icon: "🏢", group: "residentiel", saleEligible: true },
+  { value: "duplex", label: "Duplex", icon: "🏘", group: "residentiel", saleEligible: true },
+  { value: "villa", label: "Villa", icon: "🏡", group: "residentiel", saleEligible: true },
+  { value: "maison", label: "Maison", icon: "🏠", group: "residentiel", saleEligible: true },
+  { value: "bureau", label: "Bureau", icon: "💼", group: "commercial", saleEligible: true },
+  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪", group: "commercial", saleEligible: true },
+  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦", group: "commercial", saleEligible: true },
+  { value: "terrain", label: "Terrain", icon: "🌍", group: "foncier", saleEligible: true },
 ];
 
 /** Libellé affichable d'un type de bien (retombe sur la valeur brute si inconnue). */
@@ -124,65 +128,55 @@ export function propertyGroup(kind: string): PropertyGroup {
   return PROPERTY_KINDS.find((k) => k.value === kind)?.group ?? "residentiel";
 }
 
+/** La vente est-elle proposée pour ce type de bien ? (false pour Chambre/Studio). */
+export function isSaleEligible(kind: string): boolean {
+  return PROPERTY_KINDS.find((k) => k.value === kind)?.saleEligible ?? true;
+}
+
 /**
  * Règles de visibilité des champs de l'étape "Détails du bien" du
- * formulaire /publier, selon le groupe du type de bien sélectionné.
- * Centralise le mapping catégorie → champs visibles à un seul endroit :
- * pour ajouter un nouveau type de bien, il suffit de le rattacher à l'un
- * de ces 3 groupes dans PROPERTY_KINDS ci-dessus, sans toucher au JSX du
- * formulaire ni des cartes d'annonce.
+ * formulaire /publier, selon le type de transaction (Vente/Location) ET le
+ * groupe du type de bien sélectionné. Centralise le mapping à un seul
+ * endroit : pour ajouter un nouveau type de bien, il suffit de le rattacher
+ * à l'un des 3 groupes dans PROPERTY_KINDS ci-dessus, sans toucher au JSX
+ * du formulaire ni des cartes d'annonce.
  */
 export interface FieldVisibilityRule {
-  /** Champ "Chambres" pertinent pour ce groupe. */
+  /** Champ "Chambres" pertinent pour cette combinaison. */
   rooms: boolean;
-  /** Champ "Salles de bain" pertinent pour ce groupe. */
+  /** Champ "Salles de bain" pertinent pour cette combinaison. */
   baths: boolean;
   /** Libellé du champ Surface — varie pour le foncier (contenance). */
   surfaceLabel: string;
-  /** "duree" = Longue/Courte durée ; "transaction" = Vente/Bail (foncier). */
-  listingTypeKind: "duree" | "transaction";
-  /** Libellé affiché au-dessus du sélecteur Longue/Courte ou Vente/Bail. */
-  listingTypeLabel: string;
+  /** Affiche le sélecteur Longue/Courte durée — uniquement en location, résidentiel/commercial. */
+  listingDuration: boolean;
 }
 
-export const FIELD_VISIBILITY_RULES: Record<PropertyGroup, FieldVisibilityRule> = {
-  residentiel: {
-    rooms: true,
-    baths: true,
-    surfaceLabel: "Surface (m²)",
-    listingTypeKind: "duree",
-    listingTypeLabel: "Type de location *",
+export const FIELD_VISIBILITY_RULES: Record<TransactionType, Record<PropertyGroup, FieldVisibilityRule>> = {
+  location: {
+    residentiel: { rooms: true, baths: true, surfaceLabel: "Surface (m²)", listingDuration: true },
+    commercial: { rooms: false, baths: false, surfaceLabel: "Surface (m²)", listingDuration: true },
+    // Terrain en location = bail, sans durée courte/longue à proprement
+    // parler (voir la note explicative affichée à la place dans le
+    // formulaire) — surface devient "contenance".
+    foncier: { rooms: false, baths: false, surfaceLabel: "Surface / Contenance (m² ou Hectares)", listingDuration: false },
   },
-  commercial: {
-    rooms: false,
-    baths: false,
-    surfaceLabel: "Surface (m²)",
-    listingTypeKind: "duree",
-    listingTypeLabel: "Type de location ou d'usage *",
+  vente: {
+    // Une vente n'a pas de durée : listingDuration toujours false ici.
+    residentiel: { rooms: true, baths: true, surfaceLabel: "Surface (m²)", listingDuration: false },
+    commercial: { rooms: false, baths: false, surfaceLabel: "Surface (m²)", listingDuration: false },
+    foncier: { rooms: false, baths: false, surfaceLabel: "Surface / Contenance (m² ou Hectares)", listingDuration: false },
   },
-  foncier: {
-    rooms: false,
-    baths: false,
-    surfaceLabel: "Surface / Contenance (m² ou Hectares)",
-    listingTypeKind: "transaction",
-    listingTypeLabel: "Type de transaction *",
-  },
-};
-
-/** Type de location/transaction proposé par défaut quand on bascule vers ce groupe. */
-export const DEFAULT_LISTING_TYPE: Record<PropertyGroup, ListingKind> = {
-  residentiel: "longue",
-  commercial: "longue",
-  foncier: "vente",
 };
 
 /**
- * Métadonnées d'affichage d'un ListingKind — un seul endroit pour le badge
- * (icône, couleur), le suffixe de prix et les libellés utilisés dans le
- * formulaire /publier et sur les cartes/fiches d'annonce. Évite de
- * dupliquer un `type === "courte" ? … : …` dans chaque composant.
+ * Métadonnées d'affichage d'une combinaison transaction/durée — un seul
+ * endroit pour le badge (icône, couleur), le suffixe de prix et les
+ * libellés utilisés dans le formulaire /publier et sur les cartes/fiches
+ * d'annonce. Évite de dupliquer un `type === "courte" ? … : …` dans
+ * chaque composant.
  */
-export interface ListingTypeMeta {
+export interface TransactionMeta {
   /** Texte + emoji du badge affiché sur les cartes/fiches d'annonce. */
   badgeLabel: string;
   /** Couleur du badge — mirroir du type TagColor de components/ui/Tag. */
@@ -191,50 +185,53 @@ export interface ListingTypeMeta {
   priceSuffix: string;
   /** Libellé du champ prix à l'étape Tarification du formulaire /publier. */
   priceFieldLabel: string;
-  /** Libellé court utilisé dans le récapitulatif du formulaire /publier. */
-  previewLabel: string;
   /** Libellé compact (fil d'ariane, encart prix de la fiche annonce). */
   shortLabel: string;
 }
 
-export const LISTING_TYPE_META: Record<ListingKind, ListingTypeMeta> = {
-  longue: {
-    badgeLabel: "🏡 Long terme",
-    tagColor: "green",
-    priceSuffix: "/mois",
-    priceFieldLabel: "Prix mensuel (FCFA) *",
-    previewLabel: "Longue durée (mois)",
-    shortLabel: "Location",
-  },
-  courte: {
-    badgeLabel: "🌴 Court séjour",
-    tagColor: "gold",
-    priceSuffix: "/nuit",
-    priceFieldLabel: "Prix par nuit (FCFA) *",
-    previewLabel: "Court séjour (nuit)",
-    shortLabel: "Court séjour",
-  },
-  vente: {
-    badgeLabel: "💰 À vendre",
-    tagColor: "blue",
-    priceSuffix: "",
-    priceFieldLabel: "Prix de vente (FCFA) *",
-    previewLabel: "Vente",
-    shortLabel: "Vente",
-  },
-  bail: {
-    badgeLabel: "📜 Bail",
-    tagColor: "orange",
-    priceSuffix: "/mois",
-    priceFieldLabel: "Loyer de bail (FCFA) *",
-    previewLabel: "Bail",
-    shortLabel: "Bail",
-  },
+const SALE_META: TransactionMeta = {
+  badgeLabel: "💰 À vendre",
+  tagColor: "blue",
+  priceSuffix: "",
+  priceFieldLabel: "Prix de vente (FCFA) *",
+  shortLabel: "Vente",
+};
+const LONG_TERM_META: TransactionMeta = {
+  badgeLabel: "🏡 Long terme",
+  tagColor: "green",
+  priceSuffix: "/mois",
+  priceFieldLabel: "Prix mensuel (FCFA) *",
+  shortLabel: "Location",
+};
+const SHORT_TERM_META: TransactionMeta = {
+  badgeLabel: "🌴 Court séjour",
+  tagColor: "gold",
+  priceSuffix: "/nuit",
+  priceFieldLabel: "Prix par nuit (FCFA) *",
+  shortLabel: "Court séjour",
+};
+const LEASE_META: TransactionMeta = {
+  badgeLabel: "📜 Bail",
+  tagColor: "orange",
+  priceSuffix: "/mois",
+  priceFieldLabel: "Loyer de bail (FCFA) *",
+  shortLabel: "Bail",
 };
 
-/** Métadonnées d'un ListingKind (retombe sur "longue" si la valeur est inconnue). */
-export function listingTypeMeta(type: string): ListingTypeMeta {
-  return LISTING_TYPE_META[type as ListingKind] ?? LISTING_TYPE_META.longue;
+/**
+ * Résout les métadonnées d'affichage d'une annonce à partir de sa
+ * transaction, sa durée (si location) et son groupe de type de bien.
+ * Un terrain en location (bail) n'a pas de durée longue/courte : on lui
+ * donne son propre badge plutôt que de retomber sur "Longue durée" par défaut.
+ */
+export function transactionMeta(
+  transactionType: TransactionType,
+  type: ListingKind | null,
+  group: PropertyGroup
+): TransactionMeta {
+  if (transactionType === "vente") return SALE_META;
+  if (group === "foncier") return LEASE_META;
+  return type === "courte" ? SHORT_TERM_META : LONG_TERM_META;
 }
 
 // ═══════════════════════════════════════════════

@@ -13,17 +13,17 @@ import {
   AMENITIES,
   amenityFull,
   DEFAULT_AVATAR,
-  DEFAULT_LISTING_TYPE,
   FIELD_VISIBILITY_RULES,
+  isSaleEligible,
   kindLabel,
-  listingTypeMeta,
   PROPERTY_KINDS,
   propertyGroup,
+  transactionMeta,
 } from "@/lib/data";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
-import type { ListingKind, UploadedPhoto, UploadedVideo } from "@/lib/types";
+import type { ListingKind, OccupancyStatus, TransactionType, UploadedPhoto, UploadedVideo } from "@/lib/types";
 
 const PHOTO_MAX = 15;
 const PHOTO_SIZE_MB = 10;
@@ -64,30 +64,54 @@ function PublierPageInner() {
   const [rooms, setRooms] = useState("1");
   const [baths, setBaths] = useState("1");
   const [surface, setSurface] = useState("");
+  const [transactionType, setTransactionType] = useState<TransactionType>("location");
   const [listingType, setListingType] = useState<ListingKind>("longue");
   const [kind, setKind] = useState("appartement");
   const [desc, setDesc] = useState("");
+  // Statut d'occupation existant, conservé tel quel en mode édition (voir
+  // le commentaire au-dessus de `occupancyStatus` dans le payload de
+  // `publish`) — `null` pour une nouvelle annonce.
+  const [initialOccupancyStatus, setInitialOccupancyStatus] = useState<OccupancyStatus | null>(null);
 
   // Groupe du type de bien sélectionné (résidentiel / commercial / foncier)
-  // et champs à afficher pour ce groupe — voir FIELD_VISIBILITY_RULES dans
-  // lib/data.ts, source unique du mapping catégorie → champs visibles.
+  // et champs à afficher pour cette combinaison transaction × groupe — voir
+  // FIELD_VISIBILITY_RULES dans lib/data.ts, source unique du mapping.
   const group = propertyGroup(kind);
-  const rules = FIELD_VISIBILITY_RULES[group];
+  const saleEligible = isSaleEligible(kind);
+  const rules = FIELD_VISIBILITY_RULES[transactionType][group];
 
-  // Réinitialise les champs propres à un groupe dès qu'on bascule vers un
-  // groupe différent (ex : Appartement → Terrain) : sans ça, des chambres
-  // ou un type de location résiduels d'un ancien choix pourraient être
-  // envoyés pour un bien qui n'en a pas. Fait pendant le rendu (même
-  // pattern que "prevUrlTab" dans app/connexion/page.tsx) plutôt que dans
-  // un effet, pour éviter un rendu supplémentaire à chaque changement de
-  // catégorie. La confirmation finale à la soumission (voir `publish`)
-  // sert de filet de sécurité supplémentaire.
-  const [prevGroup, setPrevGroup] = useState(group);
-  if (group !== prevGroup) {
-    setPrevGroup(group);
+  // A.1 — Chambre et Studio n'autorisent que la Location : si l'utilisateur
+  // avait choisi Vente puis bascule vers l'un de ces types, on repasse
+  // automatiquement sur Location. Fait pendant le rendu (même pattern que
+  // "prevUrlTab" dans app/connexion/page.tsx) plutôt que dans un effet,
+  // pour éviter un rendu supplémentaire à chaque changement de catégorie.
+  const [prevSaleEligible, setPrevSaleEligible] = useState(saleEligible);
+  if (saleEligible !== prevSaleEligible) {
+    setPrevSaleEligible(saleEligible);
+    if (!saleEligible && transactionType === "vente") setTransactionType("location");
+  }
+
+  // Réinitialise Chambres/Salles de bain dès que la combinaison transaction
+  // × groupe change (ex : Location+Appartement → Vente+Terrain) : sans ça,
+  // des valeurs résiduelles d'un ancien choix pourraient être envoyées pour
+  // un bien qui n'en a pas. La confirmation finale à la soumission (voir
+  // `publish`) sert de filet de sécurité supplémentaire.
+  const rulesKey = `${transactionType}:${group}`;
+  const [prevRulesKey, setPrevRulesKey] = useState(rulesKey);
+  if (rulesKey !== prevRulesKey) {
+    setPrevRulesKey(rulesKey);
     if (!rules.rooms) setRooms("1");
     if (!rules.baths) setBaths("1");
-    setListingType(DEFAULT_LISTING_TYPE[group]);
+  }
+
+  // Réinitialise la durée (longue/courte) uniquement quand elle redevient
+  // pertinente après avoir été masquée (ex : Vente → Location) — on ne
+  // touche pas au choix de l'utilisateur tant qu'il reste visible (ex :
+  // Villa → Bureau ne doit pas faire perdre un choix "Courte durée").
+  const [prevListingDuration, setPrevListingDuration] = useState(rules.listingDuration);
+  if (rules.listingDuration !== prevListingDuration) {
+    setPrevListingDuration(rules.listingDuration);
+    if (rules.listingDuration) setListingType("longue");
   }
 
   // Step 3
@@ -160,7 +184,9 @@ function PublierPageInner() {
         setRooms(String(data.rooms));
         setBaths(String(data.baths));
         setSurface(data.surface != null ? String(data.surface) : "");
+        setTransactionType((data.transaction_type as TransactionType) || "location");
         setListingType((data.type as ListingKind) || "longue");
+        setInitialOccupancyStatus((data.occupancy_status as OccupancyStatus | null) ?? null);
         setKind(data.kind || "appartement");
         setDesc(data.description || "");
         setPhotos((data.images || []).map((url) => ({ name: url.split("/").pop() || "photo", url })));
@@ -305,18 +331,27 @@ function PublierPageInner() {
         videos.map((v, i) => (v.file ? uploadOne("videos", v.file, i) : Promise.resolve("")))
       );
 
-      // Filet de sécurité : quel que soit l'état des champs masqués côté
-      // UI (course entre effets lors d'un changement rapide de type de
-      // bien, données pré-remplies en mode édition, etc.), on n'envoie
-      // jamais à la base une valeur qui n'a pas de sens pour ce groupe.
-      const submittedType =
-        rules.listingTypeKind === "transaction"
-          ? listingType === "vente" || listingType === "bail"
-            ? listingType
-            : DEFAULT_LISTING_TYPE.foncier
-          : listingType === "longue" || listingType === "courte"
-            ? listingType
-            : DEFAULT_LISTING_TYPE.residentiel;
+      // Filet de sécurité : quel que soit l'état des champs masqués côté UI
+      // (course entre effets lors d'un changement rapide de type de bien,
+      // données pré-remplies en mode édition, etc.), on n'envoie jamais à
+      // la base une valeur qui n'a pas de sens pour cette combinaison.
+      const submittedTransaction: TransactionType = saleEligible && transactionType === "vente" ? "vente" : "location";
+      const submittedType = rules.listingDuration
+        ? listingType === "longue" || listingType === "courte"
+          ? listingType
+          : "longue"
+        : null;
+      // Le statut d'occupation ne se gère jamais depuis ce formulaire (voir
+      // le tableau de bord propriétaire) — on ne fait ici que : (a) le
+      // vider si la combinaison n'y donne plus droit (ex : bien repassé en
+      // Vente), (b) l'initialiser à "disponible" quand il devient pertinent
+      // pour la première fois. Dans tous les autres cas, on conserve la
+      // valeur existante telle quelle pour ne jamais écraser un bien
+      // marqué "occupé" par une simple modification du formulaire.
+      const occupancyApplicable = submittedTransaction === "location" && submittedType !== null;
+      const submittedOccupancy: OccupancyStatus | null = occupancyApplicable
+        ? (initialOccupancyStatus ?? "disponible")
+        : null;
 
       const payload = {
         title,
@@ -327,8 +362,10 @@ function PublierPageInner() {
         address: address || null,
         precision_desc: precision || null,
         description: desc,
+        transaction_type: submittedTransaction,
         type: submittedType,
         kind,
+        occupancy_status: submittedOccupancy,
         price: price ? Number(price) : 0,
         deposit: deposit ? Number(deposit) : null,
         charges,
@@ -471,6 +508,40 @@ function PublierPageInner() {
                     ))}
                   </select>
                 </Field>
+
+                {/* A.1 — Type de transaction : Vente n'est proposée que pour
+                    les types de bien "saleEligible" (Chambre et Studio en
+                    sont exclus, voir TYPES_ELIGIBLES_VENTE dans lib/data.ts).
+                    L'option est retirée plutôt que désactivée pour ce type
+                    de bien — plus net qu'une carte grisée. */}
+                <div className="mb-4">
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">Type de transaction *</label>
+                  <div className={`grid grid-cols-1 gap-3 mt-1.5 ${saleEligible ? "sm:grid-cols-2" : ""}`}>
+                    <RoleCard
+                      icon="🔑"
+                      title="Location"
+                      desc="Mettez votre bien en location, courte ou longue durée."
+                      active={transactionType === "location"}
+                      onClick={() => setTransactionType("location")}
+                    />
+                    {saleEligible && (
+                      <RoleCard
+                        icon="💰"
+                        title="Vente"
+                        desc="Cédez votre bien définitivement, en un seul paiement."
+                        active={transactionType === "vente"}
+                        onClick={() => setTransactionType("vente")}
+                      />
+                    )}
+                  </div>
+                  {!saleEligible && (
+                    <p className="text-[11px] text-dim mt-1.5">
+                      La vente n&apos;est pas proposée pour ce type de bien — {kindLabel(kind).toLowerCase()} se
+                      loue uniquement.
+                    </p>
+                  )}
+                </div>
+
                 {/* Chambres / Salles de bain / Surface — les deux premiers
                     champs ne s'affichent que pour le groupe résidentiel
                     (voir FIELD_VISIBILITY_RULES) : ni un bureau, ni un
@@ -512,48 +583,42 @@ function PublierPageInner() {
                     />
                   </Field>
                 </div>
-                <div className="mb-4">
-                  <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                    {rules.listingTypeLabel}
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
-                    {rules.listingTypeKind === "transaction" ? (
-                      <>
-                        <RoleCard
-                          icon="💰"
-                          title="Vente"
-                          desc="Cession définitive du terrain, paiement en une fois."
-                          active={listingType === "vente"}
-                          onClick={() => setListingType("vente")}
-                        />
-                        <RoleCard
-                          icon="📜"
-                          title="Bail"
-                          desc="Mise à disposition longue durée, avec loyer périodique."
-                          active={listingType === "bail"}
-                          onClick={() => setListingType("bail")}
-                        />
-                      </>
-                    ) : (
-                      <>
-                        <RoleCard
-                          icon="🏡"
-                          title="Longue durée"
-                          desc="Location mensuelle (maison, appartement, villa)"
-                          active={listingType === "longue"}
-                          onClick={() => setListingType("longue")}
-                        />
-                        <RoleCard
-                          icon="🌴"
-                          title="Courte durée"
-                          desc="Location à la nuit ou à la semaine"
-                          active={listingType === "courte"}
-                          onClick={() => setListingType("courte")}
-                        />
-                      </>
-                    )}
+
+                {/* A.2 — Longue/Courte durée : uniquement en Location,
+                    résidentiel ou commercial (rules.listingDuration). Un
+                    terrain en location est proposé en bail — pas de durée
+                    figée, on l'explique plutôt que d'inventer un champ. */}
+                {rules.listingDuration ? (
+                  <div className="mb-4">
+                    <label className="block text-[13px] text-muted mb-[7px] font-medium">
+                      {group === "commercial" ? "Type de location ou d'usage *" : "Type de location *"}
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
+                      <RoleCard
+                        icon="🏡"
+                        title="Longue durée"
+                        desc="Location mensuelle (maison, appartement, villa)"
+                        active={listingType === "longue"}
+                        onClick={() => setListingType("longue")}
+                      />
+                      <RoleCard
+                        icon="🌴"
+                        title="Courte durée"
+                        desc="Location à la nuit ou à la semaine"
+                        active={listingType === "courte"}
+                        onClick={() => setListingType("courte")}
+                      />
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  transactionType === "location" &&
+                  group === "foncier" && (
+                    <p className="text-[12px] text-muted -mt-1 mb-4">
+                      📜 Terrain proposé en bail — durée et modalités à discuter directement avec le propriétaire.
+                    </p>
+                  )
+                )}
+
                 <Field label="Description détaillée *">
                   <textarea
                     className="form-control"
@@ -721,7 +786,7 @@ function PublierPageInner() {
             {step === 4 && (
               <div>
                 <StepTitle icon="💰" text="Tarification" />
-                <Field label={listingTypeMeta(listingType).priceFieldLabel}>
+                <Field label={transactionMeta(transactionType, rules.listingDuration ? listingType : null, group).priceFieldLabel}>
                   <input
                     className="form-control !text-xl !font-semibold !px-[18px] !py-[14px]"
                     type="number"
@@ -788,10 +853,13 @@ function PublierPageInner() {
                   <PreviewRow k="Type de bien" v={kindLabel(kind)} />
                   <PreviewRow k="Ville" v={city || "—"} />
                   <PreviewRow k="Quartier" v={quartier || "—"} />
-                  <PreviewRow
-                    k={rules.listingTypeKind === "transaction" ? "Transaction" : "Location"}
-                    v={listingTypeMeta(listingType).previewLabel}
-                  />
+                  <PreviewRow k="Transaction" v={transactionType === "vente" ? "Vente" : "Location"} />
+                  {rules.listingDuration && (
+                    <PreviewRow
+                      k="Durée"
+                      v={listingType === "courte" ? "Court séjour (nuit)" : "Longue durée (mois)"}
+                    />
+                  )}
                   {rules.rooms && <PreviewRow k="Chambres" v={`${rooms} chambre(s)`} />}
                   <PreviewRow
                     k={group === "foncier" ? "Contenance" : "Surface"}

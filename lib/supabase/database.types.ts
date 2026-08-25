@@ -52,7 +52,7 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar: string | null
+          avatar: string | null
           city: string | null
           created_at: string
           id: string
@@ -62,7 +62,7 @@ export type Database = {
           status: string
         }
         Insert: {
-          avatar?: string | null
+          avatar?: string | null
           city?: string | null
           created_at?: string
           id: string
@@ -72,7 +72,7 @@ export type Database = {
           status?: string
         }
         Update: {
-          avatar?: string | null
+          avatar?: string | null
           city?: string | null
           created_at?: string
           id?: string
@@ -99,6 +99,7 @@ export type Database = {
           images: string[]
           kind: string
           min_duration: string | null
+          occupancy_status: string | null
           owner_avatar: string | null
           owner_id: string | null
           owner_listings: number
@@ -112,7 +113,8 @@ export type Database = {
           status: string
           surface: number | null
           title: string
-          type: string
+          transaction_type: string
+          type: string | null
           verified: boolean
           videos: string[]
           views: number
@@ -132,6 +134,7 @@ export type Database = {
           images?: string[]
           kind?: string
           min_duration?: string | null
+          occupancy_status?: string | null
           owner_avatar?: string | null
           owner_id?: string | null
           owner_listings?: number
@@ -145,7 +148,8 @@ export type Database = {
           status?: string
           surface?: number | null
           title: string
-          type?: string
+          transaction_type?: string
+          type?: string | null
           verified?: boolean
           videos?: string[]
           views?: number
@@ -165,6 +169,7 @@ export type Database = {
           images?: string[]
           kind?: string
           min_duration?: string | null
+          occupancy_status?: string | null
           owner_avatar?: string | null
           owner_id?: string | null
           owner_listings?: number
@@ -178,7 +183,8 @@ export type Database = {
           status?: string
           surface?: number | null
           title?: string
-          type?: string
+          transaction_type?: string
+          type?: string | null
           verified?: boolean
           videos?: string[]
           views?: number

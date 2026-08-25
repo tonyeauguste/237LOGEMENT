@@ -24,7 +24,7 @@ import {
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import { FIELD_VISIBILITY_RULES, kindLabel, listingTypeMeta, propertyGroup } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -33,8 +33,12 @@ import Button from "@/components/ui/Button";
 type DetailTab = "desc" | "amenities" | "map";
 
 export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
-  const typeMeta = listingTypeMeta(p.type);
-  const rules = FIELD_VISIBILITY_RULES[propertyGroup(p.kind)];
+  const group = propertyGroup(p.kind);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group);
+  const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
+  // B.2/B.4 — voir le commentaire équivalent dans PropertyCard.tsx : ne
+  // concerne que le court séjour, le longue durée supprime l'annonce.
+  const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [tab, setTab] = useState<DetailTab>("desc");
   const [msg, setMsg] = useState("");
@@ -151,13 +155,24 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                   alt={`${p.title} — photo ${galleryIdx + 1}`}
                   fill
                   sizes="(max-width: 1024px) 100vw, 60vw"
-                  className="object-cover"
+                  className={`object-cover ${isOccupied ? "blur-lg pointer-events-none scale-105" : ""}`}
                   priority
                 />
               </motion.div>
             </AnimatePresence>
 
-            {p.imgs.length > 1 && (
+            {/* B.2/B.4 — bien occupé : photo floutée et non zoomable/non
+                navigable (flèches et miniatures désactivées ci-dessous),
+                avec un repère clair au centre pour expliquer le flou. */}
+            {isOccupied && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <Tag color="red" className="!text-[13px] !px-4 !py-1.5">
+                  🔴 Bien occupé — photos temporairement masquées
+                </Tag>
+              </div>
+            )}
+
+            {p.imgs.length > 1 && !isOccupied && (
               <>
                 <button
                   onClick={prevImg}
@@ -186,11 +201,18 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 <button
                   key={i}
                   onClick={() => setGalleryIdx(i)}
+                  disabled={isOccupied}
                   className={`relative w-[92px] h-[68px] rounded-lg overflow-hidden shrink-0 border-2 transition-colors ${
-                    i === galleryIdx ? "border-gold" : "border-transparent hover:border-border2"
-                  }`}
+                    isOccupied ? "cursor-not-allowed" : ""
+                  } ${i === galleryIdx ? "border-gold" : "border-transparent hover:border-border2"}`}
                 >
-                  <Image src={src} alt={`Miniature ${i + 1}`} fill sizes="92px" className="object-cover" />
+                  <Image
+                    src={src}
+                    alt={`Miniature ${i + 1}`}
+                    fill
+                    sizes="92px"
+                    className={`object-cover ${isOccupied ? "blur-md pointer-events-none scale-105" : ""}`}
+                  />
                 </button>
               ))}
             </div>
@@ -200,6 +222,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           <div className="mb-6">
             <div className="flex gap-2 items-center mb-3 flex-wrap">
               <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
+              {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
               {p.verified && <Tag color="blue">🛡 Propriétaire vérifié</Tag>}
               {p.available ? <Tag color="green">✅ Disponible</Tag> : <Tag color="red">❌ Non disponible</Tag>}
             </div>

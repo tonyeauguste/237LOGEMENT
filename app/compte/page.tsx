@@ -29,11 +29,16 @@ import {
   Building2,
   Users2,
   ShieldCheck,
+  Home,
+  AlertTriangle,
+  Info,
 } from "lucide-react";
 import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
 import ToggleRow from "@/components/ui/ToggleRow";
+import Toggle from "@/components/ui/Toggle";
+import Modal from "@/components/ui/Modal";
 import PasswordField from "@/components/auth/PasswordField";
 import PasswordStrength from "@/components/auth/PasswordStrength";
 import CityInput from "@/components/ui/CityInput";
@@ -47,7 +52,7 @@ import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
-import { listingTypeMeta } from "@/lib/data";
+import { propertyGroup, transactionMeta } from "@/lib/data";
 import type { Property } from "@/lib/types";
 
 type UserSection = "favoris" | "listings" | "stats" | "messages" | "settings";
@@ -76,6 +81,17 @@ export default function AccountDashboard() {
   const [listings, setListings] = useState<Property[]>([]);
   const [favProperties, setFavProperties] = useState<Property[]>([]);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  // PARTIE B — statut d'occupation. `occupancyBusyId` couvre le toggle
+  // (courte durée) ; `rentalModalTarget` porte l'annonce en attente de
+  // confirmation dans la modale "Marquer comme loué" (longue durée,
+  // suppression définitive — voir handleMarkAsRented).
+  const [occupancyBusyId, setOccupancyBusyId] = useState<number | null>(null);
+  const [rentalModalTarget, setRentalModalTarget] = useState<Property | null>(null);
+  const [markingRented, setMarkingRented] = useState(false);
+  // Incrémenté après un échec de handleToggleOccupancy pour forcer le
+  // remontage du Toggle concerné (voir son usage plus bas) — sinon son
+  // bascule optimiste reste affiché à tort après une erreur serveur.
+  const [toggleNonce, setToggleNonce] = useState(0);
   const [messages, setMessages] = useState<
     { id: number; message: string; created_at: string; property_title: string; property_id: number }[]
   >([]);
@@ -203,6 +219,68 @@ export default function AccountDashboard() {
     }
     setListings((prev) => prev.filter((l) => l.id !== p.id));
     showToast("🗑️ Annonce supprimée.", "success");
+  }
+
+  /**
+   * PARTIE B.2 — Toggle réversible (court séjour uniquement) : bascule le
+   * statut d'occupation sans jamais toucher à l'annonce elle-même. Le
+   * badge rouge + le flou de la photo sur l'affichage public découlent de
+   * ce seul champ (voir isOccupied dans PropertyCard.tsx / PropertyDetail.tsx).
+   */
+  async function handleToggleOccupancy(p: Property, occupied: boolean) {
+    setOccupancyBusyId(p.id);
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("properties")
+      .update({ occupancy_status: occupied ? "occupe" : "disponible" })
+      .eq("id", p.id)
+      .select();
+    setOccupancyBusyId(null);
+    if (error || !data || data.length === 0) {
+      showToast("❌ Impossible de mettre à jour le statut. Réessayez.", "error");
+      // Le composant Toggle bascule visuellement dès le clic (optimiste),
+      // avant même la réponse du serveur. Sans ce remount forcé, un échec
+      // laisserait le toggle affiché dans le mauvais état — sa `key` ne
+      // change que si `occupancyStatus` change réellement, ce qui n'arrive
+      // pas ici puisque l'update a échoué.
+      setToggleNonce((n) => n + 1);
+      return;
+    }
+    setListings((prev) =>
+      prev.map((l) => (l.id === p.id ? { ...l, occupancyStatus: occupied ? "occupe" : "disponible" } : l))
+    );
+    showToast(
+      occupied
+        ? "🔴 Annonce marquée comme occupée — sa photo est floutée sur la fiche publique."
+        : "✅ Annonce remise disponible.",
+      "success"
+    );
+  }
+
+  /**
+   * PARTIE B.3 — Longue durée : action définitive, appelée uniquement
+   * après confirmation dans la modale (voir `rentalModalTarget`). Pas de
+   * statut "occupé" persisté ici : on réutilise directement le mécanisme
+   * de suppression déjà en place (`handleDelete` ci-dessus, seule
+   * suppression définitive existante dans le projet) pour rester cohérent
+   * — l'annonce n'est ensuite plus ni visible ni récupérable.
+   */
+  async function handleMarkAsRented(p: Property) {
+    setMarkingRented(true);
+    const supabase = createClient();
+    const { data, error } = await supabase.from("properties").delete().eq("id", p.id).select();
+    setMarkingRented(false);
+    if (error || !data || data.length === 0) {
+      showToast("❌ Impossible de finaliser cette action. Réessayez.", "error");
+      return;
+    }
+    setListings((prev) => prev.filter((l) => l.id !== p.id));
+    // Ferme la modale seulement si elle affiche encore CETTE annonce — si
+    // l'utilisateur l'a fermée puis a ouvert celle d'une autre annonce
+    // pendant que cette requête était en vol, on ne veut pas lui fermer
+    // sous le nez la modale d'une confirmation en cours pour une autre.
+    setRentalModalTarget((current) => (current?.id === p.id ? null : current));
+    showToast("🏠 Bien marqué comme loué — l'annonce a été supprimée définitivement.", "success");
   }
 
   /**
@@ -415,6 +493,29 @@ export default function AccountDashboard() {
                     </div>
                   ))}
                 </div>
+
+                {/* PARTIE C — rappel discret (pas de popup) sur la gestion
+                    du statut d'occupation, visible tant qu'il y a des
+                    annonces en location à gérer. */}
+                {listings.some((p) => p.transactionType === "location" && p.type !== null) && (
+                  <div className="flex gap-3 bg-card2 border border-border rounded-xl px-4 py-3.5 mb-6 text-[13px] text-muted leading-relaxed">
+                    <Info size={16} className="text-gold shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-medium text-text">
+                        📌 Rappel : une fois votre bien pris, pensez à mettre à jour son statut.
+                      </span>
+                      <br />
+                      — <strong className="text-text">Courte durée</strong> : marquez l&apos;annonce comme
+                      « Occupée » — elle reste visible mais la photo est floutée jusqu&apos;à la remise à jour du
+                      statut.
+                      <br />
+                      — <strong className="text-text">Longue durée</strong> : marquer un bien comme loué
+                      supprime définitivement l&apos;annonce de la recherche publique. Cette action est
+                      irréversible.
+                    </div>
+                  </div>
+                )}
+
                 {loading ? null : listings.length === 0 ? (
                   <ComingSoon
                     title="Aucune annonce publiée pour le moment"
@@ -428,7 +529,13 @@ export default function AccountDashboard() {
                   />
                 ) : (
                   <div className="flex flex-col gap-3.5">
-                    {listings.map((p) => (
+                    {listings.map((p) => {
+                      const group = propertyGroup(p.kind);
+                      const meta = transactionMeta(p.transactionType, p.type, group);
+                      // B.2/B.4 — badge + flou de la photo publique, cohérent
+                      // avec PropertyCard.tsx / PropertyDetail.tsx.
+                      const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
+                      return (
                       <Link
                         key={p.id}
                         href={`/annonce/${p.id}`}
@@ -440,9 +547,8 @@ export default function AccountDashboard() {
                         <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4 px-5 py-4">
                           <div className="flex-1">
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
-                              <Tag color={listingTypeMeta(p.type).tagColor}>
-                                {listingTypeMeta(p.type).badgeLabel}
-                              </Tag>
+                              <Tag color={meta.tagColor}>{meta.badgeLabel}</Tag>
+                              {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
                               {!p.available && <Tag color="red">Non disponible</Tag>}
                               {p.status === "blocked" && <Tag color="orange">🚫 Bloqué</Tag>}
                             </div>
@@ -466,6 +572,43 @@ export default function AccountDashboard() {
                           <div className="font-display font-bold text-lg text-gold shrink-0">
                             {fmtPrice(p.price)}
                           </div>
+
+                          {/* B.2 — court séjour : toggle réversible, pas de
+                              confirmation (contrairement au longue durée
+                              ci-dessous, volontairement traité différemment
+                              pour qu'on ne les confonde jamais). */}
+                          {p.transactionType === "location" && p.type === "courte" && (
+                            <div
+                              onClick={(e) => e.stopPropagation()}
+                              title={isOccupied ? "Remettre l'annonce disponible" : "Marquer comme occupé"}
+                              className="shrink-0 flex items-center gap-2"
+                            >
+                              <span className="text-[11px] text-muted hidden sm:inline">Occupé</span>
+                              <Toggle
+                                key={`occ-${p.id}-${p.occupancyStatus ?? "disponible"}-${toggleNonce}`}
+                                defaultOn={isOccupied}
+                                disabled={occupancyBusyId === p.id}
+                                onChange={(on) => handleToggleOccupancy(p, on)}
+                              />
+                            </div>
+                          )}
+                          {/* B.3 — longue durée : ouvre la modale de
+                              confirmation, seule porte d'entrée vers
+                              handleMarkAsRented (suppression définitive). */}
+                          {p.transactionType === "location" && p.type === "longue" && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setRentalModalTarget(p);
+                              }}
+                              title="Marquer comme loué"
+                              className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted hover:bg-red/10 hover:border-red hover:text-red transition-colors"
+                            >
+                              <Home size={15} />
+                            </button>
+                          )}
+
                           <button
                             onClick={(e) => {
                               e.preventDefault();
@@ -491,9 +634,54 @@ export default function AccountDashboard() {
                           </button>
                         </div>
                       </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
+
+                {/* B.3 — modale de confirmation "Marquer comme loué",
+                    délibérément distincte (rouge, texte d'avertissement
+                    explicite) du toggle réversible du court séjour
+                    ci-dessus, pour qu'un propriétaire ne les confonde pas. */}
+                <Modal open={rentalModalTarget !== null} onClose={() => setRentalModalTarget(null)}>
+                  {rentalModalTarget && (
+                    <>
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-10 h-10 rounded-full bg-red/10 border border-red/30 flex items-center justify-center shrink-0">
+                          <AlertTriangle size={18} className="text-red" />
+                        </div>
+                        <h3 className="font-display text-lg font-bold text-text">Marquer ce bien comme loué ?</h3>
+                      </div>
+                      <p className="text-sm text-muted leading-relaxed mb-1.5">
+                        Cette action est <strong className="text-text">définitive</strong>. Une fois votre bien «{" "}
+                        {rentalModalTarget.title} » marqué comme loué, l&apos;annonce sera{" "}
+                        <strong className="text-red">supprimée</strong> et ne pourra pas être récupérée.
+                      </p>
+                      <p className="text-sm text-muted leading-relaxed mb-6">
+                        Si vous souhaitez le publier à nouveau plus tard, il faudra créer une nouvelle annonce
+                        depuis zéro.
+                      </p>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="ghost"
+                          className="flex-1"
+                          onClick={() => setRentalModalTarget(null)}
+                          disabled={markingRented}
+                        >
+                          Annuler
+                        </Button>
+                        <Button
+                          variant="danger"
+                          className="flex-1"
+                          loading={markingRented}
+                          onClick={() => handleMarkAsRented(rentalModalTarget)}
+                        >
+                          Confirmer — Supprimer l&apos;annonce
+                        </Button>
+                      </div>
+                    </>
+                  )}
+                </Modal>
               </>
             )}
 

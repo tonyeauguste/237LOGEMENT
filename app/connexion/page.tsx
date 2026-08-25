@@ -79,7 +79,18 @@ function AuthPageInner() {
     });
     setLoading(false);
     if (error || !data.session) {
-      showToast("❌ Email ou mot de passe incorrect.", "error");
+      // "Invalid login credentials" couvre à la fois un mauvais mot de
+      // passe ET un email qui n'existe pas (Supabase ne distingue pas les
+      // deux, pour ne pas révéler quels emails sont enregistrés) — mais
+      // "Email not confirmed" est un cas différent et actionnable qu'on
+      // doit signaler correctement plutôt que de le noyer dans le même
+      // message générique.
+      showToast(
+        error?.message.toLowerCase().includes("email not confirmed")
+          ? "📧 Confirmez d'abord votre adresse via le lien reçu par email."
+          : "❌ Email ou mot de passe incorrect.",
+        "error"
+      );
       return;
     }
     const user = await buildUserFromSession(data.session);
@@ -155,11 +166,27 @@ function AuthPageInner() {
       return;
     }
     if (!data.session) {
-      // La confirmation par email est activée sur ce projet : le compte
-      // est créé mais pas encore utilisable tant que le lien reçu par
-      // email n'a pas été cliqué.
+      // Par protection anti-énumération, Supabase répond 200 sans erreur
+      // même quand l'email existe déjà — sans cette vérification sur
+      // `identities` (vide pour un email déjà enregistré, cf. doc Supabase
+      // "Existing accounts"), on annonçait à tort "Compte créé !" à un
+      // utilisateur qui a juste retapé son email existant, qui tentait
+      // ensuite de se connecter avec un mot de passe qui n'était jamais
+      // le bon → cascade de "Email ou mot de passe incorrect" (bug réel
+      // observé dans les logs Supabase du projet).
+      if (data.user && data.user.identities?.length === 0) {
+        showToast("❌ Un compte existe déjà avec cet email. Connectez-vous plutôt.", "error");
+        setTab("login");
+        setLoginEmail(regEmail.trim());
+        setStep(1);
+        return;
+      }
+      // Cas normal : la confirmation par email est activée sur ce projet,
+      // le compte est créé mais pas encore utilisable tant que le lien
+      // reçu par email n'a pas été cliqué.
       showToast("📧 Compte créé ! Vérifiez vos emails pour confirmer votre adresse.", "success");
       setTab("login");
+      setLoginEmail(regEmail.trim());
       setStep(1);
       return;
     }
