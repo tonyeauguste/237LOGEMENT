@@ -62,7 +62,7 @@ export default function Footer() {
             <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">Centre d&apos;aide (FAQ)</Link></li>
             <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">Contactez-nous</Link></li>
             <li><Link href="/a-propos" className="text-muted text-[13px] hover:text-gold transition-colors">À propos de nous</Link></li>
-            <li><span className="text-dim text-[13px]">CGU &amp; Politique de confidentialité (bientôt)</span></li>
+            <li><Link href="/confidentialite" className="text-muted text-[13px] hover:text-gold transition-colors">Politique de confidentialité</Link></li>
             <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">Signaler une fraude</Link></li>
           </ul>
           <div className="mt-[18px] pt-4 border-t border-border">
@@ -82,10 +82,14 @@ export default function Footer() {
           <CameroonFlag width={16} height={12} />
           Fait avec ❤️ au Cameroun
         </p>
-        {/* Pages légales pas encore rédigées — affichées à titre indicatif,
-            sans lien, pour ne pas promettre une page qui n'existe pas. */}
+        {/* CGU et page Cookies pas encore rédigées — affichées à titre
+            indicatif, sans lien, pour ne pas promettre une page qui
+            n'existe pas. La politique de confidentialité, elle, existe
+            (voir app/confidentialite/page.tsx) et couvre déjà les cookies. */}
         <div className="flex gap-5">
-          <span className="text-dim text-[13px]">Confidentialité (bientôt)</span>
+          <Link href="/confidentialite" className="text-dim text-[13px] hover:text-gold transition-colors">
+            Confidentialité
+          </Link>
           <span className="text-dim text-[13px]">CGU (bientôt)</span>
           <span className="text-dim text-[13px]">Cookies (bientôt)</span>
         </div>
