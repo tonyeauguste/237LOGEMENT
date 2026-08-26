@@ -12,6 +12,9 @@ const HIDDEN_ON = ["/connexion", "/compte"];
 
 export default function ConditionalFooter() {
   const pathname = usePathname();
-  if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
+  // pathname inclut le préfixe de langue (/fr/compte, /en/connexion) depuis
+  // le passage à app/[lang]/ — on le retire avant de comparer à HIDDEN_ON.
+  const path = pathname.replace(/^\/(fr|en)(?=\/|$)/, "") || "/";
+  if (HIDDEN_ON.some((p) => path.startsWith(p))) return null;
   return <Footer />;
 }

@@ -3,8 +3,11 @@
 import Link from "next/link";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import { CONTACT } from "@/lib/data";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function Footer() {
+  const t = useTranslations("Footer");
+
   return (
     <footer className="bg-bg2 border-t border-border px-[5%] pt-[60px] pb-[30px]">
       <div className="max-w-[1240px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-8 lg:gap-12 mb-12">
@@ -15,10 +18,7 @@ export default function Footer() {
               <span className="text-gold">237</span>Logement
             </span>
           </div>
-          <p className="text-muted text-sm leading-relaxed my-3.5 max-w-[260px]">
-            La première plateforme immobilière de confiance au Cameroun. Trouvez votre logement
-            idéal ou louez votre bien en toute simplicité.
-          </p>
+          <p className="text-muted text-sm leading-relaxed my-3.5 max-w-[260px]">{t("tagline")}</p>
           <div className="flex gap-2.5">
             {/* Pas encore de comptes réseaux sociaux : icônes affichées à
                 titre indicatif seulement (pas de href) — volontairement
@@ -36,34 +36,34 @@ export default function Footer() {
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm text-text mb-4">Découvrir</h4>
+          <h4 className="font-semibold text-sm text-text mb-4">{t("discoverTitle")}</h4>
           <ul className="space-y-2.5">
-            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">Toutes les annonces</Link></li>
-            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">Annonces à Yaoundé</Link></li>
-            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">Annonces à Douala</Link></li>
-            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">Courts séjours</Link></li>
-            <li><Link href="/comment-ca-marche" className="text-muted text-[13px] hover:text-gold transition-colors">Comment ça marche</Link></li>
+            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("allListings")}</Link></li>
+            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("listingsYaounde")}</Link></li>
+            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("listingsDouala")}</Link></li>
+            <li><Link href="/recherche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("shortStays")}</Link></li>
+            <li><Link href="/comment-ca-marche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("howItWorks")}</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm text-text mb-4">Propriétaires</h4>
+          <h4 className="font-semibold text-sm text-text mb-4">{t("ownersTitle")}</h4>
           <ul className="space-y-2.5">
-            <li><Link href="/connexion?tab=register" className="text-muted text-[13px] hover:text-gold transition-colors">Publier une annonce</Link></li>
-            <li><Link href="/comment-ca-marche" className="text-muted text-[13px] hover:text-gold transition-colors">Guide propriétaire</Link></li>
-            <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">FAQ propriétaires</Link></li>
-            <li><Link href="/compte" className="text-muted text-[13px] hover:text-gold transition-colors">Tableau de bord</Link></li>
+            <li><Link href="/connexion?tab=register" className="text-muted text-[13px] hover:text-gold transition-colors">{t("publishListing")}</Link></li>
+            <li><Link href="/comment-ca-marche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("ownerGuide")}</Link></li>
+            <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">{t("ownerFaq")}</Link></li>
+            <li><Link href="/compte" className="text-muted text-[13px] hover:text-gold transition-colors">{t("dashboard")}</Link></li>
           </ul>
         </div>
 
         <div>
-          <h4 className="font-semibold text-sm text-text mb-4">Aide &amp; Support</h4>
+          <h4 className="font-semibold text-sm text-text mb-4">{t("helpTitle")}</h4>
           <ul className="space-y-2.5">
-            <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">Centre d&apos;aide (FAQ)</Link></li>
-            <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">Contactez-nous</Link></li>
-            <li><Link href="/a-propos" className="text-muted text-[13px] hover:text-gold transition-colors">À propos de nous</Link></li>
-            <li><Link href="/confidentialite" className="text-muted text-[13px] hover:text-gold transition-colors">Politique de confidentialité</Link></li>
-            <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">Signaler une fraude</Link></li>
+            <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">{t("helpCenter")}</Link></li>
+            <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">{t("contactUs")}</Link></li>
+            <li><Link href="/a-propos" className="text-muted text-[13px] hover:text-gold transition-colors">{t("aboutUs")}</Link></li>
+            <li><Link href="/confidentialite" className="text-muted text-[13px] hover:text-gold transition-colors">{t("privacyPolicy")}</Link></li>
+            <li><Link href="/contact" className="text-muted text-[13px] hover:text-gold transition-colors">{t("reportFraud")}</Link></li>
           </ul>
           <div className="mt-[18px] pt-4 border-t border-border">
             <div className="text-xs text-muted leading-relaxed">
@@ -78,20 +78,21 @@ export default function Footer() {
 
       <div className="max-w-[1240px] mx-auto pt-6 border-t border-border flex justify-between items-center flex-wrap gap-3">
         <p className="text-dim text-[13px] flex items-center gap-1.5">
-          © {new Date().getFullYear()} 237Logement. Tous droits réservés.
+          © {new Date().getFullYear()} {t("copyright")}
           <CameroonFlag width={16} height={12} />
-          Fait avec ❤️ au Cameroun
+          {t("madeIn")}
         </p>
         {/* CGU et page Cookies pas encore rédigées — affichées à titre
             indicatif, sans lien, pour ne pas promettre une page qui
             n'existe pas. La politique de confidentialité, elle, existe
-            (voir app/confidentialite/page.tsx) et couvre déjà les cookies. */}
+            (voir app/[lang]/confidentialite/page.tsx) et couvre déjà les
+            cookies. */}
         <div className="flex gap-5">
           <Link href="/confidentialite" className="text-dim text-[13px] hover:text-gold transition-colors">
-            Confidentialité
+            {t("privacy")}
           </Link>
-          <span className="text-dim text-[13px]">CGU (bientôt)</span>
-          <span className="text-dim text-[13px]">Cookies (bientôt)</span>
+          <span className="text-dim text-[13px]">{t("terms")}</span>
+          <span className="text-dim text-[13px]">{t("cookies")}</span>
         </div>
       </div>
     </footer>

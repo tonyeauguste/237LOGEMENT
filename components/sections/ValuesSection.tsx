@@ -1,46 +1,36 @@
+"use client";
+
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
 import TiltCard from "@/components/ui/TiltCard";
-
-const VALUES = [
-  {
-    icon: "🛡",
-    title: "Propriétaires vérifiés",
-    desc: "Chaque propriétaire est contrôlé avant publication. Zéro arnaque, zéro intermédiaire abusif.",
-  },
-  {
-    icon: "💰",
-    title: "Zéro frais d'agence",
-    desc: "Contact direct entre locataire et propriétaire. Aucune commission, aucun frais cachés.",
-  },
-  {
-    icon: "flag",
-    title: "100 % Camerounais",
-    desc: "Conçu pour les Camerounais, par des Camerounais. Yaoundé, Douala, Bafoussam et bien plus.",
-  },
-];
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function ValuesSection() {
+  const t = useTranslations("Home.values");
+  const VALUES = [
+    { icon: "🛡", title: t("value1Title"), desc: t("value1Desc") },
+    { icon: "💰", title: t("value2Title"), desc: t("value2Desc") },
+    { icon: "flag", title: t("value3Title"), desc: t("value3Desc") },
+  ];
   return (
     <section className="py-20">
       <div className="max-w-[1240px] mx-auto px-[5%]">
         <div className="text-center mb-11">
           <Reveal as="span" className="text-[11px] tracking-[3px] uppercase text-gold font-semibold block">
-            Communauté
+            {t("kicker")}
           </Reveal>
           <Reveal delay={0.06}>
             <h2 className="font-display text-[clamp(24px,3vw,40px)] font-bold text-text mt-2.5 leading-tight">
-              Soyez parmi les <span className="text-gold">premiers</span>
+              {t("title").split("{highlight}")[0]}
+              <span className="text-gold">{t("titleHighlight")}</span>
+              {t("title").split("{highlight}")[1]}
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
             <div className="gold-bar mt-3 mx-auto" />
           </Reveal>
           <Reveal delay={0.16}>
-            <p className="text-muted text-[15px] mt-3 max-w-[520px] mx-auto">
-              237Logement sera bientôt opérationnel. Inscrivez-vous maintenant pour accéder en
-              avant-première à toutes les annonces dès le lancement.
-            </p>
+            <p className="text-muted text-[15px] mt-3 max-w-[520px] mx-auto">{t("subtitle")}</p>
           </Reveal>
         </div>
         <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-9">

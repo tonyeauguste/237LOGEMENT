@@ -11,18 +11,21 @@ import { useAppStore } from "@/lib/store";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_AVATAR } from "@/lib/data";
+import { useTranslations } from "@/i18n/IntlProvider";
 import MobileMenu from "./MobileMenu";
-
-const NAV_LINKS = [
-  { href: "/", label: "Accueil" },
-  { href: "/recherche", label: "Rechercher" },
-  { href: "/comment-ca-marche", label: "Comment ça marche" },
-  { href: "/a-propos", label: "À propos" },
-  { href: "/contact", label: "Contact" },
-];
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
+  const t = useTranslations("Nav");
+  const NAV_LINKS = [
+    { href: "/", label: t("home") },
+    { href: "/recherche", label: t("search") },
+    { href: "/comment-ca-marche", label: t("howItWorks") },
+    { href: "/a-propos", label: t("about") },
+    { href: "/contact", label: t("contact") },
+  ];
   const pathname = usePathname();
+  const pathnameWithoutLocale = pathname.replace(/^\/(fr|en)(?=\/|$)/, "") || "/";
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -93,7 +96,12 @@ export default function Navbar() {
               plus longtemps. */}
           <div className="hidden lg:flex items-center gap-1">
             {NAV_LINKS.map((l) => {
-              const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+              // pathname inclut le préfixe de langue (/fr/recherche) depuis
+              // le passage à app/[lang]/ — on le retire avant de comparer
+              // aux hrefs volontairement laissés sans préfixe (proxy.ts se
+              // charge de rediriger vers la bonne langue).
+              const localePath = pathnameWithoutLocale;
+              const active = l.href === "/" ? localePath === "/" : localePath.startsWith(l.href);
               return (
                 <Link
                   key={l.href}
@@ -136,28 +144,29 @@ export default function Navbar() {
                   </span>
                 </Link>
                 <Button variant="danger" size="sm" onClick={handleLogout}>
-                  Déconnexion
+                  {t("logout")}
                 </Button>
               </>
             ) : (
               <>
                 <Link href="/connexion?tab=login">
                   <Button variant="ghost" size="sm">
-                    Connexion
+                    {t("login")}
                   </Button>
                 </Link>
                 <Link href="/connexion?tab=register">
                   <Button variant="gold" size="sm">
-                    Inscription
+                    {t("register")}
                   </Button>
                 </Link>
               </>
             )}
+            <LanguageSwitcher />
           </div>
 
           <button
             onClick={() => setMobileOpen((v) => !v)}
-            aria-label="Menu"
+            aria-label={t("menu")}
             // p-2.5 plutôt que p-1.5 : ~42px de zone tactile au lieu de
             // ~34px, plus proche des ~44px recommandés pour un bouton tapé
             // au doigt.

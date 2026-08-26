@@ -5,17 +5,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import Button from "@/components/ui/Button";
-
-const LINKS = [
-  { href: "/", label: "🏠 Accueil" },
-  { href: "/recherche", label: "🔍 Rechercher" },
-  { href: "/comment-ca-marche", label: "📋 Comment ça marche" },
-  { href: "/a-propos", label: "ℹ️ À propos" },
-  { href: "/faq", label: "❓ FAQ" },
-  { href: "/contact", label: "✉️ Contact" },
-];
+import { useTranslations } from "@/i18n/IntlProvider";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useTranslations("Nav");
+  const LINKS = [
+    { href: "/", label: `🏠 ${t("home")}` },
+    { href: "/recherche", label: `🔍 ${t("search")}` },
+    { href: "/comment-ca-marche", label: `📋 ${t("howItWorks")}` },
+    { href: "/a-propos", label: `ℹ️ ${t("about")}` },
+    { href: "/faq", label: `❓ ${t("faq")}` },
+    { href: "/contact", label: `✉️ ${t("contact")}` },
+  ];
   const currentUser = useAppStore((s) => s.currentUser);
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
   const showToast = useAppStore((s) => s.showToast);
@@ -57,7 +59,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
               <>
                 <Link href={dashHref} className="flex-1" onClick={onClose}>
                   <Button variant="ghost" size="sm" full>
-                    Mon espace
+                    {t("dashboard")}
                   </Button>
                 </Link>
                 <Button
@@ -71,23 +73,26 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                     onClose();
                   }}
                 >
-                  Déconnexion
+                  {t("logout")}
                 </Button>
               </>
             ) : (
               <>
                 <Link href="/connexion?tab=login" className="flex-1" onClick={onClose}>
                   <Button variant="outline" size="sm" full>
-                    Connexion
+                    {t("login")}
                   </Button>
                 </Link>
                 <Link href="/connexion?tab=register" className="flex-1" onClick={onClose}>
                   <Button variant="gold" size="sm" full>
-                    Inscription
+                    {t("register")}
                   </Button>
                 </Link>
               </>
             )}
+          </div>
+          <div className="flex justify-center mt-5">
+            <LanguageSwitcher />
           </div>
         </motion.div>
       )}

@@ -9,6 +9,7 @@ import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
 import CityInput from "@/components/ui/CityInput";
 import { PROPERTY_KINDS } from "@/lib/data";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 const SLIDES = [
   {
@@ -26,6 +27,7 @@ const SLIDES = [
 ];
 
 export default function Hero() {
+  const t = useTranslations("Home.hero");
   const [slide, setSlide] = useState(0);
   const router = useRouter();
   const cityRef = useRef<HTMLInputElement>(null);
@@ -92,7 +94,7 @@ export default function Hero() {
           className="inline-flex items-center gap-2 bg-[rgba(200,155,60,.15)] border border-[rgba(200,155,60,.4)] rounded-full px-4 py-[7px] text-xs font-semibold text-gold tracking-[.5px] mb-6 backdrop-blur-md"
         >
           <CameroonFlag width={18} height={13} />
-          N°1 de l&apos;immobilier au Cameroun
+          {t("badge")}
         </motion.div>
 
         <motion.h1
@@ -102,9 +104,9 @@ export default function Hero() {
           className="font-display text-[clamp(28px,8vw,66px)] font-bold leading-[1.1] text-white mb-[22px]"
           style={{ textShadow: "0 2px 20px rgba(0,0,0,.5)" }}
         >
-          Votre <span className="text-gold">maison idéale</span>
-          <br className="hidden md:block" /> au Cameroun,
-          <br className="hidden md:block" /> trouvée en minutes
+          {t("titlePrefix")} <span className="text-gold">{t("titleHighlight")}</span>
+          <br className="hidden md:block" /> {t("titleLine2")}
+          <br className="hidden md:block" /> {t("titleLine3")}
         </motion.h1>
 
         <motion.p
@@ -114,8 +116,7 @@ export default function Hero() {
           className="text-[rgba(237,233,225,.8)] text-sm md:text-[17px] leading-[1.8] max-w-[500px] mb-10"
           style={{ textShadow: "0 1px 8px rgba(0,0,0,.4)" }}
         >
-          Des annonces vérifiées à Yaoundé, Douala, Bafoussam et dans tout le pays. Location
-          courte ou longue durée, sans intermédiaire.
+          {t("subtitle")}
         </motion.p>
 
         <motion.div
@@ -125,11 +126,11 @@ export default function Hero() {
           className="bg-[rgba(7,17,30,.75)] border border-[rgba(200,155,60,.25)] rounded-[18px] p-[22px] shadow-[0_32px_80px_rgba(0,0,0,.5)] mb-[26px] backdrop-blur-xl"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-            <CityInput ref={cityRef} placeholder="📍 Ville (toutes villes acceptées)" />
+            <CityInput ref={cityRef} placeholder={t("cityPlaceholder")} />
             <select ref={typeRef} className="form-control">
-              <option value="">🏠 Type</option>
-              <option value="longue">Long terme</option>
-              <option value="courte">Court séjour</option>
+              <option value="">{t("typePlaceholder")}</option>
+              <option value="longue">{t("typeLong")}</option>
+              <option value="courte">{t("typeShort")}</option>
             </select>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
@@ -137,7 +138,7 @@ export default function Hero() {
                 "Chambres", plus parlant pour choisir ce qu'on cherche. Le
                 nombre de chambres reste filtrable sur la page /recherche. */}
             <select ref={kindRef} className="form-control">
-              <option value="">🏘 Type de bien</option>
+              <option value="">{t("kindPlaceholder")}</option>
               {PROPERTY_KINDS.map((k) => (
                 <option key={k.value} value={k.value}>
                   {k.icon} {k.label}
@@ -154,12 +155,12 @@ export default function Hero() {
               step={5000}
               inputMode="numeric"
               className="form-control"
-              placeholder="💰 Budget approximatif (FCFA)"
+              placeholder={t("budgetPlaceholder")}
             />
           </div>
           <Button variant="gold" full onClick={launchSearch} className="mt-1">
             <Search size={16} />
-            Rechercher maintenant
+            {t("searchButton")}
           </Button>
         </motion.div>
 
@@ -169,13 +170,13 @@ export default function Hero() {
           transition={{ duration: 0.65, delay: 0.36 }}
           className="flex gap-5 flex-wrap"
         >
-          {["Propriétaires vérifiés", "Contact direct", "Support 7j/7"].map((t) => (
+          {[t("feature1"), t("feature2"), t("feature3")].map((f) => (
             <div
-              key={t}
+              key={f}
               className="flex items-center gap-1.5 text-xs text-[rgba(237,233,225,.7)]"
               style={{ textShadow: "0 1px 4px rgba(0,0,0,.5)" }}
             >
-              <Check size={14} className="text-green2" /> {t}
+              <Check size={14} className="text-green2" /> {f}
             </div>
           ))}
         </motion.div>
@@ -212,7 +213,7 @@ export default function Hero() {
         className="hidden md:flex absolute bottom-8 right-[5%] z-[3] flex-col items-center gap-1.5 text-white/45 text-[11px] tracking-[1px] uppercase cursor-pointer"
       >
         <span className="w-px h-9 bg-gradient-to-b from-[rgba(200,155,60,.6)] to-transparent animate-[scrollPulse_2s_ease-in-out_infinite]" />
-        <span>Défiler</span>
+        <span>{t("scrollHint")}</span>
       </div>
     </section>
   );
