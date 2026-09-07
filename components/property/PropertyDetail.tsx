@@ -24,7 +24,7 @@ import {
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import { FIELD_VISIBILITY_RULES, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, amenityIcon, amenityLabel, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -36,6 +36,7 @@ type DetailTab = "desc" | "amenities" | "map";
 export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
   const tKind = useTranslations("PropertyKinds");
   const tTx = useTranslations("Transaction");
+  const tAmenities = useTranslations("Amenities");
   const t = useTranslations("PropertyDetail");
   const group = propertyGroup(p.kind);
   const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
@@ -314,7 +315,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                       className="flex items-center gap-2.5 px-3.5 py-3 bg-card border border-border rounded-[10px] text-sm text-text"
                     >
                       <Check size={14} className="text-gold shrink-0" />
-                      {a}
+                      {amenityIcon(a)} {amenityLabel(a, tAmenities)}
                     </div>
                   ))
                 )}

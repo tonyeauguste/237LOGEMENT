@@ -11,7 +11,7 @@ import CityInput from "@/components/ui/CityInput";
 import Button from "@/components/ui/Button";
 import {
   AMENITIES,
-  amenityFull,
+  amenityLabel,
   DEFAULT_AVATAR,
   FIELD_VISIBILITY_RULES,
   isSaleEligible,
@@ -29,6 +29,7 @@ import { useTranslations } from "@/i18n/IntlProvider";
 function PublierPageInner() {
   const tKind = useTranslations("PropertyKinds");
   const tTx = useTranslations("Transaction");
+  const tAmenities = useTranslations("Amenities");
   const t = useTranslations("Publish");
   // Tout compte connecté peut publier depuis la fusion des espaces : les
   // objectifs choisis à l'inscription ne verrouillent plus rien (côté base,
@@ -120,7 +121,7 @@ function PublierPageInner() {
   // Pas de vidéo : le site ne gère que les photos.
   const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [amenities, setAmenities] = useState<string[]>(
-    AMENITIES.filter((a) => a.defaultSelected).map((a) => amenityFull(a))
+    AMENITIES.filter((a) => a.defaultSelected).map((a) => a.value)
   );
 
   // Step 4
@@ -221,8 +222,8 @@ function PublierPageInner() {
     return <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">{t("loadingListing")}</div>;
   }
 
-  function toggleAmenity(full: string) {
-    setAmenities((prev) => (prev.includes(full) ? prev.filter((a) => a !== full) : [...prev, full]));
+  function toggleAmenity(value: string) {
+    setAmenities((prev) => (prev.includes(value) ? prev.filter((a) => a !== value) : [...prev, value]));
   }
 
   function goNext() {
@@ -575,14 +576,13 @@ function PublierPageInner() {
                   <p className="text-xs text-muted mb-2.5">{t("amenitiesHint")}</p>
                   <div className="flex flex-wrap gap-2">
                     {AMENITIES.map((a) => {
-                      const full = amenityFull(a);
                       return (
                         <AmenityChip
-                          key={a.label}
+                          key={a.value}
                           icon={a.icon}
-                          label={a.label}
-                          selected={amenities.includes(full)}
-                          onClick={() => toggleAmenity(full)}
+                          label={amenityLabel(a.value, tAmenities)}
+                          selected={amenities.includes(a.value)}
+                          onClick={() => toggleAmenity(a.value)}
                         />
                       );
                     })}

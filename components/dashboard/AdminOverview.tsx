@@ -13,6 +13,7 @@ import Tag from "@/components/ui/Tag";
 import { createClient } from "@/lib/supabase/client";
 import { fmtPrice } from "@/lib/format";
 import { fmtRelativeDate } from "@/lib/format";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 interface RecentProperty {
   id: number;
@@ -37,6 +38,7 @@ export default function AdminOverview({
 }: {
   onNavigate: (section: "admin-annonces" | "admin-users") => void;
 }) {
+  const t = useTranslations("AdminOverview");
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ properties: 0, owners: 0, blockedProperties: 0, blockedAccounts: 0 });
   const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
@@ -71,7 +73,7 @@ export default function AdminOverview({
       setRecentUsers(
         (recentUsersRes.data ?? []).map((u) => ({
           id: u.id,
-          name: u.name || "Utilisateur",
+          name: u.name || t("defaultUserName"),
           email: u.email,
           role: u.role,
           created_at: u.created_at,
@@ -89,28 +91,28 @@ export default function AdminOverview({
     {
       icon: <Building2 size={20} />,
       val: counts.properties,
-      label: "Annonces sur le site",
+      label: t("cardListings"),
       color: "text-gold",
       onClick: () => onNavigate("admin-annonces"),
     },
     {
       icon: <Users2 size={20} />,
       val: counts.owners,
-      label: "Propriétaires inscrits",
+      label: t("cardOwners"),
       color: "text-blue",
       onClick: () => onNavigate("admin-users"),
     },
     {
       icon: <ShieldOff size={20} />,
       val: counts.blockedProperties,
-      label: "Annonces bloquées",
+      label: t("cardBlockedListings"),
       color: "text-orange",
       onClick: () => onNavigate("admin-annonces"),
     },
     {
       icon: <UserX size={20} />,
       val: counts.blockedAccounts,
-      label: "Comptes bloqués",
+      label: t("cardBlockedAccounts"),
       color: "text-red",
       onClick: () => onNavigate("admin-users"),
     },
@@ -119,9 +121,9 @@ export default function AdminOverview({
   return (
     <>
       <div className="mb-[30px]">
-        <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">Administration</div>
-        <h2 className="font-display text-[26px] font-bold text-text mt-1">Vue d&apos;ensemble</h2>
-        <p className="text-sm text-muted mt-1.5">Activité globale de la plateforme, tous propriétaires confondus.</p>
+        <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">{t("administration")}</div>
+        <h2 className="font-display text-[26px] font-bold text-text mt-1">{t("title")}</h2>
+        <p className="text-sm text-muted mt-1.5">{t("subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -143,18 +145,18 @@ export default function AdminOverview({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-card border border-border rounded-2xl p-5">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-[15px] font-semibold text-text">Annonces les plus récentes</h4>
+            <h4 className="text-[15px] font-semibold text-text">{t("recentListings")}</h4>
             <button
               onClick={() => onNavigate("admin-annonces")}
               className="text-[12px] text-gold font-semibold flex items-center gap-1 hover:underline"
             >
-              Tout voir <ArrowRight size={12} />
+              {t("seeAll")} <ArrowRight size={12} />
             </button>
           </div>
           {loading ? (
-            <p className="text-sm text-muted py-4">Chargement…</p>
+            <p className="text-sm text-muted py-4">{t("loading")}</p>
           ) : recentProperties.length === 0 ? (
-            <p className="text-sm text-muted py-4">Aucune annonce sur la plateforme pour le moment.</p>
+            <p className="text-sm text-muted py-4">{t("noListings")}</p>
           ) : (
             <div className="flex flex-col gap-2.5">
               {recentProperties.map((p) => (
@@ -170,7 +172,7 @@ export default function AdminOverview({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {p.status === "blocked" && <Tag color="orange">Bloqué</Tag>}
+                    {p.status === "blocked" && <Tag color="orange">{t("blocked")}</Tag>}
                     <span className="text-[13px] font-bold text-gold">{fmtPrice(p.price)}</span>
                   </div>
                 </Link>
@@ -181,18 +183,18 @@ export default function AdminOverview({
 
         <div className="bg-card border border-border rounded-2xl p-5">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-[15px] font-semibold text-text">Derniers comptes inscrits</h4>
+            <h4 className="text-[15px] font-semibold text-text">{t("recentAccounts")}</h4>
             <button
               onClick={() => onNavigate("admin-users")}
               className="text-[12px] text-gold font-semibold flex items-center gap-1 hover:underline"
             >
-              Tout voir <ArrowRight size={12} />
+              {t("seeAll")} <ArrowRight size={12} />
             </button>
           </div>
           {loading ? (
-            <p className="text-sm text-muted py-4">Chargement…</p>
+            <p className="text-sm text-muted py-4">{t("loading")}</p>
           ) : recentUsers.length === 0 ? (
-            <p className="text-sm text-muted py-4">Aucun compte inscrit pour le moment.</p>
+            <p className="text-sm text-muted py-4">{t("noAccounts")}</p>
           ) : (
             <div className="flex flex-col gap-2.5">
               {recentUsers.map((u) => (
@@ -203,7 +205,7 @@ export default function AdminOverview({
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Tag color={u.role === "owner" ? "gold" : "neutral"}>
-                      {u.role === "owner" ? "Propriétaire" : u.role === "admin" ? "Admin" : "Visiteur"}
+                      {u.role === "owner" ? t("roleOwner") : u.role === "admin" ? t("roleAdmin") : t("roleVisitor")}
                     </Tag>
                   </div>
                 </div>

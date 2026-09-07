@@ -255,30 +255,45 @@ export function transactionMeta(
 // ÉQUIPEMENTS — chips sélectionnables
 // ═══════════════════════════════════════════════
 export interface AmenityDef {
-  label: string;
+  /**
+   * Clé stable stockée en base (namespace de traduction "Amenities", voir
+   * messages/fr.json et messages/en.json) — remplace l'ancien `label` en
+   * dur : avant, la chaîne affichée ("🏊 Piscine") était directement
+   * stockée dans `properties.amenities`, ce qui figeait la langue au
+   * moment de la publication. Une annonce publiée avant ce changement
+   * garde son ancien texte français tel quel (voir amenityIcon ci-dessous,
+   * qui retombe sur une icône neutre pour ces valeurs inconnues).
+   */
+  value: string;
   icon: string;
   defaultSelected: boolean;
 }
 
 export const AMENITIES: AmenityDef[] = [
-  { label: "Piscine", icon: "🏊", defaultSelected: false },
-  { label: "Jardin", icon: "🌿", defaultSelected: true },
-  { label: "Garage", icon: "🚗", defaultSelected: true },
-  { label: "Groupe électrogène", icon: "⚡", defaultSelected: true },
-  { label: "Gardiennage 24h", icon: "🛡", defaultSelected: true },
-  { label: "Cuisine équipée", icon: "🍳", defaultSelected: true },
-  { label: "Climatisation", icon: "❄️", defaultSelected: true },
-  { label: "Eau courante", icon: "💧", defaultSelected: true },
-  { label: "WiFi fibre", icon: "📶", defaultSelected: true },
-  { label: "Meublé", icon: "🛋", defaultSelected: false },
-  { label: "Ascenseur", icon: "🏗", defaultSelected: false },
-  { label: "Balcon/Terrasse", icon: "🌅", defaultSelected: false },
-  { label: "Parking", icon: "🅿️", defaultSelected: false },
-  { label: "Chauffe-eau", icon: "🔥", defaultSelected: false },
+  { value: "piscine", icon: "🏊", defaultSelected: false },
+  { value: "jardin", icon: "🌿", defaultSelected: true },
+  { value: "garage", icon: "🚗", defaultSelected: true },
+  { value: "groupeElectrogene", icon: "⚡", defaultSelected: true },
+  { value: "gardiennage", icon: "🛡", defaultSelected: true },
+  { value: "cuisineEquipee", icon: "🍳", defaultSelected: true },
+  { value: "climatisation", icon: "❄️", defaultSelected: true },
+  { value: "eauCourante", icon: "💧", defaultSelected: true },
+  { value: "wifi", icon: "📶", defaultSelected: true },
+  { value: "meuble", icon: "🛋", defaultSelected: false },
+  { value: "ascenseur", icon: "🏗", defaultSelected: false },
+  { value: "balcon", icon: "🌅", defaultSelected: false },
+  { value: "parking", icon: "🅿️", defaultSelected: false },
+  { value: "chauffeEau", icon: "🔥", defaultSelected: false },
 ];
 
-export function amenityFull(a: AmenityDef) {
-  return `${a.icon} ${a.label}`;
+/** Libellé affichable d'un équipement. `t` = `useTranslations("Amenities")` côté appelant. */
+export function amenityLabel(value: string, t: Translate): string {
+  return t(value);
+}
+
+/** Icône d'un équipement à partir de sa clé stockée (fallback neutre pour une valeur inconnue — voir la note sur AmenityDef.value). */
+export function amenityIcon(value: string): string {
+  return AMENITIES.find((a) => a.value === value)?.icon ?? "✓";
 }
 
 // ═══════════════════════════════════════════════
