@@ -4,32 +4,40 @@ import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyDetail from "@/components/property/PropertyDetail";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
+import { getMessages } from "@/i18n/dictionaries";
+import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 export default async function AnnonceDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ lang: string; id: string }>;
 }) {
-  const { id } = await params;
+  const { lang, id } = await params;
   const numericId = Number(id);
+
+  const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
+  const messages = await getMessages(locale);
+  const t = (messages as {
+    AnnonceNotFound: { title: string; line1: string; line2: string; badge: string; backButton: string };
+  }).AnnonceNotFound;
 
   const supabase = await createClient();
 
   const notFoundBlock = (
     <div className="pt-[110px] px-[5%] pb-[80px] flex justify-center">
       <ComingSoon
-        title="Cette annonce n'est pas encore disponible"
+        title={t.title}
         text={
           <>
-            La plateforme est en cours de déploiement et cette fiche n&apos;existe pas encore.
+            {t.line1}
             <br />
-            Explorez nos autres pages en attendant le lancement officiel.
+            {t.line2}
           </>
         }
-        badge="🚀 Bientôt opérationnel"
+        badge={t.badge}
         action={
           <Link href="/recherche">
-            <Button variant="gold">Retour aux annonces</Button>
+            <Button variant="gold">{t.backButton}</Button>
           </Link>
         }
       />

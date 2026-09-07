@@ -27,11 +27,9 @@ import type { ListingKind, OccupancyStatus, TransactionType, UploadedPhoto } fro
 import { useTranslations } from "@/i18n/IntlProvider";
 
 function PublierPageInner() {
-  // Adaptation minimale à la signature localisée de kindLabel/
-  // transactionMeta et à la clé de traduction surfaceLabelKey (voir
-  // lib/data.ts) — le reste de ce formulaire n'est pas encore traduit.
   const tKind = useTranslations("PropertyKinds");
   const tTx = useTranslations("Transaction");
+  const t = useTranslations("Publish");
   // Tout compte connecté peut publier depuis la fusion des espaces : les
   // objectifs choisis à l'inscription ne verrouillent plus rien (côté base,
   // la policy RLS d'insertion vérifie seulement owner_id = auth.uid()).
@@ -179,7 +177,7 @@ function PublierPageInner() {
         // est restreint à la sienne.
         const allowed = data && (data.owner_id === user.id || user.role === "admin");
         if (error || !data || !allowed) {
-          showToast("⛔ Impossible de modifier cette annonce.", "error");
+          showToast(t("toastCannotEdit"), "error");
           router.replace("/compte");
           return;
         }
@@ -215,12 +213,12 @@ function PublierPageInner() {
   if (!user) {
     return (
       <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">
-        Chargement…
+        {t("loading")}
       </div>
     );
   }
   if (loadingExisting) {
-    return <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">Chargement de l&apos;annonce…</div>;
+    return <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">{t("loadingListing")}</div>;
   }
 
   function toggleAmenity(full: string) {
@@ -229,15 +227,15 @@ function PublierPageInner() {
 
   function goNext() {
     if (step === 1 && (!city || !quartier)) {
-      showToast("⚠️ Veuillez renseigner la ville et le quartier.", "error");
+      showToast(t("toastFillLocation"), "error");
       return;
     }
     if (step === 2 && !title) {
-      showToast("⚠️ Veuillez donner un titre à votre annonce.", "error");
+      showToast(t("toastFillTitle"), "error");
       return;
     }
     if (step === 3 && photos.length < 3) {
-      showToast("📸 Ajoutez au minimum 3 photos pour continuer.", "error");
+      showToast(t("toastMinPhotos"), "error");
       return;
     }
     if (step < 5) {
@@ -330,7 +328,7 @@ function PublierPageInner() {
           .update(payload)
           .eq("id", editId as number);
         if (updateError) throw updateError;
-        showToast("✅ Annonce mise à jour avec succès !", "success");
+        showToast(t("toastUpdateSuccess"), "success");
       } else {
         const { error: insertError } = await supabase.from("properties").insert({
           ...payload,
@@ -340,17 +338,12 @@ function PublierPageInner() {
           owner_phone: user?.phone || "",
         });
         if (insertError) throw insertError;
-        showToast("🚀 Annonce publiée avec succès !", "success");
+        showToast(t("toastPublishSuccess"), "success");
       }
       setTimeout(() => router.push("/compte"), 1500);
     } catch (err) {
       console.error(err);
-      showToast(
-        isEditMode
-          ? "❌ Une erreur est survenue lors de la mise à jour. Réessayez."
-          : "❌ Une erreur est survenue lors de la publication. Réessayez.",
-        "error"
-      );
+      showToast(isEditMode ? t("toastUpdateError") : t("toastPublishError"), "error");
       setPublishing(false);
     }
   }
@@ -364,14 +357,12 @@ function PublierPageInner() {
   return (
     <div className="pt-[90px] px-[5%] pb-[60px] max-w-[820px] mx-auto">
       <div className="mb-[30px]">
-        <span className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">Propriétaire</span>
+        <span className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">{t("kicker")}</span>
         <h1 className="font-display text-[clamp(22px,3vw,36px)] font-bold text-text mt-2.5 mb-1.5">
-          {isEditMode ? "Modifier l'annonce" : "Publier une nouvelle annonce"}
+          {isEditMode ? t("editTitle") : t("newTitle")}
         </h1>
         <p className="text-muted text-[15px]">
-          {isEditMode
-            ? "Corrigez les informations de votre bien ci-dessous, puis enregistrez."
-            : "Remplissez les informations de votre bien en 5 étapes simples. Publication gratuite, sans commission."}
+          {isEditMode ? t("editSubtitle") : t("newSubtitle")}
         </p>
       </div>
 
@@ -390,62 +381,61 @@ function PublierPageInner() {
           >
             {step === 1 && (
               <div>
-                <StepTitle icon="📍" text="Localisation du bien" />
+                <StepTitle icon="📍" text={t("step1Title")} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <Field label="Ville *">
+                  <Field label={t("cityLabel")}>
                     {/* Saisie libre : un propriétaire d'une localité absente
                         de nos suggestions doit pouvoir publier malgré tout. */}
                     <CityInput
-                      placeholder="Saisir ou choisir une ville"
+                      placeholder={t("cityPlaceholder")}
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                     />
                   </Field>
-                  <Field label="Quartier *">
+                  <Field label={t("quartierLabel")}>
                     <input
                       className="form-control"
-                      placeholder="Ex : Bastos, Bonapriso, Akwa…"
+                      placeholder={t("quartierPlaceholder")}
                       value={quartier}
                       onChange={(e) => setQuartier(e.target.value)}
                     />
                   </Field>
                 </div>
-                <Field label="Adresse précise">
+                <Field label={t("addressLabel")}>
                   <input
                     className="form-control"
-                    placeholder="Rue, avenue, carrefour, point de repère…"
+                    placeholder={t("addressPlaceholder")}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
                 </Field>
-                <Field label="Précision (description de l'emplacement)">
+                <Field label={t("precisionLabel")}>
                   <textarea
                     className="form-control"
                     style={{ minHeight: 80 }}
-                    placeholder="Décrivez l'accès : proche de quelle école, marché, axe principal, etc."
+                    placeholder={t("precisionPlaceholder")}
                     value={precision}
                     onChange={(e) => setPrecision(e.target.value)}
                   />
                 </Field>
                 <div className="px-4 py-3.5 bg-[rgba(61,153,112,.07)] border border-[rgba(61,153,112,.2)] rounded-[10px] text-[13px] text-green2 mt-3.5">
-                  💡 Plus votre adresse est précise, plus les locataires potentiels vous trouveront
-                  facilement. Un bon emplacement augmente de 40% les chances de location rapide.
+                  {t("locationTip")}
                 </div>
               </div>
             )}
 
             {step === 2 && (
               <div>
-                <StepTitle icon="🏠" text="Détails du bien" />
-                <Field label="Titre de l'annonce *">
+                <StepTitle icon="🏠" text={t("step2Title")} />
+                <Field label={t("titleLabel")}>
                   <input
                     className="form-control"
-                    placeholder="Ex : Villa Contemporaine avec Piscine — Bastos"
+                    placeholder={t("titlePlaceholder")}
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </Field>
-                <Field label="Type de bien *">
+                <Field label={t("kindLabel")}>
                   <select className="form-control" value={kind} onChange={(e) => setKind(e.target.value)}>
                     {PROPERTY_KINDS.map((k) => (
                       <option key={k.value} value={k.value}>
@@ -461,20 +451,20 @@ function PublierPageInner() {
                     L'option est retirée plutôt que désactivée pour ce type
                     de bien — plus net qu'une carte grisée. */}
                 <div className="mb-4">
-                  <label className="block text-[13px] text-muted mb-[7px] font-medium">Type de transaction *</label>
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("transactionTypeLabel")}</label>
                   <div className={`grid grid-cols-1 gap-3 mt-1.5 ${saleEligible ? "sm:grid-cols-2" : ""}`}>
                     <RoleCard
                       icon="🔑"
-                      title="Location"
-                      desc="Mettez votre bien en location, courte ou longue durée."
+                      title={t("rentalTitle")}
+                      desc={t("rentalDesc")}
                       active={transactionType === "location"}
                       onClick={() => setTransactionType("location")}
                     />
                     {saleEligible && (
                       <RoleCard
                         icon="💰"
-                        title="Vente"
-                        desc="Cédez votre bien définitivement, en un seul paiement."
+                        title={t("saleTitle")}
+                        desc={t("saleDesc")}
                         active={transactionType === "vente"}
                         onClick={() => setTransactionType("vente")}
                       />
@@ -482,8 +472,7 @@ function PublierPageInner() {
                   </div>
                   {!saleEligible && (
                     <p className="text-[11px] text-dim mt-1.5">
-                      La vente n&apos;est pas proposée pour ce type de bien — {kindLabel(kind, tKind).toLowerCase()} se
-                      loue uniquement.
+                      {t("saleNotEligible", { kind: kindLabel(kind, tKind).toLowerCase() })}
                     </p>
                   )}
                 </div>
@@ -498,7 +487,7 @@ function PublierPageInner() {
                   }`}
                 >
                   {rules.rooms && (
-                    <Field label="Chambres *">
+                    <Field label={t("roomsLabel")}>
                       <select className="form-control" value={rooms} onChange={(e) => setRooms(e.target.value)}>
                         {["1", "2", "3", "4", "5", "6"].map((n) => (
                           <option key={n} value={n}>
@@ -509,7 +498,7 @@ function PublierPageInner() {
                     </Field>
                   )}
                   {rules.baths && (
-                    <Field label="Salles de bain">
+                    <Field label={t("bathsLabel")}>
                       <select className="form-control" value={baths} onChange={(e) => setBaths(e.target.value)}>
                         {["1", "2", "3", "4"].map((n) => (
                           <option key={n} value={n}>
@@ -523,7 +512,7 @@ function PublierPageInner() {
                     <input
                       className="form-control"
                       type="number"
-                      placeholder="Ex : 120"
+                      placeholder={t("surfacePlaceholder")}
                       value={surface}
                       onChange={(e) => setSurface(e.target.value)}
                     />
@@ -537,20 +526,20 @@ function PublierPageInner() {
                 {rules.listingDuration ? (
                   <div className="mb-4">
                     <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                      {group === "commercial" ? "Type de location ou d'usage *" : "Type de location *"}
+                      {group === "commercial" ? t("rentalOrUseTypeLabel") : t("rentalTypeLabel")}
                     </label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
                       <RoleCard
                         icon="🏡"
-                        title="Longue durée"
-                        desc="Location mensuelle (maison, appartement, villa)"
+                        title={t("longTermTitle")}
+                        desc={t("longTermDesc")}
                         active={listingType === "longue"}
                         onClick={() => setListingType("longue")}
                       />
                       <RoleCard
                         icon="🌴"
-                        title="Courte durée"
-                        desc="Location à la nuit ou à la semaine"
+                        title={t("shortTermTitle")}
+                        desc={t("shortTermDesc")}
                         active={listingType === "courte"}
                         onClick={() => setListingType("courte")}
                       />
@@ -559,17 +548,15 @@ function PublierPageInner() {
                 ) : (
                   transactionType === "location" &&
                   group === "foncier" && (
-                    <p className="text-[12px] text-muted -mt-1 mb-4">
-                      📜 Terrain proposé en bail — durée et modalités à discuter directement avec le propriétaire.
-                    </p>
+                    <p className="text-[12px] text-muted -mt-1 mb-4">{t("landLeaseNote")}</p>
                   )
                 )}
 
-                <Field label="Description détaillée *">
+                <Field label={t("descriptionLabel")}>
                   <textarea
                     className="form-control"
                     style={{ minHeight: 120 }}
-                    placeholder="Décrivez votre bien : caractéristiques, environnement, points forts, règles de la maison…"
+                    placeholder={t("descriptionPlaceholder")}
                     value={desc}
                     onChange={(e) => setDesc(e.target.value)}
                   />
@@ -579,15 +566,13 @@ function PublierPageInner() {
 
             {step === 3 && (
               <div>
-                <StepTitle icon="📸" text="Photos du bien" />
+                <StepTitle icon="📸" text={t("step3Title")} />
 
                 <PhotoUploader photos={photos} onPhotosChange={setPhotos} />
 
                 <div className="mt-7">
-                  <label className="block text-[13px] text-muted mb-[7px] font-medium">Équipements disponibles</label>
-                  <p className="text-xs text-muted mb-2.5">
-                    Sélectionnez tous les équipements présents dans votre bien.
-                  </p>
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("amenitiesLabel")}</label>
+                  <p className="text-xs text-muted mb-2.5">{t("amenitiesHint")}</p>
                   <div className="flex flex-wrap gap-2">
                     {AMENITIES.map((a) => {
                       const full = amenityFull(a);
@@ -608,52 +593,49 @@ function PublierPageInner() {
 
             {step === 4 && (
               <div>
-                <StepTitle icon="💰" text="Tarification" />
+                <StepTitle icon="💰" text={t("step4Title")} />
                 <Field label={transactionMeta(transactionType, rules.listingDuration ? listingType : null, group, tTx).priceFieldLabel}>
                   <input
                     className="form-control !text-xl !font-semibold !px-[18px] !py-[14px]"
                     type="number"
-                    placeholder="Ex : 150 000"
+                    placeholder={t("pricePlaceholder")}
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                   />
                 </Field>
-                <p className="text-xs text-muted -mt-2 mb-4">
-                  💡 Prix moyen pour ce type de bien dans votre quartier : 150 000 – 400 000 FCFA/mois
-                </p>
+                <p className="text-xs text-muted -mt-2 mb-4">{t("priceTip")}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <Field label="Caution (FCFA)">
+                  <Field label={t("depositLabel")}>
                     <input
                       className="form-control"
                       type="number"
-                      placeholder="Ex : 2 mois de loyer"
+                      placeholder={t("depositPlaceholder")}
                       value={deposit}
                       onChange={(e) => setDeposit(e.target.value)}
                     />
                   </Field>
-                  <Field label="Charges incluses ?">
+                  <Field label={t("chargesLabel")}>
                     <select
                       className="form-control"
                       value={charges}
                       onChange={(e) => setCharges(e.target.value as typeof charges)}
                     >
-                      <option value="non">Non</option>
-                      <option value="oui">Oui</option>
-                      <option value="partiel">Partiellement</option>
+                      <option value="non">{t("chargesNo")}</option>
+                      <option value="oui">{t("chargesYes")}</option>
+                      <option value="partiel">{t("chargesPartial")}</option>
                     </select>
                   </Field>
                 </div>
-                <Field label="Durée minimale de location">
+                <Field label={t("minDurationLabel")}>
                   <select className="form-control" value={minDuration} onChange={(e) => setMinDuration(e.target.value)}>
-                    <option>1 mois</option>
-                    <option>3 mois</option>
-                    <option>6 mois</option>
-                    <option>1 an</option>
+                    <option>{t("duration1Month")}</option>
+                    <option>{t("duration3Months")}</option>
+                    <option>{t("duration6Months")}</option>
+                    <option>{t("duration1Year")}</option>
                   </select>
                 </Field>
                 <div className="px-4 py-3.5 bg-[rgba(61,153,112,.07)] border border-[rgba(61,153,112,.2)] rounded-[10px] text-[13px] text-green2">
-                  ✅ Publication gratuite · Aucune commission sur les loyers · Modification de
-                  l&apos;annonce gratuite à tout moment
+                  {t("pricingTip")}
                 </div>
               </div>
             )}
@@ -663,41 +645,42 @@ function PublierPageInner() {
                 <div className="text-center mb-7">
                   <div className="text-[52px] mb-3.5">🏠</div>
                   <h3 className="font-display text-2xl font-bold text-text mb-2">
-                    {isEditMode ? "Vos modifications sont prêtes !" : "Votre annonce est prête !"}
+                    {isEditMode ? t("editReadyTitle") : t("newReadyTitle")}
                   </h3>
                   <p className="text-muted text-[15px] max-w-[380px] mx-auto">
-                    {isEditMode
-                      ? "Vérifiez les informations ci-dessous avant d'enregistrer."
-                      : "Vérifiez les informations ci-dessous avant de publier. Notre équipe validera votre annonce dans les 24h."}
+                    {isEditMode ? t("editReadySubtitle") : t("newReadySubtitle")}
                   </p>
                 </div>
                 <div className="bg-bg3 rounded-2xl p-5 border border-border">
-                  <PreviewRow k="Titre" v={title || "—"} />
-                  <PreviewRow k="Type de bien" v={kindLabel(kind, tKind)} />
-                  <PreviewRow k="Ville" v={city || "—"} />
-                  <PreviewRow k="Quartier" v={quartier || "—"} />
-                  <PreviewRow k="Transaction" v={transactionType === "vente" ? "Vente" : "Location"} />
+                  <PreviewRow k={t("previewTitle")} v={title || t("emptyValue")} />
+                  <PreviewRow k={t("previewKind")} v={kindLabel(kind, tKind)} />
+                  <PreviewRow k={t("previewCity")} v={city || t("emptyValue")} />
+                  <PreviewRow k={t("previewQuartier")} v={quartier || t("emptyValue")} />
+                  <PreviewRow
+                    k={t("previewTransaction")}
+                    v={transactionType === "vente" ? t("previewSale") : t("previewRental")}
+                  />
                   {rules.listingDuration && (
                     <PreviewRow
-                      k="Durée"
-                      v={listingType === "courte" ? "Court séjour (nuit)" : "Longue durée (mois)"}
+                      k={t("previewDuration")}
+                      v={listingType === "courte" ? t("previewShortStay") : t("previewLongTerm")}
                     />
                   )}
-                  {rules.rooms && <PreviewRow k="Chambres" v={`${rooms} chambre(s)`} />}
+                  {rules.rooms && <PreviewRow k={t("previewRooms")} v={t("previewRoomsValue", { n: rooms })} />}
                   <PreviewRow
-                    k={group === "foncier" ? "Contenance" : "Surface"}
-                    v={surface ? `${surface} m²` : "—"}
+                    k={group === "foncier" ? t("previewSurfaceArea") : t("previewSurface")}
+                    v={surface ? `${surface} m²` : t("emptyValue")}
                   />
-                  <PreviewRow k="Photos" v={`${photos.length} photo${photos.length > 1 ? "s" : ""}`} />
+                  <PreviewRow k={t("previewPhotos")} v={`${photos.length} photo${photos.length > 1 ? "s" : ""}`} />
                   <PreviewRow
-                    k="Prix"
-                    v={price ? `${parseInt(price, 10).toLocaleString("fr-FR")} FCFA` : "—"}
+                    k={t("previewPrice")}
+                    v={price ? `${parseInt(price, 10).toLocaleString("fr-FR")} FCFA` : t("emptyValue")}
                     gold
                     last
                   />
                 </div>
                 <Button variant="gold" full size="lg" loading={publishing} onClick={publish} className="mt-6">
-                  {isEditMode ? "💾 Enregistrer les modifications" : "🚀 Publier l'annonce"}
+                  {isEditMode ? t("saveChangesButton") : t("publishButton")}
                 </Button>
               </div>
             )}
@@ -706,11 +689,11 @@ function PublierPageInner() {
 
         <div className="flex justify-between mt-7 pt-6 border-t border-border">
           <Button variant="ghost" onClick={goPrev}>
-            ← {step === 1 ? "Annuler" : "Précédent"}
+            ← {step === 1 ? t("cancelButton") : t("previousButton")}
           </Button>
           {step < 5 && (
             <Button variant="gold" onClick={goNext}>
-              Continuer →
+              {t("continueButton")}
             </Button>
           )}
         </div>
