@@ -633,6 +633,25 @@
     "toastPasswordChangeError": "❌ Impossible de changer le mot de passe. Réessayez.",
     "toastPasswordChanged": "✅ Mot de passe modifié."
   },
+  "ResetPassword": {
+    "title": "Nouveau mot de passe",
+    "subtitle": "Choisissez un mot de passe pour sécuriser votre compte 237Logement.",
+    "checkingLink": "Vérification du lien…",
+    "invalidLinkTitle": "Lien invalide ou expiré",
+    "invalidLinkText": "Les liens de réinitialisation ne sont valables qu'une heure et ne peuvent servir qu'une fois. Demandez-en un nouveau depuis la page de connexion.",
+    "backToLogin": "Retour à la connexion",
+    "accountLabel": "Compte :",
+    "newPasswordLabel": "Nouveau mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "passwordMismatch": "Les deux mots de passe ne correspondent pas.",
+    "submitButton": "Enregistrer le mot de passe",
+    "passwordHint": "Au moins 8 caractères. Mélangez majuscules, chiffres et symboles pour un compte mieux protégé.",
+    "toastPasswordTooShort": "⚠️ Le mot de passe doit contenir au moins 8 caractères.",
+    "toastPasswordMismatch": "⚠️ Les deux mots de passe ne correspondent pas.",
+    "toastPasswordSameAsOld": "⚠️ Choisissez un mot de passe différent de l'actuel.",
+    "toastError": "❌ Impossible de changer le mot de passe. Le lien a peut-être expiré.",
+    "toastSuccess": "✅ Mot de passe modifié. Vous êtes connecté."
+  },
   "Home": {
     "hero": {
       "badge": "N°1 de l'immobilier au Cameroun",

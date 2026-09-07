@@ -633,6 +633,25 @@
     "toastPasswordChangeError": "❌ Could not change the password. Please try again.",
     "toastPasswordChanged": "✅ Password changed."
   },
+  "ResetPassword": {
+    "title": "New password",
+    "subtitle": "Choose a password to secure your 237Logement account.",
+    "checkingLink": "Checking link…",
+    "invalidLinkTitle": "Invalid or expired link",
+    "invalidLinkText": "Reset links are only valid for one hour and can be used once. Request a new one from the login page.",
+    "backToLogin": "Back to login",
+    "accountLabel": "Account:",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm password",
+    "passwordMismatch": "The two passwords do not match.",
+    "submitButton": "Save password",
+    "passwordHint": "At least 8 characters. Mix uppercase letters, numbers and symbols for a better-protected account.",
+    "toastPasswordTooShort": "⚠️ Password must be at least 8 characters.",
+    "toastPasswordMismatch": "⚠️ The two passwords do not match.",
+    "toastPasswordSameAsOld": "⚠️ Choose a password different from your current one.",
+    "toastError": "❌ Could not change the password. The link may have expired.",
+    "toastSuccess": "✅ Password changed. You're logged in."
+  },
   "Home": {
     "hero": {
       "badge": "Cameroon's #1 real estate platform",

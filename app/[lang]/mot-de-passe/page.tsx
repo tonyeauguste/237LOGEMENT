@@ -23,8 +23,10 @@ import PasswordStrength from "@/components/auth/PasswordStrength";
 import { useAppStore } from "@/lib/store";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { createClient } from "@/lib/supabase/client";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function NouveauMotDePassePage() {
+  const t = useTranslations("ResetPassword");
   const ready = useAuthSession();
   const currentUser = useAppStore((s) => s.currentUser);
   const showToast = useAppStore((s) => s.showToast);
@@ -36,11 +38,11 @@ export default function NouveauMotDePassePage() {
 
   async function submit() {
     if (pwd.length < 8) {
-      showToast("⚠️ Le mot de passe doit contenir au moins 8 caractères.", "error");
+      showToast(t("toastPasswordTooShort"), "error");
       return;
     }
     if (pwd !== pwd2) {
-      showToast("⚠️ Les deux mots de passe ne correspondent pas.", "error");
+      showToast(t("toastPasswordMismatch"), "error");
       return;
     }
 
@@ -51,14 +53,14 @@ export default function NouveauMotDePassePage() {
     if (error) {
       showToast(
         error.message.toLowerCase().includes("should be different")
-          ? "⚠️ Choisissez un mot de passe différent de l'actuel."
-          : "❌ Impossible de changer le mot de passe. Le lien a peut-être expiré.",
+          ? t("toastPasswordSameAsOld")
+          : t("toastError"),
         "error"
       );
       return;
     }
 
-    showToast("✅ Mot de passe modifié. Vous êtes connecté.", "success");
+    showToast(t("toastSuccess"), "success");
     router.push("/compte");
   }
 
@@ -69,42 +71,35 @@ export default function NouveauMotDePassePage() {
           <div className="w-14 h-14 rounded-2xl bg-gold3 border border-[rgba(200,155,60,.3)] flex items-center justify-center mx-auto mb-4 text-gold">
             <ShieldCheck size={26} />
           </div>
-          <h1 className="font-display text-[28px] font-bold text-text mb-1.5">
-            Nouveau mot de passe
-          </h1>
-          <p className="text-muted text-sm">
-            Choisissez un mot de passe pour sécuriser votre compte 237Logement.
-          </p>
+          <h1 className="font-display text-[28px] font-bold text-text mb-1.5">{t("title")}</h1>
+          <p className="text-muted text-sm">{t("subtitle")}</p>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6">
           {!ready ? (
-            <p className="text-sm text-muted text-center py-6">Vérification du lien…</p>
+            <p className="text-sm text-muted text-center py-6">{t("checkingLink")}</p>
           ) : !currentUser ? (
             // Pas de session : lien expiré, déjà utilisé, ou page ouverte
             // directement sans passer par l'email.
             <div className="text-center py-4">
               <div className="text-[40px] mb-3">⏳</div>
-              <h2 className="text-base font-semibold text-text mb-2">Lien invalide ou expiré</h2>
-              <p className="text-sm text-muted mb-5 leading-relaxed">
-                Les liens de réinitialisation ne sont valables qu&apos;une heure et ne peuvent
-                servir qu&apos;une fois. Demandez-en un nouveau depuis la page de connexion.
-              </p>
+              <h2 className="text-base font-semibold text-text mb-2">{t("invalidLinkTitle")}</h2>
+              <p className="text-sm text-muted mb-5 leading-relaxed">{t("invalidLinkText")}</p>
               <Link href="/connexion?tab=login">
                 <Button variant="gold" full>
-                  Retour à la connexion
+                  {t("backToLogin")}
                 </Button>
               </Link>
             </div>
           ) : (
             <>
               <p className="text-[13px] text-muted mb-5">
-                Compte : <span className="text-text font-medium">{currentUser.email}</span>
+                {t("accountLabel")} <span className="text-text font-medium">{currentUser.email}</span>
               </p>
 
               <div className="mb-4">
                 <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                  Nouveau mot de passe
+                  {t("newPasswordLabel")}
                 </label>
                 <PasswordField
                   value={pwd}
@@ -117,7 +112,7 @@ export default function NouveauMotDePassePage() {
 
               <div className="mb-5">
                 <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                  Confirmer le mot de passe
+                  {t("confirmPasswordLabel")}
                 </label>
                 <PasswordField
                   value={pwd2}
@@ -126,20 +121,15 @@ export default function NouveauMotDePassePage() {
                   autoComplete="new-password"
                 />
                 {pwd2.length > 0 && pwd !== pwd2 && (
-                  <p className="text-[12px] text-red mt-1.5">
-                    Les deux mots de passe ne correspondent pas.
-                  </p>
+                  <p className="text-[12px] text-red mt-1.5">{t("passwordMismatch")}</p>
                 )}
               </div>
 
               <Button variant="gold" full size="lg" loading={saving} onClick={submit}>
-                Enregistrer le mot de passe
+                {t("submitButton")}
               </Button>
 
-              <p className="text-[12px] text-dim mt-4 leading-relaxed">
-                Au moins 8 caractères. Mélangez majuscules, chiffres et symboles pour un compte
-                mieux protégé.
-              </p>
+              <p className="text-[12px] text-dim mt-4 leading-relaxed">{t("passwordHint")}</p>
             </>
           )}
         </div>
