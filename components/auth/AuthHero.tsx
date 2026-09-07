@@ -8,15 +8,16 @@
 
 import Image from "next/image";
 import { Home, Megaphone, ShieldCheck, MessageCircle } from "lucide-react";
-
-const FEATURES = [
-  { icon: Home, text: "Trouvez un logement adapté à votre budget" },
-  { icon: Megaphone, text: "Publiez et mettez en avant vos annonces" },
-  { icon: ShieldCheck, text: "Propriétaires et annonces vérifiés" },
-  { icon: MessageCircle, text: "Contact direct, sans intermédiaire" },
-];
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function AuthHero() {
+  const t = useTranslations("AuthHero");
+  const FEATURES = [
+    { icon: Home, text: t("feature1") },
+    { icon: Megaphone, text: t("feature2") },
+    { icon: ShieldCheck, text: t("feature3") },
+    { icon: MessageCircle, text: t("feature4") },
+  ];
   return (
     <div className="hidden lg:block relative overflow-hidden min-h-[500px]">
       <Image
@@ -35,14 +36,13 @@ export default function AuthHero() {
       <div className="relative h-full flex flex-col justify-end p-10 xl:p-12">
         <div>
           <p className="text-[11px] tracking-[3px] uppercase text-gold font-semibold mb-3">
-            Louer · Publier · Gérer
+            {t("kicker")}
           </p>
           <h2 className="font-display text-[clamp(26px,2.6vw,38px)] font-bold text-white leading-tight mb-3">
-            Rejoignez le marché locatif camerounais
+            {t("title")}
           </h2>
           <p className="text-white/75 text-[15px] leading-relaxed mb-7 max-w-[380px]">
-            Créez un compte gratuit pour trouver un logement, publier vos biens ou gérer vos
-            locations — sans commission, sans intermédiaire.
+            {t("subtitle")}
           </p>
           <ul className="flex flex-col gap-3">
             {FEATURES.map(({ icon: Icon, text }) => (

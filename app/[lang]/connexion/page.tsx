@@ -12,20 +12,17 @@ import PasswordStrength from "@/components/auth/PasswordStrength";
 import { buildUserFromSession, useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { DEFAULT_AVATAR } from "@/lib/data";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 type AuthTab = "login" | "register";
 /** Objectifs déclarés à l'inscription — sélection multiple. */
 type Goal = "find" | "publish";
 
 const REGISTER_STEPS = 4;
-const STEP_LABELS = [
-  "Vos informations",
-  "Vos objectifs",
-  "Sécurisez votre accès",
-  "Confirmation",
-];
 
 function AuthPageInner() {
+  const t = useTranslations("Auth");
+  const STEP_LABELS = [t("step1Label"), t("step2Label"), t("step3Label"), t("step4Label")];
   const params = useSearchParams();
   const router = useRouter();
   const setCurrentUser = useAppStore((s) => s.setCurrentUser);
@@ -68,7 +65,7 @@ function AuthPageInner() {
 
   async function handleLogin() {
     if (!loginEmail.trim() || !loginPwd) {
-      showToast("⚠️ Remplissez tous les champs.", "error");
+      showToast(t("toastFillFields"), "error");
       return;
     }
     setLoading(true);
@@ -87,8 +84,8 @@ function AuthPageInner() {
       // message générique.
       showToast(
         error?.message.toLowerCase().includes("email not confirmed")
-          ? "📧 Confirmez d'abord votre adresse via le lien reçu par email."
-          : "❌ Email ou mot de passe incorrect.",
+          ? t("toastEmailNotConfirmed")
+          : t("toastInvalidCredentials"),
         "error"
       );
       return;
@@ -97,11 +94,11 @@ function AuthPageInner() {
     if (!user) {
       // Compte bloqué par un administrateur — buildUserFromSession a déjà
       // fermé la session ouverte par signInWithPassword ci-dessus.
-      showToast("⛔ Ce compte a été bloqué. Contactez l'administrateur.", "error");
+      showToast(t("toastAccountBlocked"), "error");
       return;
     }
     setCurrentUser(user);
-    showToast(`✅ Bienvenue ${user.name} !`, "success");
+    showToast(t("toastWelcome", { name: user.name }), "success");
     router.push("/compte");
   }
 
@@ -109,25 +106,25 @@ function AuthPageInner() {
   function goNext() {
     if (step === 1) {
       if (!fname.trim()) {
-        showToast("⚠️ Veuillez renseigner votre prénom.", "error");
+        showToast(t("toastEnterFirstName"), "error");
         return;
       }
     }
     if (step === 2 && goals.length === 0) {
-      showToast("⚠️ Sélectionnez au moins un objectif.", "error");
+      showToast(t("toastSelectGoal"), "error");
       return;
     }
     if (step === 3) {
       if (!regEmail.trim()) {
-        showToast("⚠️ Veuillez renseigner votre adresse email.", "error");
+        showToast(t("toastEnterEmail"), "error");
         return;
       }
       if (regPwd.length < 8) {
-        showToast("⚠️ Le mot de passe doit contenir au moins 8 caractères.", "error");
+        showToast(t("toastPasswordTooShort"), "error");
         return;
       }
       if (regPwd !== regPwd2) {
-        showToast("⚠️ Les deux mots de passe ne correspondent pas.", "error");
+        showToast(t("toastPasswordMismatch"), "error");
         return;
       }
     }
@@ -159,8 +156,8 @@ function AuthPageInner() {
     if (error) {
       showToast(
         error.message.toLowerCase().includes("already registered")
-          ? "❌ Un compte existe déjà avec cet email."
-          : "❌ Une erreur est survenue. Réessayez.",
+          ? t("toastAccountExists")
+          : t("toastGenericError"),
         "error"
       );
       return;
@@ -175,7 +172,7 @@ function AuthPageInner() {
       // le bon → cascade de "Email ou mot de passe incorrect" (bug réel
       // observé dans les logs Supabase du projet).
       if (data.user && data.user.identities?.length === 0) {
-        showToast("❌ Un compte existe déjà avec cet email. Connectez-vous plutôt.", "error");
+        showToast(t("toastAccountExists"), "error");
         setTab("login");
         setLoginEmail(regEmail.trim());
         setStep(1);
@@ -184,7 +181,7 @@ function AuthPageInner() {
       // Cas normal : la confirmation par email est activée sur ce projet,
       // le compte est créé mais pas encore utilisable tant que le lien
       // reçu par email n'a pas été cliqué.
-      showToast("📧 Compte créé ! Vérifiez vos emails pour confirmer votre adresse.", "success");
+      showToast(t("toastAccountCreatedConfirm"), "success");
       setTab("login");
       setLoginEmail(regEmail.trim());
       setStep(1);
@@ -192,11 +189,11 @@ function AuthPageInner() {
     }
     const user = await buildUserFromSession(data.session);
     if (!user) {
-      showToast("❌ Une erreur est survenue. Réessayez.", "error");
+      showToast(t("toastGenericError"), "error");
       return;
     }
     setCurrentUser(user);
-    showToast(`🎉 Compte créé ! Bienvenue ${fname} !`, "success");
+    showToast(t("toastAccountCreatedWelcome", { name: fname }), "success");
     router.push("/compte");
   }
 
@@ -219,7 +216,7 @@ function AuthPageInner() {
                 tab === "login" ? "bg-gold3 text-gold" : "text-muted"
               }`}
             >
-              Connexion
+              {t("loginTab")}
             </button>
             <button
               onClick={() => setTab("register")}
@@ -227,7 +224,7 @@ function AuthPageInner() {
                 tab === "register" ? "bg-gold3 text-gold" : "text-muted"
               }`}
             >
-              Inscription
+              {t("registerTab")}
             </button>
           </div>
 
@@ -240,23 +237,21 @@ function AuthPageInner() {
                 exit={{ opacity: 0, x: 12 }}
                 transition={{ duration: 0.25 }}
               >
-                <h1 className="font-display text-[28px] font-bold text-text mb-1.5">Bon retour !</h1>
-                <p className="text-muted text-sm mb-[26px]">
-                  Connectez-vous pour accéder à votre espace personnel.
-                </p>
+                <h1 className="font-display text-[28px] font-bold text-text mb-1.5">{t("loginTitle")}</h1>
+                <p className="text-muted text-sm mb-[26px]">{t("loginSubtitle")}</p>
                 <div className="mb-4">
-                  <label className="block text-[13px] text-muted mb-[7px] font-medium">Adresse email</label>
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("emailLabel")}</label>
                   <input
                     className="form-control"
                     type="email"
                     autoComplete="email"
-                    placeholder="votre@email.com"
+                    placeholder={t("emailPlaceholder")}
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
                   />
                 </div>
                 <div className="mb-4">
-                  <label className="block text-[13px] text-muted mb-[7px] font-medium">Mot de passe</label>
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("passwordLabel")}</label>
                   <PasswordField
                     value={loginPwd}
                     onChange={setLoginPwd}
@@ -269,7 +264,7 @@ function AuthPageInner() {
                     className="bg-none border-none text-gold text-[13px] cursor-pointer"
                     onClick={async () => {
                       if (!loginEmail.trim()) {
-                        showToast("⚠️ Renseignez d'abord votre adresse email ci-dessus.", "error");
+                        showToast(t("toastEnterEmailFirst"), "error");
                         return;
                       }
                       const supabase = createClient();
@@ -280,23 +275,21 @@ function AuthPageInner() {
                         redirectTo: `${window.location.origin}/mot-de-passe`,
                       });
                       showToast(
-                        error
-                          ? "❌ Une erreur est survenue. Réessayez."
-                          : "📧 Email de réinitialisation envoyé (si ce compte existe).",
+                        error ? t("toastResetEmailError") : t("toastResetEmailSent"),
                         error ? "error" : "success"
                       );
                     }}
                   >
-                    Mot de passe oublié ?
+                    {t("forgotPassword")}
                   </button>
                 </div>
                 <Button variant="gold" full size="lg" loading={loading} onClick={handleLogin}>
-                  Se connecter
+                  {t("loginButton")}
                 </Button>
                 <p className="text-center text-[13px] text-muted mt-[18px]">
-                  Pas encore de compte ?{" "}
+                  {t("noAccount")}{" "}
                   <button className="text-gold font-semibold" onClick={() => setTab("register")}>
-                    S&apos;inscrire gratuitement
+                    {t("signUpLink")}
                   </button>
                 </p>
               </motion.div>
@@ -311,15 +304,13 @@ function AuthPageInner() {
                 {/* Indicateur d'avancement du parcours en 4 étapes */}
                 <div className="mb-5">
                   <div className="flex justify-between items-center text-[12px] text-muted mb-2">
-                    <span>
-                      Étape {step} sur {REGISTER_STEPS}
-                    </span>
+                    <span>{t("stepOf", { step, total: REGISTER_STEPS })}</span>
                     {step > 1 && (
                       <button
                         onClick={goPrev}
                         className="flex items-center gap-1 text-gold hover:underline cursor-pointer"
                       >
-                        <ArrowLeft size={12} /> Retour
+                        <ArrowLeft size={12} /> {t("back")}
                       </button>
                     )}
                   </div>
@@ -333,9 +324,9 @@ function AuthPageInner() {
                   </div>
                 </div>
 
-                <h1 className="font-display text-[28px] font-bold text-text mb-1">Créer un compte</h1>
+                <h1 className="font-display text-[28px] font-bold text-text mb-1">{t("registerTitle")}</h1>
                 <p className="text-muted text-sm mb-6">
-                  Étape {step} sur {REGISTER_STEPS} — {STEP_LABELS[step - 1]}
+                  {t("stepOf", { step, total: REGISTER_STEPS })} — {STEP_LABELS[step - 1]}
                 </p>
 
                 <AnimatePresence mode="wait" custom={dir} initial={false}>
@@ -351,20 +342,20 @@ function AuthPageInner() {
                     {step === 1 && (
                       <>
                         <div className="mb-4">
-                          <label className="block text-[13px] text-muted mb-[7px] font-medium">Prénom *</label>
+                          <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("firstNameLabel")}</label>
                           <input
                             className="form-control"
-                            placeholder="Votre prénom"
+                            placeholder={t("firstNamePlaceholder")}
                             autoComplete="given-name"
                             value={fname}
                             onChange={(e) => setFname(e.target.value)}
                           />
                         </div>
                         <div className="mb-4">
-                          <label className="block text-[13px] text-muted mb-[7px] font-medium">Nom</label>
+                          <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("lastNameLabel")}</label>
                           <input
                             className="form-control"
-                            placeholder="Votre nom"
+                            placeholder={t("lastNamePlaceholder")}
                             autoComplete="family-name"
                             value={lname}
                             onChange={(e) => setLname(e.target.value)}
@@ -372,7 +363,7 @@ function AuthPageInner() {
                         </div>
                         <div className="mb-1">
                           <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                            Téléphone <span className="text-dim font-normal">(optionnel)</span>
+                            {t("phoneLabel")} <span className="text-dim font-normal">{t("phoneOptional")}</span>
                           </label>
                           {/* Préfixe pays figé : la plateforme ne cible que le
                               Cameroun, autant éviter un sélecteur inutile. */}
@@ -384,38 +375,32 @@ function AuthPageInner() {
                               className="form-control !rounded-l-none"
                               type="tel"
                               autoComplete="tel"
-                              placeholder="6XX XXX XXX"
+                              placeholder={t("phonePlaceholder")}
                               value={phone}
                               onChange={(e) => setPhone(e.target.value)}
                             />
                           </div>
-                          <p className="text-[11px] text-dim mt-1.5">
-                            Utile pour être contacté au sujet de vos annonces.
-                          </p>
+                          <p className="text-[11px] text-dim mt-1.5">{t("phoneHint")}</p>
                         </div>
                       </>
                     )}
 
                     {step === 2 && (
                       <>
-                        <p className="text-[13px] font-semibold text-text mb-1">
-                          Que voulez-vous faire sur 237Logement ?
-                        </p>
-                        <p className="text-[12px] text-muted mb-4">
-                          Sélectionnez une ou plusieurs options qui vous correspondent.
-                        </p>
+                        <p className="text-[13px] font-semibold text-text mb-1">{t("goalsTitle")}</p>
+                        <p className="text-[12px] text-muted mb-4">{t("goalsSubtitle")}</p>
                         <div className="flex flex-col gap-3">
                           <GoalCard
                             icon={<Search size={17} />}
-                            title="Trouver un bien"
-                            desc="Recherchez, sauvegardez des annonces et contactez directement les propriétaires."
+                            title={t("goalFindTitle")}
+                            desc={t("goalFindDesc")}
                             checked={goals.includes("find")}
                             onToggle={() => toggleGoal("find")}
                           />
                           <GoalCard
                             icon={<Megaphone size={17} />}
-                            title="Publier ou louer un bien"
-                            desc="Publiez vos biens à louer, suivez les vues et gérez les demandes reçues."
+                            title={t("goalPublishTitle")}
+                            desc={t("goalPublishDesc")}
                             checked={goals.includes("publish")}
                             onToggle={() => toggleGoal("publish")}
                           />
@@ -427,20 +412,20 @@ function AuthPageInner() {
                       <>
                         <div className="mb-4">
                           <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                            Email de connexion *
+                            {t("loginEmailLabel")}
                           </label>
                           <input
                             className="form-control"
                             type="email"
                             autoComplete="email"
-                            placeholder="votre@email.com"
+                            placeholder={t("emailPlaceholder")}
                             value={regEmail}
                             onChange={(e) => setRegEmail(e.target.value)}
                           />
                         </div>
                         <div className="mb-4">
                           <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                            Mot de passe *
+                            {t("passwordCreateLabel")}
                           </label>
                           <PasswordField
                             value={regPwd}
@@ -452,7 +437,7 @@ function AuthPageInner() {
                         </div>
                         <div className="mb-4">
                           <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                            Confirmer le mot de passe *
+                            {t("confirmPasswordLabel")}
                           </label>
                           <PasswordField
                             value={regPwd2}
@@ -461,14 +446,11 @@ function AuthPageInner() {
                             autoComplete="new-password"
                           />
                           {regPwd2.length > 0 && regPwd !== regPwd2 && (
-                            <p className="text-[12px] text-red mt-1.5">
-                              Les deux mots de passe ne correspondent pas.
-                            </p>
+                            <p className="text-[12px] text-red mt-1.5">{t("passwordMismatch")}</p>
                           )}
                         </div>
                         <div className="bg-card border border-border rounded-xl px-4 py-3 text-[12px] text-muted">
-                          Votre mot de passe doit contenir au moins 8 caractères. Mélangez majuscules,
-                          chiffres et symboles pour un compte mieux protégé.
+                          {t("passwordRules")}
                         </div>
                       </>
                     )}
@@ -476,25 +458,25 @@ function AuthPageInner() {
                     {step === 4 && (
                       <>
                         <div className="bg-card border border-border rounded-2xl p-5 mb-4">
-                          <RecapRow k="Nom complet" v={`${fname} ${lname}`.trim() || "—"} />
-                          <RecapRow k="Téléphone" v={phone.trim() ? `+237 ${phone.trim()}` : "Non renseigné"} />
-                          <RecapRow k="Email" v={regEmail.trim() || "—"} />
+                          <RecapRow k={t("recapFullName")} v={`${fname} ${lname}`.trim() || t("recapEmpty")} />
                           <RecapRow
-                            k="Objectifs"
+                            k={t("recapPhone")}
+                            v={phone.trim() ? `+237 ${phone.trim()}` : t("recapNotProvided")}
+                          />
+                          <RecapRow k={t("recapEmail")} v={regEmail.trim() || t("recapEmpty")} />
+                          <RecapRow
+                            k={t("recapGoals")}
                             v={
                               goals.length === 0
-                                ? "—"
+                                ? t("recapEmpty")
                                 : goals
-                                    .map((g) => (g === "find" ? "Trouver un bien" : "Publier un bien"))
+                                    .map((g) => (g === "find" ? t("recapGoalFind") : t("recapGoalPublish")))
                                     .join(" · ")
                             }
                             last
                           />
                         </div>
-                        <p className="text-[12px] text-muted mb-1">
-                          En créant votre compte, vous acceptez nos conditions d&apos;utilisation.
-                          Publication gratuite, sans commission.
-                        </p>
+                        <p className="text-[12px] text-muted mb-1">{t("termsText")}</p>
                       </>
                     )}
                   </motion.div>
@@ -503,12 +485,12 @@ function AuthPageInner() {
                 <div className="flex gap-3 mt-6">
                   {step > 1 && (
                     <Button variant="ghost" size="lg" onClick={goPrev} className="flex-1">
-                      ← Retour
+                      ← {t("back")}
                     </Button>
                   )}
                   {step < REGISTER_STEPS ? (
                     <Button variant="gold" size="lg" onClick={goNext} className="flex-1">
-                      Continuer →
+                      {t("continueButton")}
                     </Button>
                   ) : (
                     <Button
@@ -518,24 +500,22 @@ function AuthPageInner() {
                       onClick={handleRegister}
                       className="flex-1"
                     >
-                      Créer mon compte
+                      {t("createAccountButton")}
                     </Button>
                   )}
                 </div>
 
                 <p className="text-center text-[13px] text-muted mt-[18px]">
-                  Vous avez déjà un compte ?{" "}
+                  {t("alreadyAccount")}{" "}
                   <button className="text-gold font-semibold" onClick={() => setTab("login")}>
-                    Se connecter
+                    {t("loginLink")}
                   </button>
                 </p>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <p className="text-center text-[11px] text-dim mt-6">
-            🔒 Connexion sécurisée · Vos données restent privées
-          </p>
+          <p className="text-center text-[11px] text-dim mt-6">{t("secureFooter")}</p>
         </div>
       </div>
     </div>

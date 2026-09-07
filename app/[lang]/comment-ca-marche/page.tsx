@@ -1,109 +1,168 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
+import { getMessages } from "@/i18n/dictionaries";
+import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
-export const metadata = {
-  title: "Comment ça marche – 237Logement",
-  description:
-    "237Logement simplifie la location immobilière au Cameroun. Que vous soyez locataire ou propriétaire, découvrez comment profiter de notre plateforme.",
+type HowItWorksMessages = {
+  metaTitle: string;
+  metaDescription: string;
+  kicker: string;
+  titlePrefix: string;
+  titleHighlight: string;
+  subtitle: string;
+  findHomeButton: string;
+  publishButton: string;
+  labelTenants: string;
+  labelTenantsOwners: string;
+  labelOwners: string;
+  step1Title: string;
+  step1Text: string;
+  step1Alt: string;
+  step2Title: string;
+  step2Text: string;
+  step2Alt: string;
+  step3Title: string;
+  step3Text: string;
+  step3Alt: string;
+  step4Title: string;
+  step4Text: string;
+  step4Alt: string;
+  rolesKicker: string;
+  rolesTitle: string;
+  rolesTitleHighlight: string;
+  visitorTitle: string;
+  visitorSub: string;
+  visitorFeature1: string;
+  visitorFeature2: string;
+  visitorFeature3: string;
+  visitorFeature4: string;
+  visitorFeature5: string;
+  visitorFeature6: string;
+  ownerTitle: string;
+  ownerSub: string;
+  ownerFeature1: string;
+  ownerFeature2: string;
+  ownerFeature3: string;
+  ownerFeature4: string;
+  ownerFeature5: string;
+  ownerFeature6: string;
+  createAccountButton: string;
 };
 
-const STEPS = [
-  {
-    num: "01",
-    label: "Locataires",
-    title: "Recherchez et filtrez avec précision",
-    text: "Notre moteur de recherche avancé vous permet de filtrer par ville, quartier, type de location (courte ou longue durée), budget, nombre de chambres et équipements. Affinez votre recherche jusqu'à trouver exactement ce dont vous avez besoin. Visualisez simultanément les résultats sur la carte interactive du Cameroun.",
-    img: "https://images.unsplash.com/photo-1502005097973-6a7082348e28?w=700&q=80",
-    alt: "Recherche de logement",
-    reverse: false,
-  },
-  {
-    num: "02",
-    label: "Locataires",
-    title: "Explorez chaque annonce en détail",
-    text: "Chaque annonce dispose d'une galerie photos haute définition, d'une description complète, d'un inventaire des équipements, d'une localisation sur carte et du profil vérifié du propriétaire avec ses avis. Sauvegardez vos préférées dans vos favoris pour les comparer tranquillement.",
-    img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=700&q=80",
-    alt: "Détail annonce",
-    reverse: true,
-  },
-  {
-    num: "03",
-    label: "Locataires & Propriétaires",
-    title: "Contactez directement, sans intermédiaire",
-    text: "Envoyez un message ou appelez directement le propriétaire depuis la fiche de l'annonce. Pas de frais d'agence, pas d'intermédiaire caché. Les propriétaires reçoivent vos demandes dans leur tableau de bord et peuvent vous répondre rapidement. La négociation se fait entre vous, librement.",
-    img: "https://images.unsplash.com/photo-1560472355-536de3962603?w=700&q=80",
-    alt: "Contact direct",
-    reverse: false,
-  },
-  {
-    num: "04",
-    label: "Propriétaires",
-    title: "Gérez vos annonces comme un pro",
-    text: "Les propriétaires disposent d'un tableau de bord complet : publication en 5 étapes, gestion des annonces, suivi des statistiques (vues, contacts, favoris), messagerie intégrée. Modifiez ou supprimez vos annonces à tout moment. Recevez des alertes à chaque nouveau message ou intérêt.",
-    img: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=700&q=80",
-    alt: "Tableau de bord propriétaire",
-    reverse: true,
-  },
-];
+async function getHowItWorks(lang: string): Promise<HowItWorksMessages> {
+  const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
+  const messages = await getMessages(locale);
+  return (messages as { HowItWorks: HowItWorksMessages }).HowItWorks;
+}
 
-const ROLES = [
-  {
-    icon: "🏠",
-    title: "Compte Visiteur",
-    sub: "Pour les personnes qui cherchent un logement à louer",
-    highlight: false,
-    features: [
-      "Recherche avancée par ville, quartier, prix et type",
-      "Consultation des photos et descriptions détaillées",
-      "Sauvegarde de favoris personnalisés",
-      "Contact direct avec les propriétaires",
-      "Alertes email pour les nouvelles annonces",
-      "Historique des recherches récentes",
-    ],
-  },
-  {
-    icon: "🔑",
-    title: "Compte Propriétaire",
-    sub: "Pour les propriétaires souhaitant louer leur bien",
-    highlight: true,
-    features: [
-      "Publication gratuite et illimitée d'annonces",
-      "Gestion complète des annonces (modifier, supprimer)",
-      "Tableau de bord avec statistiques détaillées",
-      "Messagerie intégrée avec les locataires",
-      "Badge propriétaire vérifié",
-      "Notifications en temps réel",
-    ],
-  },
-];
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const t = await getHowItWorks(lang);
+  return { title: t.metaTitle, description: t.metaDescription };
+}
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage({ params }: { params: Promise<{ lang: string }> }) {
+  const { lang } = await params;
+  const t = await getHowItWorks(lang);
+
+  const STEPS = [
+    {
+      num: "01",
+      label: t.labelTenants,
+      title: t.step1Title,
+      text: t.step1Text,
+      img: "https://images.unsplash.com/photo-1502005097973-6a7082348e28?w=700&q=80",
+      alt: t.step1Alt,
+      reverse: false,
+    },
+    {
+      num: "02",
+      label: t.labelTenants,
+      title: t.step2Title,
+      text: t.step2Text,
+      img: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=700&q=80",
+      alt: t.step2Alt,
+      reverse: true,
+    },
+    {
+      num: "03",
+      label: t.labelTenantsOwners,
+      title: t.step3Title,
+      text: t.step3Text,
+      img: "https://images.unsplash.com/photo-1560472355-536de3962603?w=700&q=80",
+      alt: t.step3Alt,
+      reverse: false,
+    },
+    {
+      num: "04",
+      label: t.labelOwners,
+      title: t.step4Title,
+      text: t.step4Text,
+      img: "https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=700&q=80",
+      alt: t.step4Alt,
+      reverse: true,
+    },
+  ];
+
+  const ROLES = [
+    {
+      icon: "🏠",
+      title: t.visitorTitle,
+      sub: t.visitorSub,
+      highlight: false,
+      features: [
+        t.visitorFeature1,
+        t.visitorFeature2,
+        t.visitorFeature3,
+        t.visitorFeature4,
+        t.visitorFeature5,
+        t.visitorFeature6,
+      ],
+    },
+    {
+      icon: "🔑",
+      title: t.ownerTitle,
+      sub: t.ownerSub,
+      highlight: true,
+      features: [
+        t.ownerFeature1,
+        t.ownerFeature2,
+        t.ownerFeature3,
+        t.ownerFeature4,
+        t.ownerFeature5,
+        t.ownerFeature6,
+      ],
+    },
+  ];
+
   return (
     <div>
       <div className="bg-gradient-to-br from-bg to-bg2 px-[5%] pt-20 pb-[60px] text-center border-b border-border">
         <Reveal as="span" className="text-[11px] tracking-[3px] uppercase text-gold font-semibold block">
-          Guide d&apos;utilisation
+          {t.kicker}
         </Reveal>
         <Reveal delay={0.08}>
           <h1 className="font-display text-[clamp(28px,4vw,52px)] font-bold text-text mt-2.5">
-            Comment <span className="text-gold">ça marche</span> ?
+            {t.titlePrefix} <span className="text-gold">{t.titleHighlight}</span> ?
           </h1>
         </Reveal>
         <Reveal delay={0.14}>
-          <p className="text-muted text-base mt-3.5 mb-7 max-w-[560px] mx-auto">
-            237Logement simplifie la location immobilière au Cameroun. Que vous soyez locataire ou
-            propriétaire, voici comment profiter de notre plateforme.
-          </p>
+          <p className="text-muted text-base mt-3.5 mb-7 max-w-[560px] mx-auto">{t.subtitle}</p>
         </Reveal>
         <Reveal delay={0.2} className="flex gap-3.5 justify-center flex-wrap">
           <Link href="/recherche">
-            <Button variant="gold" size="lg">Trouver un logement</Button>
+            <Button variant="gold" size="lg">{t.findHomeButton}</Button>
           </Link>
           <Link href="/connexion?tab=register">
-            <Button variant="outline" size="lg">Publier mon bien</Button>
+            <Button variant="outline" size="lg">{t.publishButton}</Button>
           </Link>
         </Reveal>
       </div>
@@ -137,10 +196,12 @@ export default function HowItWorksPage() {
       <div className="bg-bg2 border-t border-border max-w-[1100px] mx-auto px-[5%] py-[60px]">
         <div className="text-center mb-7">
           <span className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">
-            Deux types de comptes
+            {t.rolesKicker}
           </span>
           <h2 className="font-display text-[clamp(24px,3vw,40px)] font-bold text-text mt-2">
-            Choisissez votre <span className="text-gold">profil</span>
+            {t.rolesTitle.split("{highlight}")[0]}
+            <span className="text-gold">{t.rolesTitleHighlight}</span>
+            {t.rolesTitle.split("{highlight}")[1]}
           </h2>
           <div className="gold-bar mt-3 mx-auto" />
         </div>
@@ -169,7 +230,7 @@ export default function HowItWorksPage() {
         </div>
         <div className="text-center mt-9 pb-4">
           <Link href="/connexion?tab=register">
-            <Button variant="gold" size="lg">Créer mon compte gratuitement</Button>
+            <Button variant="gold" size="lg">{t.createAccountButton}</Button>
           </Link>
         </div>
       </div>
