@@ -54,6 +54,7 @@ import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
 import { propertyGroup, transactionMeta } from "@/lib/data";
 import type { Property } from "@/lib/types";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 type UserSection = "favoris" | "listings" | "stats" | "messages" | "settings";
 type AdminSection = "admin-overview" | "admin-annonces" | "admin-users";
@@ -64,6 +65,9 @@ function isAdminSection(s: Section): s is AdminSection {
 }
 
 export default function AccountDashboard() {
+  // Adaptation minimale à la signature localisée de transactionMeta (voir
+  // lib/data.ts) — le reste de ce tableau de bord n'est pas encore traduit.
+  const tTx = useTranslations("Transaction");
   // Plus de rôle requis : tout compte connecté accède au même espace.
   const user = useAuthGuard();
   const showToast = useAppStore((s) => s.showToast);
@@ -531,7 +535,7 @@ export default function AccountDashboard() {
                   <div className="flex flex-col gap-3.5">
                     {listings.map((p) => {
                       const group = propertyGroup(p.kind);
-                      const meta = transactionMeta(p.transactionType, p.type, group);
+                      const meta = transactionMeta(p.transactionType, p.type, group, tTx);
                       // B.2/B.4 — badge + flou de la photo publique, cohérent
                       // avec PropertyCard.tsx / PropertyDetail.tsx.
                       const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";

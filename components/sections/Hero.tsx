@@ -8,7 +8,7 @@ import { Search, Check } from "lucide-react";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
 import CityInput from "@/components/ui/CityInput";
-import { PROPERTY_KINDS } from "@/lib/data";
+import { PROPERTY_KINDS, kindLabel } from "@/lib/data";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 const SLIDES = [
@@ -28,6 +28,7 @@ const SLIDES = [
 
 export default function Hero() {
   const t = useTranslations("Home.hero");
+  const tKind = useTranslations("PropertyKinds");
   const [slide, setSlide] = useState(0);
   const router = useRouter();
   const cityRef = useRef<HTMLInputElement>(null);
@@ -141,7 +142,7 @@ export default function Hero() {
               <option value="">{t("kindPlaceholder")}</option>
               {PROPERTY_KINDS.map((k) => (
                 <option key={k.value} value={k.value}>
-                  {k.icon} {k.label}
+                  {k.icon} {kindLabel(k.value, tKind)}
                 </option>
               ))}
             </select>

@@ -24,8 +24,14 @@ import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import type { ListingKind, OccupancyStatus, TransactionType, UploadedPhoto } from "@/lib/types";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 function PublierPageInner() {
+  // Adaptation minimale à la signature localisée de kindLabel/
+  // transactionMeta et à la clé de traduction surfaceLabelKey (voir
+  // lib/data.ts) — le reste de ce formulaire n'est pas encore traduit.
+  const tKind = useTranslations("PropertyKinds");
+  const tTx = useTranslations("Transaction");
   // Tout compte connecté peut publier depuis la fusion des espaces : les
   // objectifs choisis à l'inscription ne verrouillent plus rien (côté base,
   // la policy RLS d'insertion vérifie seulement owner_id = auth.uid()).
@@ -443,7 +449,7 @@ function PublierPageInner() {
                   <select className="form-control" value={kind} onChange={(e) => setKind(e.target.value)}>
                     {PROPERTY_KINDS.map((k) => (
                       <option key={k.value} value={k.value}>
-                        {k.icon} {k.label}
+                        {k.icon} {kindLabel(k.value, tKind)}
                       </option>
                     ))}
                   </select>
@@ -476,7 +482,7 @@ function PublierPageInner() {
                   </div>
                   {!saleEligible && (
                     <p className="text-[11px] text-dim mt-1.5">
-                      La vente n&apos;est pas proposée pour ce type de bien — {kindLabel(kind).toLowerCase()} se
+                      La vente n&apos;est pas proposée pour ce type de bien — {kindLabel(kind, tKind).toLowerCase()} se
                       loue uniquement.
                     </p>
                   )}
@@ -513,7 +519,7 @@ function PublierPageInner() {
                       </select>
                     </Field>
                   )}
-                  <Field label={rules.surfaceLabel}>
+                  <Field label={tTx(rules.surfaceLabelKey)}>
                     <input
                       className="form-control"
                       type="number"
@@ -603,7 +609,7 @@ function PublierPageInner() {
             {step === 4 && (
               <div>
                 <StepTitle icon="💰" text="Tarification" />
-                <Field label={transactionMeta(transactionType, rules.listingDuration ? listingType : null, group).priceFieldLabel}>
+                <Field label={transactionMeta(transactionType, rules.listingDuration ? listingType : null, group, tTx).priceFieldLabel}>
                   <input
                     className="form-control !text-xl !font-semibold !px-[18px] !py-[14px]"
                     type="number"
@@ -667,7 +673,7 @@ function PublierPageInner() {
                 </div>
                 <div className="bg-bg3 rounded-2xl p-5 border border-border">
                   <PreviewRow k="Titre" v={title || "—"} />
-                  <PreviewRow k="Type de bien" v={kindLabel(kind)} />
+                  <PreviewRow k="Type de bien" v={kindLabel(kind, tKind)} />
                   <PreviewRow k="Ville" v={city || "—"} />
                   <PreviewRow k="Quartier" v={quartier || "—"} />
                   <PreviewRow k="Transaction" v={transactionType === "vente" ? "Vente" : "Location"} />

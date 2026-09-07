@@ -96,31 +96,40 @@ export type PropertyGroup = "residentiel" | "commercial" | "foncier";
 
 export interface PropertyKindDef {
   value: string;
-  label: string;
   icon: string;
   group: PropertyGroup;
   /** false = ce type de bien n'est proposé qu'à la location, jamais à la vente. */
   saleEligible: boolean;
 }
 
+/** Fonction de traduction générique — passer `useTranslations("PropertyKinds")` (ou "Transaction", etc.) côté client. */
+type Translate = (key: string) => string;
+
 // Chambre et Studio sont volontairement exclus de la vente : ce sont des
 // logements meublés loués à la chambre/à l'unité, pas des biens qu'on cède.
+// Le libellé affiché n'est plus ici (voir kindLabel ci-dessous) : il vit
+// dans messages/fr.json et messages/en.json (namespace "PropertyKinds"),
+// sous la même clé que `value` — ex. "chambre" -> "Chambre" / "Room".
 export const PROPERTY_KINDS: PropertyKindDef[] = [
-  { value: "chambre", label: "Chambre", icon: "🚪", group: "residentiel", saleEligible: false },
-  { value: "studio", label: "Studio", icon: "🛏", group: "residentiel", saleEligible: false },
-  { value: "appartement", label: "Appartement", icon: "🏢", group: "residentiel", saleEligible: true },
-  { value: "duplex", label: "Duplex", icon: "🏘", group: "residentiel", saleEligible: true },
-  { value: "villa", label: "Villa", icon: "🏡", group: "residentiel", saleEligible: true },
-  { value: "maison", label: "Maison", icon: "🏠", group: "residentiel", saleEligible: true },
-  { value: "bureau", label: "Bureau", icon: "💼", group: "commercial", saleEligible: true },
-  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪", group: "commercial", saleEligible: true },
-  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦", group: "commercial", saleEligible: true },
-  { value: "terrain", label: "Terrain", icon: "🌍", group: "foncier", saleEligible: true },
+  { value: "chambre", icon: "🚪", group: "residentiel", saleEligible: false },
+  { value: "studio", icon: "🛏", group: "residentiel", saleEligible: false },
+  { value: "appartement", icon: "🏢", group: "residentiel", saleEligible: true },
+  { value: "duplex", icon: "🏘", group: "residentiel", saleEligible: true },
+  { value: "villa", icon: "🏡", group: "residentiel", saleEligible: true },
+  { value: "maison", icon: "🏠", group: "residentiel", saleEligible: true },
+  { value: "bureau", icon: "💼", group: "commercial", saleEligible: true },
+  { value: "boutique", icon: "🏪", group: "commercial", saleEligible: true },
+  { value: "magasin", icon: "📦", group: "commercial", saleEligible: true },
+  { value: "terrain", icon: "🌍", group: "foncier", saleEligible: true },
 ];
 
-/** Libellé affichable d'un type de bien (retombe sur la valeur brute si inconnue). */
-export function kindLabel(value: string): string {
-  return PROPERTY_KINDS.find((k) => k.value === value)?.label ?? value;
+/**
+ * Libellé affichable d'un type de bien. `t` = `useTranslations("PropertyKinds")`
+ * côté appelant ; retombe sur la valeur brute si la clé est introuvable
+ * (comportement déjà géré par useTranslations lui-même).
+ */
+export function kindLabel(value: string, t: Translate): string {
+  return t(value);
 }
 
 /** Groupe d'un type de bien (retombe sur "residentiel" si la valeur est inconnue). */
@@ -146,26 +155,30 @@ export interface FieldVisibilityRule {
   rooms: boolean;
   /** Champ "Salles de bain" pertinent pour cette combinaison. */
   baths: boolean;
-  /** Libellé du champ Surface — varie pour le foncier (contenance). */
-  surfaceLabel: string;
+  /**
+   * Clé de traduction du libellé du champ Surface (namespace "Transaction",
+   * voir messages/fr.json et messages/en.json) — varie pour le foncier
+   * (contenance). Appeler `t(rules.surfaceLabelKey)` côté composant.
+   */
+  surfaceLabelKey: "surfaceM2" | "surfaceFoncier";
   /** Affiche le sélecteur Longue/Courte durée — uniquement en location, résidentiel/commercial. */
   listingDuration: boolean;
 }
 
 export const FIELD_VISIBILITY_RULES: Record<TransactionType, Record<PropertyGroup, FieldVisibilityRule>> = {
   location: {
-    residentiel: { rooms: true, baths: true, surfaceLabel: "Surface (m²)", listingDuration: true },
-    commercial: { rooms: false, baths: false, surfaceLabel: "Surface (m²)", listingDuration: true },
+    residentiel: { rooms: true, baths: true, surfaceLabelKey: "surfaceM2", listingDuration: true },
+    commercial: { rooms: false, baths: false, surfaceLabelKey: "surfaceM2", listingDuration: true },
     // Terrain en location = bail, sans durée courte/longue à proprement
     // parler (voir la note explicative affichée à la place dans le
     // formulaire) — surface devient "contenance".
-    foncier: { rooms: false, baths: false, surfaceLabel: "Surface / Contenance (m² ou Hectares)", listingDuration: false },
+    foncier: { rooms: false, baths: false, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
   },
   vente: {
     // Une vente n'a pas de durée : listingDuration toujours false ici.
-    residentiel: { rooms: true, baths: true, surfaceLabel: "Surface (m²)", listingDuration: false },
-    commercial: { rooms: false, baths: false, surfaceLabel: "Surface (m²)", listingDuration: false },
-    foncier: { rooms: false, baths: false, surfaceLabel: "Surface / Contenance (m² ou Hectares)", listingDuration: false },
+    residentiel: { rooms: true, baths: true, surfaceLabelKey: "surfaceM2", listingDuration: false },
+    commercial: { rooms: false, baths: false, surfaceLabelKey: "surfaceM2", listingDuration: false },
+    foncier: { rooms: false, baths: false, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
   },
 };
 
@@ -189,49 +202,53 @@ export interface TransactionMeta {
   shortLabel: string;
 }
 
-const SALE_META: TransactionMeta = {
-  badgeLabel: "💰 À vendre",
-  tagColor: "blue",
-  priceSuffix: "",
-  priceFieldLabel: "Prix de vente (FCFA) *",
-  shortLabel: "Vente",
-};
-const LONG_TERM_META: TransactionMeta = {
-  badgeLabel: "🏡 Long terme",
-  tagColor: "green",
-  priceSuffix: "/mois",
-  priceFieldLabel: "Prix mensuel (FCFA) *",
-  shortLabel: "Location",
-};
-const SHORT_TERM_META: TransactionMeta = {
-  badgeLabel: "🌴 Court séjour",
-  tagColor: "gold",
-  priceSuffix: "/nuit",
-  priceFieldLabel: "Prix par nuit (FCFA) *",
-  shortLabel: "Court séjour",
-};
-const LEASE_META: TransactionMeta = {
-  badgeLabel: "📜 Bail",
-  tagColor: "orange",
-  priceSuffix: "/mois",
-  priceFieldLabel: "Loyer de bail (FCFA) *",
-  shortLabel: "Bail",
-};
-
 /**
  * Résout les métadonnées d'affichage d'une annonce à partir de sa
  * transaction, sa durée (si location) et son groupe de type de bien.
  * Un terrain en location (bail) n'a pas de durée longue/courte : on lui
  * donne son propre badge plutôt que de retomber sur "Longue durée" par défaut.
+ * `t` = `useTranslations("Transaction")` côté appelant.
  */
 export function transactionMeta(
   transactionType: TransactionType,
   type: ListingKind | null,
-  group: PropertyGroup
+  group: PropertyGroup,
+  t: Translate
 ): TransactionMeta {
-  if (transactionType === "vente") return SALE_META;
-  if (group === "foncier") return LEASE_META;
-  return type === "courte" ? SHORT_TERM_META : LONG_TERM_META;
+  if (transactionType === "vente") {
+    return {
+      badgeLabel: t("saleBadge"),
+      tagColor: "blue",
+      priceSuffix: "",
+      priceFieldLabel: t("salePriceField"),
+      shortLabel: t("saleShort"),
+    };
+  }
+  if (group === "foncier") {
+    return {
+      badgeLabel: t("leaseBadge"),
+      tagColor: "orange",
+      priceSuffix: t("perMonth"),
+      priceFieldLabel: t("leasePriceField"),
+      shortLabel: t("leaseShort"),
+    };
+  }
+  if (type === "courte") {
+    return {
+      badgeLabel: t("shortTermBadge"),
+      tagColor: "gold",
+      priceSuffix: t("perNight"),
+      priceFieldLabel: t("shortTermPriceField"),
+      shortLabel: t("shortTermShort"),
+    };
+  }
+  return {
+    badgeLabel: t("longTermBadge"),
+    tagColor: "green",
+    priceSuffix: t("perMonth"),
+    priceFieldLabel: t("longTermPriceField"),
+    shortLabel: t("longTermShort"),
+  };
 }
 
 // ═══════════════════════════════════════════════

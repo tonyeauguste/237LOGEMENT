@@ -29,12 +29,20 @@ import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
 import Button from "@/components/ui/Button";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 type DetailTab = "desc" | "amenities" | "map";
 
 export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
+  // Signature transactionMeta/kindLabel désormais localisée (voir
+  // lib/data.ts) — seule cette adaptation minimale est faite ici pour que
+  // le composant continue de compiler ; le reste du texte de cette page
+  // (description, contact, etc.) n'est pas encore traduit (voir portée du
+  // commit "Site bilingue FR/EN — phase 1").
+  const tKind = useTranslations("PropertyKinds");
+  const tTx = useTranslations("Transaction");
   const group = propertyGroup(p.kind);
-  const typeMeta = transactionMeta(p.transactionType, p.type, group);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
   // B.2/B.4 — voir le commentaire équivalent dans PropertyCard.tsx : ne
   // concerne que le court séjour, le longue durée supprime l'annonce.
@@ -349,7 +357,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           {/* Bloc prix + partage + sauvegarde */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-1">
-              {typeMeta.shortLabel} · {kindLabel(p.kind)}
+              {typeMeta.shortLabel} · {kindLabel(p.kind, tKind)}
             </div>
             <div className="text-[13px] text-muted mb-3">{p.quartier}, {p.city}</div>
 

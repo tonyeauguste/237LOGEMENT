@@ -7,8 +7,9 @@ import { Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
 import CityInput from "@/components/ui/CityInput";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
-import { PROPERTY_KINDS, QUARTIERS } from "@/lib/data";
+import { PROPERTY_KINDS, QUARTIERS, kindLabel } from "@/lib/data";
 import type { ListingView, Property, SearchFilters } from "@/lib/types";
+import { useTranslations } from "@/i18n/IntlProvider";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyCard from "@/components/property/PropertyCard";
@@ -34,6 +35,9 @@ function normalize(v: string): string {
 }
 
 function SearchPageInner() {
+  // Adaptation minimale à la signature localisée de kindLabel (voir
+  // lib/data.ts) — le reste de cette page n'est pas encore traduit.
+  const tKind = useTranslations("PropertyKinds");
   const params = useSearchParams();
 
   const [filters, setFilters] = useState<SearchFilters>({
@@ -234,7 +238,7 @@ function SearchPageInner() {
             <option value="">Tous les types de bien</option>
             {PROPERTY_KINDS.map((k) => (
               <option key={k.value} value={k.value}>
-                {k.label}
+                {kindLabel(k.value, tKind)}
               </option>
             ))}
           </select>
