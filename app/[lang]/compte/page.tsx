@@ -65,9 +65,8 @@ function isAdminSection(s: Section): s is AdminSection {
 }
 
 export default function AccountDashboard() {
-  // Adaptation minimale à la signature localisée de transactionMeta (voir
-  // lib/data.ts) — le reste de ce tableau de bord n'est pas encore traduit.
   const tTx = useTranslations("Transaction");
+  const t = useTranslations("Dashboard");
   // Plus de rôle requis : tout compte connecté accède au même espace.
   const user = useAuthGuard();
   const showToast = useAppStore((s) => s.showToast);
@@ -149,7 +148,7 @@ export default function AccountDashboard() {
           message: m.message,
           created_at: m.created_at,
           property_id: m.property_id ?? 0,
-          property_title: (m.properties as { title?: string } | null)?.title ?? "Annonce supprimée",
+          property_title: (m.properties as { title?: string } | null)?.title ?? t("deletedListing"),
         }))
       );
       setLoading(false);
@@ -184,10 +183,10 @@ export default function AccountDashboard() {
   const totalViews = listings.reduce((sum, p) => sum + p.views, 0);
   const totalFavs = listings.reduce((sum, p) => sum + p.favs, 0);
   const stats = [
-    { icon: "📊", val: String(listings.length), label: "Annonces publiées", color: "text-gold" },
-    { icon: "👁", val: String(totalViews), label: "Vues cumulées", color: "text-blue" },
-    { icon: "💬", val: String(messages.length), label: "Messages reçus", color: "text-green2" },
-    { icon: "❤️", val: String(totalFavs), label: "Favoris reçus", color: "text-red" },
+    { icon: "📊", val: String(listings.length), label: t("statPublished"), color: "text-gold" },
+    { icon: "👁", val: String(totalViews), label: t("statViews"), color: "text-blue" },
+    { icon: "💬", val: String(messages.length), label: t("statMessages"), color: "text-green2" },
+    { icon: "❤️", val: String(totalFavs), label: t("statFavs"), color: "text-red" },
   ];
 
   // Message plutôt qu'un écran blanc pendant la vérification de session
@@ -195,7 +194,7 @@ export default function AccountDashboard() {
   if (!user) {
     return (
       <div className="pt-[160px] pb-[100px] text-center text-muted text-sm">
-        Chargement de votre espace…
+        {t("loading")}
       </div>
     );
   }
@@ -203,12 +202,12 @@ export default function AccountDashboard() {
   async function handleLogout() {
     await createClient().auth.signOut();
     setCurrentUser(null);
-    showToast("👋 Déconnexion réussie. À bientôt !", "info");
+    showToast(t("toastLogoutSuccess"), "info");
     router.push("/");
   }
 
   async function handleDelete(p: Property) {
-    if (!window.confirm(`Supprimer définitivement l'annonce « ${p.title} » ? Cette action est irréversible.`)) {
+    if (!window.confirm(t("toastConfirmDelete", { title: p.title }))) {
       return;
     }
     setDeletingId(p.id);
@@ -218,11 +217,11 @@ export default function AccountDashboard() {
     const { data, error } = await supabase.from("properties").delete().eq("id", p.id).select();
     setDeletingId(null);
     if (error || !data || data.length === 0) {
-      showToast("❌ Impossible de supprimer l'annonce. Réessayez.", "error");
+      showToast(t("toastDeleteError"), "error");
       return;
     }
     setListings((prev) => prev.filter((l) => l.id !== p.id));
-    showToast("🗑️ Annonce supprimée.", "success");
+    showToast(t("toastDeleteSuccess"), "success");
   }
 
   /**
@@ -241,7 +240,7 @@ export default function AccountDashboard() {
       .select();
     setOccupancyBusyId(null);
     if (error || !data || data.length === 0) {
-      showToast("❌ Impossible de mettre à jour le statut. Réessayez.", "error");
+      showToast(t("toastOccupancyError"), "error");
       // Le composant Toggle bascule visuellement dès le clic (optimiste),
       // avant même la réponse du serveur. Sans ce remount forcé, un échec
       // laisserait le toggle affiché dans le mauvais état — sa `key` ne
@@ -253,12 +252,7 @@ export default function AccountDashboard() {
     setListings((prev) =>
       prev.map((l) => (l.id === p.id ? { ...l, occupancyStatus: occupied ? "occupe" : "disponible" } : l))
     );
-    showToast(
-      occupied
-        ? "🔴 Annonce marquée comme occupée — sa photo est floutée sur la fiche publique."
-        : "✅ Annonce remise disponible.",
-      "success"
-    );
+    showToast(occupied ? t("toastMarkedOccupied") : t("toastMarkedAvailable"), "success");
   }
 
   /**
@@ -275,7 +269,7 @@ export default function AccountDashboard() {
     const { data, error } = await supabase.from("properties").delete().eq("id", p.id).select();
     setMarkingRented(false);
     if (error || !data || data.length === 0) {
-      showToast("❌ Impossible de finaliser cette action. Réessayez.", "error");
+      showToast(t("toastRentedError"), "error");
       return;
     }
     setListings((prev) => prev.filter((l) => l.id !== p.id));
@@ -284,7 +278,7 @@ export default function AccountDashboard() {
     // pendant que cette requête était en vol, on ne veut pas lui fermer
     // sous le nez la modale d'une confirmation en cours pour une autre.
     setRentalModalTarget((current) => (current?.id === p.id ? null : current));
-    showToast("🏠 Bien marqué comme loué — l'annonce a été supprimée définitivement.", "success");
+    showToast(t("toastRentedSuccess"), "success");
   }
 
   /**
@@ -297,7 +291,7 @@ export default function AccountDashboard() {
   async function saveProfile() {
     if (!user) return;
     if (!formName.trim()) {
-      showToast("⚠️ Le nom ne peut pas être vide.", "error");
+      showToast(t("toastNameEmpty"), "error");
       return;
     }
 
@@ -319,7 +313,7 @@ export default function AccountDashboard() {
 
     if (error || !data || data.length === 0) {
       setSavingProfile(false);
-      showToast("❌ Impossible d'enregistrer le profil. Réessayez.", "error");
+      showToast(t("toastProfileError"), "error");
       return;
     }
 
@@ -332,8 +326,8 @@ export default function AccountDashboard() {
         setSavingProfile(false);
         showToast(
           emailError.message.toLowerCase().includes("already")
-            ? "❌ Cette adresse email est déjà utilisée."
-            : "❌ Impossible de changer l'email. Le reste du profil a été enregistré.",
+            ? t("toastEmailInUse")
+            : t("toastEmailChangeError"),
           "error"
         );
         return;
@@ -352,22 +346,17 @@ export default function AccountDashboard() {
     });
 
     setSavingProfile(false);
-    showToast(
-      emailPending
-        ? "✅ Profil enregistré. Confirmez le changement d'email via le lien reçu."
-        : "✅ Profil mis à jour.",
-      "success"
-    );
+    showToast(emailPending ? t("toastProfileEmailPending") : t("toastProfileUpdated"), "success");
   }
 
   /** Change le mot de passe de l'utilisateur connecté (sans passer par un email). */
   async function changePassword() {
     if (newPwd.length < 8) {
-      showToast("⚠️ Le mot de passe doit contenir au moins 8 caractères.", "error");
+      showToast(t("toastPasswordTooShort"), "error");
       return;
     }
     if (newPwd !== newPwd2) {
-      showToast("⚠️ Les deux mots de passe ne correspondent pas.", "error");
+      showToast(t("toastPasswordMismatch"), "error");
       return;
     }
 
@@ -378,8 +367,8 @@ export default function AccountDashboard() {
     if (error) {
       showToast(
         error.message.toLowerCase().includes("should be different")
-          ? "⚠️ Choisissez un mot de passe différent de l'actuel."
-          : "❌ Impossible de changer le mot de passe. Réessayez.",
+          ? t("toastPasswordSameAsOld")
+          : t("toastPasswordChangeError"),
         "error"
       );
       return;
@@ -387,7 +376,7 @@ export default function AccountDashboard() {
 
     setNewPwd("");
     setNewPwd2("");
-    showToast("✅ Mot de passe modifié.", "success");
+    showToast(t("toastPasswordChanged"), "success");
   }
 
   function goToOwnerListings(ownerName: string) {
@@ -403,32 +392,32 @@ export default function AccountDashboard() {
         roleBadge={
           isAdmin ? (
             <div className="flex flex-col items-center gap-1.5">
-              <Tag color="gold">🔑 Mon compte</Tag>
+              <Tag color="gold">{t("myAccount")}</Tag>
               <span className="text-[10px] font-bold tracking-[1px] bg-gold text-[#07111e] px-2.5 py-[3px] rounded-full">
                 ADMIN
               </span>
             </div>
           ) : (
-            <Tag color="gold">🔑 Mon compte</Tag>
+            <Tag color="gold">{t("myAccount")}</Tag>
           )
         }
         active={isAdminSection(section) ? "admin" : section}
         onSelect={(k) => setSection(k === "admin" ? "admin-overview" : (k as Section))}
         items={[
-          { key: "favoris", label: "Mes favoris", icon: <Heart size={15} />, badge: favorites.length },
-          { key: "listings", label: "Mes annonces", icon: <List size={15} /> },
-          { key: "stats", label: "Statistiques", icon: <BarChart3 size={15} /> },
-          { key: "messages", label: "Messages", icon: <MessageSquare size={15} /> },
-          { key: "settings", label: "Paramètres", icon: <Settings size={15} /> },
+          { key: "favoris", label: t("navFavorites"), icon: <Heart size={15} />, badge: favorites.length },
+          { key: "listings", label: t("navListings"), icon: <List size={15} /> },
+          { key: "stats", label: t("navStats"), icon: <BarChart3 size={15} /> },
+          { key: "messages", label: t("navMessages"), icon: <MessageSquare size={15} /> },
+          { key: "settings", label: t("navSettings"), icon: <Settings size={15} /> },
           // Visible UNIQUEMENT pour l'admin.
-          ...(isAdmin ? [{ key: "admin", label: "Administration", icon: <Shield size={15} /> }] : []),
+          ...(isAdmin ? [{ key: "admin", label: t("navAdmin"), icon: <Shield size={15} /> }] : []),
         ]}
         footer={
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-[11px] rounded-[10px] text-sm text-red hover:bg-bg3 transition-colors w-full text-left"
           >
-            <LogOut size={15} /> Déconnexion
+            <LogOut size={15} /> {t("logout")}
           </button>
         }
       />
@@ -445,9 +434,9 @@ export default function AccountDashboard() {
             {section === "favoris" && (
               <>
                 <Header
-                  label="Mon espace"
-                  title="Mes favoris"
-                  sub="Les logements que vous avez sauvegardés."
+                  label={t("sectionLabel")}
+                  title={t("favoritesTitle")}
+                  sub={t("favoritesSub")}
                 />
                 {favProperties.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -458,14 +447,10 @@ export default function AccountDashboard() {
                 ) : (
                   <div className="text-center py-[60px] px-5">
                     <div className="text-[48px] mb-3.5">💛</div>
-                    <h3 className="text-lg font-semibold text-text mb-2">
-                      Aucun favori pour l&apos;instant
-                    </h3>
-                    <p className="text-sm text-muted mb-[22px]">
-                      Explorez les annonces et cliquez sur le cœur pour sauvegarder vos préférées.
-                    </p>
+                    <h3 className="text-lg font-semibold text-text mb-2">{t("noFavoritesTitle")}</h3>
+                    <p className="text-sm text-muted mb-[22px]">{t("noFavoritesText")}</p>
                     <Link href="/recherche">
-                      <Button variant="gold">Explorer les annonces</Button>
+                      <Button variant="gold">{t("exploreListings")}</Button>
                     </Link>
                   </div>
                 )}
@@ -477,14 +462,14 @@ export default function AccountDashboard() {
                 <div className="flex justify-between items-end mb-[30px] flex-wrap gap-3">
                   <div>
                     <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">
-                      Mon espace
+                      {t("sectionLabel")}
                     </div>
-                    <h2 className="font-display text-[26px] font-bold text-text mt-1">Mes annonces</h2>
-                    <p className="text-sm text-muted mt-1.5">Gérez vos biens mis en location.</p>
+                    <h2 className="font-display text-[26px] font-bold text-text mt-1">{t("listingsTitle")}</h2>
+                    <p className="text-sm text-muted mt-1.5">{t("listingsSub")}</p>
                   </div>
                   <Link href="/publier">
                     <Button variant="gold">
-                      <PlusCircle size={14} /> Nouvelle annonce
+                      <PlusCircle size={14} /> {t("newListing")}
                     </Button>
                   </Link>
                 </div>
@@ -505,28 +490,24 @@ export default function AccountDashboard() {
                   <div className="flex gap-3 bg-card2 border border-border rounded-xl px-4 py-3.5 mb-6 text-[13px] text-muted leading-relaxed">
                     <Info size={16} className="text-gold shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-medium text-text">
-                        📌 Rappel : une fois votre bien pris, pensez à mettre à jour son statut.
-                      </span>
+                      <span className="font-medium text-text">{t("occupancyReminderTitle")}</span>
                       <br />
-                      — <strong className="text-text">Courte durée</strong> : marquez l&apos;annonce comme
-                      « Occupée » — elle reste visible mais la photo est floutée jusqu&apos;à la remise à jour du
-                      statut.
+                      — <strong className="text-text">{t("occupancyReminderShort")}</strong>
+                      {t("occupancyReminderShortText")}
                       <br />
-                      — <strong className="text-text">Longue durée</strong> : marquer un bien comme loué
-                      supprime définitivement l&apos;annonce de la recherche publique. Cette action est
-                      irréversible.
+                      — <strong className="text-text">{t("occupancyReminderLong")}</strong>
+                      {t("occupancyReminderLongText")}
                     </div>
                   </div>
                 )}
 
                 {loading ? null : listings.length === 0 ? (
                   <ComingSoon
-                    title="Aucune annonce publiée pour le moment"
-                    text="Publiez votre premier bien et suivez ici ses vues, ses favoris et les messages reçus."
+                    title={t("noListingsTitle")}
+                    text={t("noListingsText")}
                     action={
                       <Link href="/publier">
-                        <Button variant="gold">+ Publier une annonce</Button>
+                        <Button variant="gold">{t("publishListing")}</Button>
                       </Link>
                     }
                     className="mx-0"
@@ -552,9 +533,9 @@ export default function AccountDashboard() {
                           <div className="flex-1">
                             <div className="flex gap-1.5 mb-1.5 flex-wrap">
                               <Tag color={meta.tagColor}>{meta.badgeLabel}</Tag>
-                              {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
-                              {!p.available && <Tag color="red">Non disponible</Tag>}
-                              {p.status === "blocked" && <Tag color="orange">🚫 Bloqué</Tag>}
+                              {isOccupied && <Tag color="red">🔴 {t("occupied")}</Tag>}
+                              {!p.available && <Tag color="red">{t("notAvailable")}</Tag>}
+                              {p.status === "blocked" && <Tag color="orange">{t("blocked")}</Tag>}
                             </div>
                             <div className="font-semibold text-base text-text mb-1">{p.title}</div>
                             <div className="text-[13px] text-muted">{p.quartier}, {p.city}</div>
@@ -564,13 +545,13 @@ export default function AccountDashboard() {
                               <div className="font-semibold text-base text-text flex items-center gap-1 justify-center">
                                 <Eye size={13} /> {p.views}
                               </div>
-                              <div className="text-[11px] text-muted">Vues</div>
+                              <div className="text-[11px] text-muted">{t("views")}</div>
                             </div>
                             <div className="text-center">
                               <div className="font-semibold text-base text-text flex items-center gap-1 justify-center">
                                 <Heart size={13} /> {p.favs}
                               </div>
-                              <div className="text-[11px] text-muted">Favoris</div>
+                              <div className="text-[11px] text-muted">{t("favs")}</div>
                             </div>
                           </div>
                           <div className="font-display font-bold text-lg text-gold shrink-0">
@@ -584,10 +565,10 @@ export default function AccountDashboard() {
                           {p.transactionType === "location" && p.type === "courte" && (
                             <div
                               onClick={(e) => e.stopPropagation()}
-                              title={isOccupied ? "Remettre l'annonce disponible" : "Marquer comme occupé"}
+                              title={isOccupied ? t("markAvailable") : t("markOccupied")}
                               className="shrink-0 flex items-center gap-2"
                             >
-                              <span className="text-[11px] text-muted hidden sm:inline">Occupé</span>
+                              <span className="text-[11px] text-muted hidden sm:inline">{t("occupiedLabel")}</span>
                               <Toggle
                                 key={`occ-${p.id}-${p.occupancyStatus ?? "disponible"}-${toggleNonce}`}
                                 defaultOn={isOccupied}
@@ -606,7 +587,7 @@ export default function AccountDashboard() {
                                 e.stopPropagation();
                                 setRentalModalTarget(p);
                               }}
-                              title="Marquer comme loué"
+                              title={t("markAsRented")}
                               className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted hover:bg-red/10 hover:border-red hover:text-red transition-colors"
                             >
                               <Home size={15} />
@@ -619,7 +600,7 @@ export default function AccountDashboard() {
                               e.stopPropagation();
                               router.push(`/publier?edit=${p.id}`);
                             }}
-                            title="Modifier l'annonce"
+                            title={t("editListing")}
                             className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted hover:bg-gold3 hover:border-gold hover:text-gold transition-colors"
                           >
                             <Pencil size={15} />
@@ -631,7 +612,7 @@ export default function AccountDashboard() {
                               handleDelete(p);
                             }}
                             disabled={deletingId === p.id}
-                            title="Supprimer l'annonce"
+                            title={t("deleteListing")}
                             className="shrink-0 w-9 h-9 rounded-lg border border-border flex items-center justify-center text-red hover:bg-red/10 hover:border-red transition-colors disabled:opacity-50"
                           >
                             <Trash2 size={15} />
@@ -654,17 +635,14 @@ export default function AccountDashboard() {
                         <div className="w-10 h-10 rounded-full bg-red/10 border border-red/30 flex items-center justify-center shrink-0">
                           <AlertTriangle size={18} className="text-red" />
                         </div>
-                        <h3 className="font-display text-lg font-bold text-text">Marquer ce bien comme loué ?</h3>
+                        <h3 className="font-display text-lg font-bold text-text">{t("rentalModalTitle")}</h3>
                       </div>
                       <p className="text-sm text-muted leading-relaxed mb-1.5">
-                        Cette action est <strong className="text-text">définitive</strong>. Une fois votre bien «{" "}
-                        {rentalModalTarget.title} » marqué comme loué, l&apos;annonce sera{" "}
-                        <strong className="text-red">supprimée</strong> et ne pourra pas être récupérée.
+                        {t("rentalModalText1Part1")} <strong className="text-text">{t("rentalModalText1Definitive")}</strong>
+                        {t("rentalModalText1Part2")} {rentalModalTarget.title} {t("rentalModalText1Part3")}{" "}
+                        <strong className="text-red">{t("rentalModalText1Deleted")}</strong> {t("rentalModalText1Part4")}
                       </p>
-                      <p className="text-sm text-muted leading-relaxed mb-6">
-                        Si vous souhaitez le publier à nouveau plus tard, il faudra créer une nouvelle annonce
-                        depuis zéro.
-                      </p>
+                      <p className="text-sm text-muted leading-relaxed mb-6">{t("rentalModalText2")}</p>
                       <div className="flex gap-3">
                         <Button
                           variant="ghost"
@@ -672,7 +650,7 @@ export default function AccountDashboard() {
                           onClick={() => setRentalModalTarget(null)}
                           disabled={markingRented}
                         >
-                          Annuler
+                          {t("cancelButton")}
                         </Button>
                         <Button
                           variant="danger"
@@ -680,7 +658,7 @@ export default function AccountDashboard() {
                           loading={markingRented}
                           onClick={() => handleMarkAsRented(rentalModalTarget)}
                         >
-                          Confirmer — Supprimer l&apos;annonce
+                          {t("confirmDeleteButton")}
                         </Button>
                       </div>
                     </>
@@ -692,20 +670,17 @@ export default function AccountDashboard() {
             {section === "stats" && (
               <>
                 <Header
-                  label="Analytique"
-                  title="Statistiques"
-                  sub={listings.length > 0 ? "Vues et favoris par annonce, mis à jour en temps réel." : undefined}
+                  label={t("analyticsLabel")}
+                  title={t("statsTitle")}
+                  sub={listings.length > 0 ? t("statsSub") : undefined}
                 />
                 {loading ? null : listings.length === 0 ? (
                   <div className="text-center py-[60px] px-5">
                     <div className="text-[48px] mb-3.5">📊</div>
-                    <h3 className="text-lg font-semibold text-text mb-2">Aucune statistique disponible</h3>
-                    <p className="text-sm text-muted mb-[22px]">
-                      Vos statistiques de vues, contacts et favoris apparaîtront ici une fois vos
-                      premières annonces publiées.
-                    </p>
+                    <h3 className="text-lg font-semibold text-text mb-2">{t("noStatsTitle")}</h3>
+                    <p className="text-sm text-muted mb-[22px]">{t("noStatsText")}</p>
                     <Link href="/publier">
-                      <Button variant="gold">Publier une annonce</Button>
+                      <Button variant="gold">{t("publishListingPlain")}</Button>
                     </Link>
                   </div>
                 ) : (
@@ -747,14 +722,12 @@ export default function AccountDashboard() {
 
             {section === "messages" && (
               <>
-                <Header label="Communication" title="Messages reçus" />
+                <Header label={t("communicationLabel")} title={t("messagesTitle")} />
                 {loading ? null : messages.length === 0 ? (
                   <div className="text-center py-[60px] px-5">
                     <div className="text-[48px] mb-3.5">💬</div>
-                    <h3 className="text-lg font-semibold text-text mb-2">Aucun message pour le moment</h3>
-                    <p className="text-sm text-muted">
-                      Les messages envoyés par les locataires intéressés par vos biens apparaîtront ici.
-                    </p>
+                    <h3 className="text-lg font-semibold text-text mb-2">{t("noMessagesTitle")}</h3>
+                    <p className="text-sm text-muted">{t("noMessagesText")}</p>
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2.5">
@@ -780,12 +753,12 @@ export default function AccountDashboard() {
 
             {section === "settings" && (
               <>
-                <Header label="Mon compte" title="Paramètres" />
+                <Header label={t("myAccountLabel")} title={t("settingsTitle")} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[780px]">
                   <div className="bg-card border border-border rounded-2xl p-5">
-                    <h4 className="text-[15px] font-semibold text-text mb-[18px]">Mon profil</h4>
+                    <h4 className="text-[15px] font-semibold text-text mb-[18px]">{t("profileTitle")}</h4>
                     <div className="mb-4">
-                      <label className="block text-[13px] text-muted mb-[7px] font-medium">Nom complet</label>
+                      <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("fullNameLabel")}</label>
                       <input
                         className="form-control"
                         value={formName}
@@ -793,7 +766,7 @@ export default function AccountDashboard() {
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-[13px] text-muted mb-[7px] font-medium">Email</label>
+                      <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("emailLabel")}</label>
                       <input
                         className="form-control"
                         type="email"
@@ -804,30 +777,28 @@ export default function AccountDashboard() {
                           Supabase envoie un lien à la nouvelle adresse et
                           n'applique le changement qu'une fois celui-ci cliqué. */}
                       {formEmail.trim() !== user.email && (
-                        <p className="text-[12px] text-gold mt-1.5">
-                          Un email de confirmation sera envoyé à cette adresse.
-                        </p>
+                        <p className="text-[12px] text-gold mt-1.5">{t("emailChangeNote")}</p>
                       )}
                     </div>
                     <div className="mb-4">
-                      <label className="block text-[13px] text-muted mb-[7px] font-medium">Téléphone</label>
+                      <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("phoneLabel")}</label>
                       <input
                         className="form-control"
-                        placeholder="+237 6XX XXX XXX"
+                        placeholder={t("phonePlaceholder")}
                         value={formPhone}
                         onChange={(e) => setFormPhone(e.target.value)}
                       />
                     </div>
                     <div className="mb-4">
-                      <label className="block text-[13px] text-muted mb-[7px] font-medium">Ville</label>
+                      <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("cityLabel")}</label>
                       <CityInput
-                        placeholder="Votre ville"
+                        placeholder={t("cityPlaceholder")}
                         value={formCity}
                         onChange={(e) => setFormCity(e.target.value)}
                       />
                     </div>
                     <Button variant="gold" size="sm" loading={savingProfile} onClick={saveProfile}>
-                      Mettre à jour
+                      {t("updateButton")}
                     </Button>
                   </div>
                   {/* Changement de mot de passe sans passer par l'email :
@@ -835,11 +806,11 @@ export default function AccountDashboard() {
                       updateUser({ password }) directement. */}
                   <div className="bg-card border border-border rounded-2xl p-5">
                     <h4 className="text-[15px] font-semibold text-text mb-[18px] flex items-center gap-2">
-                      <ShieldCheck size={15} className="text-gold" /> Mot de passe
+                      <ShieldCheck size={15} className="text-gold" /> {t("passwordTitle")}
                     </h4>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                        Nouveau mot de passe
+                        {t("newPasswordLabel")}
                       </label>
                       <PasswordField
                         value={newPwd}
@@ -851,7 +822,7 @@ export default function AccountDashboard() {
                     </div>
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">
-                        Confirmer
+                        {t("confirmLabel")}
                       </label>
                       <PasswordField
                         value={newPwd2}
@@ -860,25 +831,21 @@ export default function AccountDashboard() {
                         autoComplete="new-password"
                       />
                       {newPwd2.length > 0 && newPwd !== newPwd2 && (
-                        <p className="text-[12px] text-red mt-1.5">
-                          Les deux mots de passe ne correspondent pas.
-                        </p>
+                        <p className="text-[12px] text-red mt-1.5">{t("passwordMismatch")}</p>
                       )}
                     </div>
                     <Button variant="gold" size="sm" loading={savingPwd} onClick={changePassword}>
-                      Changer le mot de passe
+                      {t("changePasswordButton")}
                     </Button>
-                    <p className="text-[12px] text-dim mt-3 leading-relaxed">
-                      Au moins 8 caractères. Vous resterez connecté après le changement.
-                    </p>
+                    <p className="text-[12px] text-dim mt-3 leading-relaxed">{t("passwordHint")}</p>
                   </div>
 
                   <div className="bg-card border border-border rounded-2xl p-5">
-                    <h4 className="text-[15px] font-semibold text-text mb-[18px]">Notifications</h4>
-                    <ToggleRow label="Nouveau message reçu" defaultOn />
-                    <ToggleRow label="Nouvelles annonces correspondant à mes critères" defaultOn />
-                    <ToggleRow label="Alerte ajouté aux favoris" />
-                    <ToggleRow label="Newsletter mensuelle" last />
+                    <h4 className="text-[15px] font-semibold text-text mb-[18px]">{t("notificationsTitle")}</h4>
+                    <ToggleRow label={t("notifNewMessage")} defaultOn />
+                    <ToggleRow label={t("notifNewListings")} defaultOn />
+                    <ToggleRow label={t("notifFavorite")} />
+                    <ToggleRow label={t("notifNewsletter")} last />
                   </div>
                 </div>
               </>
@@ -890,21 +857,21 @@ export default function AccountDashboard() {
                 <div className="flex gap-2 mb-7 flex-wrap">
                   {(
                     [
-                      { key: "admin-overview", label: "Vue d'ensemble", icon: <LayoutDashboard size={14} /> },
-                      { key: "admin-annonces", label: "Annonces", icon: <Building2 size={14} /> },
-                      { key: "admin-users", label: "Comptes", icon: <Users2 size={14} /> },
+                      { key: "admin-overview", label: t("adminOverview"), icon: <LayoutDashboard size={14} /> },
+                      { key: "admin-annonces", label: t("adminListings"), icon: <Building2 size={14} /> },
+                      { key: "admin-users", label: t("adminAccounts"), icon: <Users2 size={14} /> },
                     ] as const
-                  ).map((t) => (
+                  ).map((tab) => (
                     <button
-                      key={t.key}
-                      onClick={() => setSection(t.key)}
+                      key={tab.key}
+                      onClick={() => setSection(tab.key)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-colors ${
-                        section === t.key
+                        section === tab.key
                           ? "bg-gold text-[#07111e]"
                           : "bg-card border border-border text-muted hover:border-gold hover:text-gold"
                       }`}
                     >
-                      {t.icon} {t.label}
+                      {tab.icon} {tab.label}
                     </button>
                   ))}
                 </div>
