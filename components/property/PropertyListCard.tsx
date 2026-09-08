@@ -8,10 +8,13 @@ import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
 import { FIELD_VISIBILITY_RULES, propertyGroup, transactionMeta } from "@/lib/data";
 import Tag from "@/components/ui/Tag";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function PropertyListCard({ p }: { p: Property }) {
+  const t = useTranslations("Property");
+  const tTx = useTranslations("Transaction");
   const group = propertyGroup(p.kind);
-  const typeMeta = transactionMeta(p.transactionType, p.type, group);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
   // Voir le commentaire équivalent dans PropertyCard.tsx.
   const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
@@ -34,8 +37,8 @@ export default function PropertyListCard({ p }: { p: Property }) {
           <div>
             <div className="flex gap-1.5 mb-1.5">
               <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
-              {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
-              {p.verified && <Tag color="blue">🛡 Vérifié</Tag>}
+              {isOccupied && <Tag color="red">🔴 {t("occupied")}</Tag>}
+              {p.verified && <Tag color="blue">🛡 {t("verified")}</Tag>}
             </div>
             <div className="font-semibold text-[15px] text-text mb-1">{p.title}</div>
             <div className="text-[13px] text-muted flex items-center gap-1.5">
@@ -45,8 +48,8 @@ export default function PropertyListCard({ p }: { p: Property }) {
           </div>
           <div className="flex justify-between items-end">
             <div className="flex gap-3.5 text-xs text-muted">
-              {rules.rooms && <span>🛏 {p.rooms} ch.</span>}
-              {rules.baths && <span>🚿 {p.baths} sdb</span>}
+              {rules.rooms && <span>🛏 {p.rooms} {t("roomsAbbr")}</span>}
+              {rules.baths && <span>🚿 {p.baths} {t("bathsAbbr")}</span>}
               <span>📐 {p.surface}m²</span>
             </div>
             <div className="font-display text-lg font-bold text-gold">{fmtPrice(p.price)}</div>

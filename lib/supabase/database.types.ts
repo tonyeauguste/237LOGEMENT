@@ -1,6 +1,3 @@
-// Généré automatiquement depuis le schéma Supabase (projet 237LOGEMENT).
-// Ne pas éditer à la main — régénérer via le MCP Supabase après une migration.
-
 export type Json =
   | string
   | number
@@ -13,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -86,6 +83,7 @@ export type Database = {
       properties: {
         Row: {
           address: string | null
+          advance_payment: number | null
           amenities: string[]
           available: boolean
           baths: number
@@ -95,9 +93,11 @@ export type Database = {
           deposit: number | null
           description: string
           favs: number
+          favs_legacy_baseline: number
           id: number
           images: string[]
           kind: string
+          land_title_status: string | null
           min_duration: string | null
           occupancy_status: string | null
           owner_avatar: string | null
@@ -108,6 +108,7 @@ export type Database = {
           owner_rating: number
           precision_desc: string | null
           price: number
+          price_negotiable: boolean | null
           quartier: string
           rooms: number
           status: string
@@ -118,9 +119,11 @@ export type Database = {
           verified: boolean
           videos: string[]
           views: number
+          views_legacy_baseline: number
         }
         Insert: {
           address?: string | null
+          advance_payment?: number | null
           amenities?: string[]
           available?: boolean
           baths?: number
@@ -130,9 +133,11 @@ export type Database = {
           deposit?: number | null
           description?: string
           favs?: number
+          favs_legacy_baseline?: number
           id?: never
           images?: string[]
           kind?: string
+          land_title_status?: string | null
           min_duration?: string | null
           occupancy_status?: string | null
           owner_avatar?: string | null
@@ -143,6 +148,7 @@ export type Database = {
           owner_rating?: number
           precision_desc?: string | null
           price?: number
+          price_negotiable?: boolean | null
           quartier: string
           rooms?: number
           status?: string
@@ -153,9 +159,11 @@ export type Database = {
           verified?: boolean
           videos?: string[]
           views?: number
+          views_legacy_baseline?: number
         }
         Update: {
           address?: string | null
+          advance_payment?: number | null
           amenities?: string[]
           available?: boolean
           baths?: number
@@ -165,9 +173,11 @@ export type Database = {
           deposit?: number | null
           description?: string
           favs?: number
+          favs_legacy_baseline?: number
           id?: never
           images?: string[]
           kind?: string
+          land_title_status?: string | null
           min_duration?: string | null
           occupancy_status?: string | null
           owner_avatar?: string | null
@@ -178,6 +188,7 @@ export type Database = {
           owner_rating?: number
           precision_desc?: string | null
           price?: number
+          price_negotiable?: boolean | null
           quartier?: string
           rooms?: number
           status?: string
@@ -188,8 +199,38 @@ export type Database = {
           verified?: boolean
           videos?: string[]
           views?: number
+          views_legacy_baseline?: number
         }
         Relationships: []
+      }
+      property_favorites: {
+        Row: {
+          created_at: string
+          id: number
+          property_id: number
+          visitor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          property_id: number
+          visitor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          property_id?: number
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_favorites_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       property_messages: {
         Row: {
@@ -220,15 +261,43 @@ export type Database = {
           },
         ]
       }
+      property_views: {
+        Row: {
+          first_viewed_at: string
+          id: number
+          last_viewed_at: string
+          property_id: number
+          visitor_id: string
+        }
+        Insert: {
+          first_viewed_at?: string
+          id?: never
+          last_viewed_at?: string
+          property_id: number
+          visitor_id: string
+        }
+        Update: {
+          first_viewed_at?: string
+          id?: never
+          last_viewed_at?: string
+          property_id?: number
+          visitor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_views_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      adjust_property_favs: {
-        Args: { delta: number; prop_id: number }
-        Returns: undefined
-      }
       admin_delete_user: { Args: { p_id: string }; Returns: undefined }
       admin_list_users: {
         Args: { p_limit?: number; p_offset?: number; p_search?: string }
@@ -246,12 +315,16 @@ export type Database = {
           total_count: number
         }[]
       }
-      increment_property_views: {
-        Args: { prop_id: number }
-        Returns: undefined
-      }
       is_active_user: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      register_property_view: {
+        Args: { prop_id: number; visitor: string }
+        Returns: undefined
+      }
+      set_property_favorite: {
+        Args: { is_fav: boolean; prop_id: number; visitor: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
@@ -270,12 +343,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -299,11 +372,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -324,11 +397,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -349,11 +422,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -366,11 +439,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

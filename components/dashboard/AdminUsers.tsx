@@ -23,10 +23,12 @@ import { createClient } from "@/lib/supabase/client";
 import { fmtRelativeDate } from "@/lib/format";
 import { DEFAULT_AVATAR } from "@/lib/data";
 import type { AccountStatus, AdminUserRow, UserRole } from "@/lib/types";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 const PAGE_SIZE = 20;
 
 export default function AdminUsers({ onViewListings }: { onViewListings: (ownerName: string) => void }) {
+  const t = useTranslations("AdminUsers");
   const showToast = useAppStore((s) => s.showToast);
   const currentUser = useAppStore((s) => s.currentUser);
 
@@ -64,7 +66,7 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
       .then(({ data, error }) => {
         if (cancelled) return;
         if (error) {
-          showToast("❌ Impossible de charger les comptes.", "error");
+          showToast(t("toastLoadError"), "error");
           setLoading(false);
           return;
         }
@@ -75,7 +77,7 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
             email: u.email,
             createdAt: u.created_at,
             lastSignInAt: u.last_sign_in_at,
-            name: u.name || "Utilisateur",
+            name: u.name || t("defaultUserName"),
             phone: u.phone,
             avatar: u.avatar,
             role: u.role as UserRole,
@@ -94,16 +96,13 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
 
   async function toggleBlock(u: AdminUserRow) {
     if (u.id === currentUser?.id) {
-      showToast("⛔ Vous ne pouvez pas bloquer votre propre compte.", "error");
+      showToast(t("toastCannotBlockSelf"), "error");
       return;
     }
     const nextStatus: AccountStatus = u.status === "blocked" ? "active" : "blocked";
-    const label = nextStatus === "blocked" ? "bloquer" : "débloquer";
-    const warn =
-      nextStatus === "blocked"
-        ? ` Ses annonces seront automatiquement masquées du site public.`
-        : "";
-    if (!window.confirm(`Voulez-vous vraiment ${label} le compte de « ${u.name} » ?${warn}`)) return;
+    const action = nextStatus === "blocked" ? t("confirmBlockAction") : t("confirmUnblockAction");
+    const warn = nextStatus === "blocked" ? t("confirmBlockWarning") : "";
+    if (!window.confirm(t("confirmBlockText", { action, name: u.name, warn }))) return;
 
     setBusyId(u.id);
     const supabase = createClient();
@@ -111,27 +110,20 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
     setBusyId(null);
 
     if (error || !data || data.length === 0) {
-      showToast("❌ Action impossible. Réessayez.", "error");
+      showToast(t("toastActionError"), "error");
       return;
     }
     setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, status: nextStatus } : x)));
     setDetail((d) => (d && d.id === u.id ? { ...d, status: nextStatus } : d));
-    showToast(
-      nextStatus === "blocked" ? "🚫 Compte bloqué — connexion refusée." : "✅ Compte débloqué.",
-      "success"
-    );
+    showToast(nextStatus === "blocked" ? t("toastBlocked") : t("toastUnblocked"), "success");
   }
 
   async function handleDelete(u: AdminUserRow) {
     if (u.id === currentUser?.id) {
-      showToast("⛔ Vous ne pouvez pas supprimer votre propre compte.", "error");
+      showToast(t("toastCannotDeleteSelf"), "error");
       return;
     }
-    if (
-      !window.confirm(
-        `Supprimer définitivement le compte de « ${u.name} » ? Ses ${u.listingsCount} annonce(s) seront aussi supprimées. Cette action est irréversible.`
-      )
-    ) {
+    if (!window.confirm(t("confirmDeleteText", { name: u.name, count: u.listingsCount }))) {
       return;
     }
     setBusyId(u.id);
@@ -140,13 +132,13 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
     setBusyId(null);
 
     if (error) {
-      showToast("❌ Impossible de supprimer ce compte. Réessayez.", "error");
+      showToast(t("toastDeleteError"), "error");
       return;
     }
     setUsers((prev) => prev.filter((x) => x.id !== u.id));
-    setTotal((t) => Math.max(0, t - 1));
+    setTotal((prevTotal) => Math.max(0, prevTotal - 1));
     setDetail((d) => (d && d.id === u.id ? null : d));
-    showToast("🗑️ Compte supprimé définitivement.", "success");
+    showToast(t("toastDeleted"), "success");
   }
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -154,10 +146,10 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
   return (
     <>
       <div className="mb-6">
-        <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">Administration</div>
-        <h2 className="font-display text-[26px] font-bold text-text mt-1">Tous les comptes</h2>
+        <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">{t("administration")}</div>
+        <h2 className="font-display text-[26px] font-bold text-text mt-1">{t("title")}</h2>
         <p className="text-sm text-muted mt-1.5">
-          {loading ? "Chargement…" : `${total} compte${total > 1 ? "s" : ""} inscrit${total > 1 ? "s" : ""}.`}
+          {loading ? t("loading") : t("accountCount", { count: total, plural: total > 1 ? "s" : "" })}
         </p>
       </div>
 
@@ -165,19 +157,19 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
         <input
           className="form-control !pl-10"
-          placeholder="Rechercher par nom ou email…"
+          placeholder={t("searchPlaceholder")}
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
         />
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted text-center py-16">Chargement des comptes…</p>
+        <p className="text-sm text-muted text-center py-16">{t("loadingAccounts")}</p>
       ) : users.length === 0 ? (
         <div className="text-center py-16 px-5">
           <div className="text-[40px] mb-3">🔍</div>
-          <h3 className="text-base font-semibold text-text mb-1.5">Aucun compte ne correspond</h3>
-          <p className="text-sm text-muted">Essayez une autre recherche.</p>
+          <h3 className="text-base font-semibold text-text mb-1.5">{t("noMatchTitle")}</h3>
+          <p className="text-sm text-muted">{t("noMatchText")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-2.5">
@@ -202,18 +194,18 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
 
               <div className="flex items-center gap-2 flex-wrap">
                 <Tag color={u.role === "owner" ? "gold" : u.role === "admin" ? "blue" : "neutral"}>
-                  {u.role === "owner" ? "🔑 Propriétaire" : u.role === "admin" ? "🛡 Admin" : "👤 Visiteur"}
+                  {u.role === "owner" ? t("roleOwner") : u.role === "admin" ? t("roleAdmin") : t("roleVisitor")}
                 </Tag>
-                {u.status === "blocked" && <Tag color="red">🚫 Bloqué</Tag>}
+                {u.status === "blocked" && <Tag color="red">{t("blocked")}</Tag>}
                 <span className="text-[12px] text-muted whitespace-nowrap">
-                  {u.listingsCount} annonce{u.listingsCount > 1 ? "s" : ""}
+                  {t("listingsCount", { count: u.listingsCount, plural: u.listingsCount > 1 ? "s" : "" })}
                 </span>
               </div>
 
               <div className="flex gap-2 shrink-0">
                 <button
                   onClick={() => onViewListings(u.name)}
-                  title="Voir ses annonces"
+                  title={t("viewListings")}
                   className="w-9 h-9 rounded-lg border border-[rgba(59,130,246,.3)] bg-[rgba(59,130,246,.08)] flex items-center justify-center text-blue hover:bg-[rgba(59,130,246,.18)] transition-colors"
                 >
                   <Building2 size={15} />
@@ -221,7 +213,7 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
                 <button
                   onClick={() => toggleBlock(u)}
                   disabled={busyId === u.id || u.id === currentUser?.id}
-                  title={u.status === "blocked" ? "Débloquer le compte" : "Bloquer le compte"}
+                  title={u.status === "blocked" ? t("unblockAccount") : t("blockAccount")}
                   className={
                     u.status === "blocked"
                       ? "w-9 h-9 rounded-lg border border-[rgba(34,197,94,.3)] bg-[rgba(34,197,94,.08)] flex items-center justify-center text-green2 hover:bg-[rgba(34,197,94,.18)] transition-colors disabled:opacity-40"
@@ -233,7 +225,7 @@ export default function AdminUsers({ onViewListings }: { onViewListings: (ownerN
                 <button
                   onClick={() => handleDelete(u)}
                   disabled={busyId === u.id || u.id === currentUser?.id}
-                  title="Supprimer le compte"
+                  title={t("deleteAccount")}
                   className="w-9 h-9 rounded-lg border border-[rgba(224,85,85,.3)] bg-[rgba(224,85,85,.08)] flex items-center justify-center text-red hover:bg-[rgba(224,85,85,.18)] transition-colors disabled:opacity-40"
                 >
                   <Trash2 size={15} />
@@ -289,6 +281,7 @@ function UserDetailModal({
   onDelete: () => void;
   busy: boolean;
 }) {
+  const t = useTranslations("AdminUsers");
   const showToast = useAppStore((s) => s.showToast);
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || "");
@@ -305,10 +298,10 @@ function UserDetailModal({
       .maybeSingle();
     setSaving(false);
     if (error || !data) {
-      showToast("❌ Impossible d'enregistrer les modifications.", "error");
+      showToast(t("toastSaveError"), "error");
       return;
     }
-    showToast("✅ Profil mis à jour.", "success");
+    showToast(t("toastSaved"), "success");
     onSaved({ ...user, name: data.name, phone: data.phone });
   }
 
@@ -346,39 +339,39 @@ function UserDetailModal({
 
         <div className="flex gap-2 flex-wrap mb-5">
           <Tag color={user.role === "owner" ? "gold" : user.role === "admin" ? "blue" : "neutral"}>
-            {user.role === "owner" ? "🔑 Propriétaire" : user.role === "admin" ? "🛡 Admin" : "👤 Visiteur"}
+            {user.role === "owner" ? t("roleOwner") : user.role === "admin" ? t("roleAdmin") : t("roleVisitor")}
           </Tag>
           <Tag color={user.status === "blocked" ? "red" : "green"}>
-            {user.status === "blocked" ? "🚫 Bloqué" : "✅ Actif"}
+            {user.status === "blocked" ? t("statusBlocked") : t("statusActive")}
           </Tag>
         </div>
 
         <div className="grid grid-cols-2 gap-3 mb-5 text-[13px]">
           <div className="bg-bg3 rounded-xl px-3.5 py-3">
-            <div className="text-muted text-[11px] uppercase tracking-wide mb-1">Inscrit</div>
+            <div className="text-muted text-[11px] uppercase tracking-wide mb-1">{t("modalJoined")}</div>
             <div className="text-text font-medium">{fmtRelativeDate(user.createdAt)}</div>
           </div>
           <div className="bg-bg3 rounded-xl px-3.5 py-3">
-            <div className="text-muted text-[11px] uppercase tracking-wide mb-1">Dernière connexion</div>
+            <div className="text-muted text-[11px] uppercase tracking-wide mb-1">{t("modalLastLogin")}</div>
             <div className="text-text font-medium">
-              {user.lastSignInAt ? fmtRelativeDate(user.lastSignInAt) : "Jamais"}
+              {user.lastSignInAt ? fmtRelativeDate(user.lastSignInAt) : t("modalNever")}
             </div>
           </div>
           <div className="bg-bg3 rounded-xl px-3.5 py-3 col-span-2">
-            <div className="text-muted text-[11px] uppercase tracking-wide mb-1">Annonces publiées</div>
+            <div className="text-muted text-[11px] uppercase tracking-wide mb-1">{t("modalListingsPublished")}</div>
             <div className="text-text font-medium">{user.listingsCount}</div>
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-[13px] text-muted mb-[7px] font-medium">Nom complet</label>
+          <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("modalFullName")}</label>
           <input className="form-control" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="mb-5">
-          <label className="block text-[13px] text-muted mb-[7px] font-medium">Téléphone</label>
+          <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("modalPhone")}</label>
           <input
             className="form-control"
-            placeholder="+237 6XX XXX XXX"
+            placeholder={t("modalPhonePlaceholder")}
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />
@@ -386,10 +379,10 @@ function UserDetailModal({
 
         <div className="flex gap-2 flex-wrap">
           <Button variant="gold" size="sm" loading={saving} onClick={save}>
-            Enregistrer
+            {t("modalSave")}
           </Button>
           <Button variant="outline" size="sm" onClick={onViewListings}>
-            <Building2 size={14} /> Voir ses annonces
+            <Building2 size={14} /> {t("viewListings")}
           </Button>
           {!isSelf && (
             <>
@@ -402,25 +395,21 @@ function UserDetailModal({
               >
                 {user.status === "blocked" ? (
                   <>
-                    <CheckCircle2 size={14} /> Débloquer
+                    <CheckCircle2 size={14} /> {t("modalUnblock")}
                   </>
                 ) : (
                   <>
-                    <Ban size={14} /> Bloquer
+                    <Ban size={14} /> {t("modalBlock")}
                   </>
                 )}
               </Button>
               <Button variant="danger" size="sm" loading={busy} onClick={onDelete}>
-                <Trash2 size={14} /> Supprimer
+                <Trash2 size={14} /> {t("modalDelete")}
               </Button>
             </>
           )}
         </div>
-        {isSelf && (
-          <p className="text-[12px] text-muted mt-3">
-            Vous ne pouvez pas bloquer ou supprimer votre propre compte administrateur.
-          </p>
-        )}
+        {isSelf && <p className="text-[12px] text-muted mt-3">{t("modalSelfNote")}</p>}
       </motion.div>
     </motion.div>
   );

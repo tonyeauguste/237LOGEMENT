@@ -96,31 +96,40 @@ export type PropertyGroup = "residentiel" | "commercial" | "foncier";
 
 export interface PropertyKindDef {
   value: string;
-  label: string;
   icon: string;
   group: PropertyGroup;
   /** false = ce type de bien n'est proposé qu'à la location, jamais à la vente. */
   saleEligible: boolean;
 }
 
+/** Fonction de traduction générique — passer `useTranslations("PropertyKinds")` (ou "Transaction", etc.) côté client. */
+type Translate = (key: string) => string;
+
 // Chambre et Studio sont volontairement exclus de la vente : ce sont des
 // logements meublés loués à la chambre/à l'unité, pas des biens qu'on cède.
+// Le libellé affiché n'est plus ici (voir kindLabel ci-dessous) : il vit
+// dans messages/fr.json et messages/en.json (namespace "PropertyKinds"),
+// sous la même clé que `value` — ex. "chambre" -> "Chambre" / "Room".
 export const PROPERTY_KINDS: PropertyKindDef[] = [
-  { value: "chambre", label: "Chambre", icon: "🚪", group: "residentiel", saleEligible: false },
-  { value: "studio", label: "Studio", icon: "🛏", group: "residentiel", saleEligible: false },
-  { value: "appartement", label: "Appartement", icon: "🏢", group: "residentiel", saleEligible: true },
-  { value: "duplex", label: "Duplex", icon: "🏘", group: "residentiel", saleEligible: true },
-  { value: "villa", label: "Villa", icon: "🏡", group: "residentiel", saleEligible: true },
-  { value: "maison", label: "Maison", icon: "🏠", group: "residentiel", saleEligible: true },
-  { value: "bureau", label: "Bureau", icon: "💼", group: "commercial", saleEligible: true },
-  { value: "boutique", label: "Boutique / Local commercial", icon: "🏪", group: "commercial", saleEligible: true },
-  { value: "magasin", label: "Magasin / Entrepôt", icon: "📦", group: "commercial", saleEligible: true },
-  { value: "terrain", label: "Terrain", icon: "🌍", group: "foncier", saleEligible: true },
+  { value: "chambre", icon: "🚪", group: "residentiel", saleEligible: false },
+  { value: "studio", icon: "🛏", group: "residentiel", saleEligible: false },
+  { value: "appartement", icon: "🏢", group: "residentiel", saleEligible: true },
+  { value: "duplex", icon: "🏘", group: "residentiel", saleEligible: true },
+  { value: "villa", icon: "🏡", group: "residentiel", saleEligible: true },
+  { value: "maison", icon: "🏠", group: "residentiel", saleEligible: true },
+  { value: "bureau", icon: "💼", group: "commercial", saleEligible: true },
+  { value: "boutique", icon: "🏪", group: "commercial", saleEligible: true },
+  { value: "magasin", icon: "📦", group: "commercial", saleEligible: true },
+  { value: "terrain", icon: "🌍", group: "foncier", saleEligible: true },
 ];
 
-/** Libellé affichable d'un type de bien (retombe sur la valeur brute si inconnue). */
-export function kindLabel(value: string): string {
-  return PROPERTY_KINDS.find((k) => k.value === value)?.label ?? value;
+/**
+ * Libellé affichable d'un type de bien. `t` = `useTranslations("PropertyKinds")`
+ * côté appelant ; retombe sur la valeur brute si la clé est introuvable
+ * (comportement déjà géré par useTranslations lui-même).
+ */
+export function kindLabel(value: string, t: Translate): string {
+  return t(value);
 }
 
 /** Groupe d'un type de bien (retombe sur "residentiel" si la valeur est inconnue). */
@@ -146,26 +155,39 @@ export interface FieldVisibilityRule {
   rooms: boolean;
   /** Champ "Salles de bain" pertinent pour cette combinaison. */
   baths: boolean;
-  /** Libellé du champ Surface — varie pour le foncier (contenance). */
-  surfaceLabel: string;
+  /**
+   * Champ "Surface" pertinent pour cette combinaison. Règle : toujours
+   * affiché pour un terrain (prime sur tout — voir PROPERTY_KINDS/group
+   * "foncier" ci-dessus), masqué en location pour tout le reste, affiché en
+   * vente. Voir la Tâche 4.1 du prompt "publier-et-auth".
+   */
+  surface: boolean;
+  /**
+   * Clé de traduction du libellé du champ Surface (namespace "Transaction",
+   * voir messages/fr.json et messages/en.json) — varie pour le foncier
+   * (contenance). Appeler `t(rules.surfaceLabelKey)` côté composant.
+   */
+  surfaceLabelKey: "surfaceM2" | "surfaceFoncier";
   /** Affiche le sélecteur Longue/Courte durée — uniquement en location, résidentiel/commercial. */
   listingDuration: boolean;
 }
 
 export const FIELD_VISIBILITY_RULES: Record<TransactionType, Record<PropertyGroup, FieldVisibilityRule>> = {
   location: {
-    residentiel: { rooms: true, baths: true, surfaceLabel: "Surface (m²)", listingDuration: true },
-    commercial: { rooms: false, baths: false, surfaceLabel: "Surface (m²)", listingDuration: true },
+    residentiel: { rooms: true, baths: true, surface: false, surfaceLabelKey: "surfaceM2", listingDuration: true },
+    commercial: { rooms: false, baths: false, surface: false, surfaceLabelKey: "surfaceM2", listingDuration: true },
     // Terrain en location = bail, sans durée courte/longue à proprement
     // parler (voir la note explicative affichée à la place dans le
-    // formulaire) — surface devient "contenance".
-    foncier: { rooms: false, baths: false, surfaceLabel: "Surface / Contenance (m² ou Hectares)", listingDuration: false },
+    // formulaire) — surface devient "contenance", et reste affichée
+    // (seul cas où la location montre la surface : la règle "terrain"
+    // prime sur la règle "masqué en location").
+    foncier: { rooms: false, baths: false, surface: true, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
   },
   vente: {
     // Une vente n'a pas de durée : listingDuration toujours false ici.
-    residentiel: { rooms: true, baths: true, surfaceLabel: "Surface (m²)", listingDuration: false },
-    commercial: { rooms: false, baths: false, surfaceLabel: "Surface (m²)", listingDuration: false },
-    foncier: { rooms: false, baths: false, surfaceLabel: "Surface / Contenance (m² ou Hectares)", listingDuration: false },
+    residentiel: { rooms: true, baths: true, surface: true, surfaceLabelKey: "surfaceM2", listingDuration: false },
+    commercial: { rooms: false, baths: false, surface: true, surfaceLabelKey: "surfaceM2", listingDuration: false },
+    foncier: { rooms: false, baths: false, surface: true, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
   },
 };
 
@@ -189,79 +211,98 @@ export interface TransactionMeta {
   shortLabel: string;
 }
 
-const SALE_META: TransactionMeta = {
-  badgeLabel: "💰 À vendre",
-  tagColor: "blue",
-  priceSuffix: "",
-  priceFieldLabel: "Prix de vente (FCFA) *",
-  shortLabel: "Vente",
-};
-const LONG_TERM_META: TransactionMeta = {
-  badgeLabel: "🏡 Long terme",
-  tagColor: "green",
-  priceSuffix: "/mois",
-  priceFieldLabel: "Prix mensuel (FCFA) *",
-  shortLabel: "Location",
-};
-const SHORT_TERM_META: TransactionMeta = {
-  badgeLabel: "🌴 Court séjour",
-  tagColor: "gold",
-  priceSuffix: "/nuit",
-  priceFieldLabel: "Prix par nuit (FCFA) *",
-  shortLabel: "Court séjour",
-};
-const LEASE_META: TransactionMeta = {
-  badgeLabel: "📜 Bail",
-  tagColor: "orange",
-  priceSuffix: "/mois",
-  priceFieldLabel: "Loyer de bail (FCFA) *",
-  shortLabel: "Bail",
-};
-
 /**
  * Résout les métadonnées d'affichage d'une annonce à partir de sa
  * transaction, sa durée (si location) et son groupe de type de bien.
  * Un terrain en location (bail) n'a pas de durée longue/courte : on lui
  * donne son propre badge plutôt que de retomber sur "Longue durée" par défaut.
+ * `t` = `useTranslations("Transaction")` côté appelant.
  */
 export function transactionMeta(
   transactionType: TransactionType,
   type: ListingKind | null,
-  group: PropertyGroup
+  group: PropertyGroup,
+  t: Translate
 ): TransactionMeta {
-  if (transactionType === "vente") return SALE_META;
-  if (group === "foncier") return LEASE_META;
-  return type === "courte" ? SHORT_TERM_META : LONG_TERM_META;
+  if (transactionType === "vente") {
+    return {
+      badgeLabel: t("saleBadge"),
+      tagColor: "blue",
+      priceSuffix: "",
+      priceFieldLabel: t("salePriceField"),
+      shortLabel: t("saleShort"),
+    };
+  }
+  if (group === "foncier") {
+    return {
+      badgeLabel: t("leaseBadge"),
+      tagColor: "orange",
+      priceSuffix: t("perMonth"),
+      priceFieldLabel: t("leasePriceField"),
+      shortLabel: t("leaseShort"),
+    };
+  }
+  if (type === "courte") {
+    return {
+      badgeLabel: t("shortTermBadge"),
+      tagColor: "gold",
+      priceSuffix: t("perNight"),
+      priceFieldLabel: t("shortTermPriceField"),
+      shortLabel: t("shortTermShort"),
+    };
+  }
+  return {
+    badgeLabel: t("longTermBadge"),
+    tagColor: "green",
+    priceSuffix: t("perMonth"),
+    priceFieldLabel: t("longTermPriceField"),
+    shortLabel: t("longTermShort"),
+  };
 }
 
 // ═══════════════════════════════════════════════
 // ÉQUIPEMENTS — chips sélectionnables
 // ═══════════════════════════════════════════════
 export interface AmenityDef {
-  label: string;
+  /**
+   * Clé stable stockée en base (namespace de traduction "Amenities", voir
+   * messages/fr.json et messages/en.json) — remplace l'ancien `label` en
+   * dur : avant, la chaîne affichée ("🏊 Piscine") était directement
+   * stockée dans `properties.amenities`, ce qui figeait la langue au
+   * moment de la publication. Une annonce publiée avant ce changement
+   * garde son ancien texte français tel quel (voir amenityIcon ci-dessous,
+   * qui retombe sur une icône neutre pour ces valeurs inconnues).
+   */
+  value: string;
   icon: string;
   defaultSelected: boolean;
 }
 
 export const AMENITIES: AmenityDef[] = [
-  { label: "Piscine", icon: "🏊", defaultSelected: false },
-  { label: "Jardin", icon: "🌿", defaultSelected: true },
-  { label: "Garage", icon: "🚗", defaultSelected: true },
-  { label: "Groupe électrogène", icon: "⚡", defaultSelected: true },
-  { label: "Gardiennage 24h", icon: "🛡", defaultSelected: true },
-  { label: "Cuisine équipée", icon: "🍳", defaultSelected: true },
-  { label: "Climatisation", icon: "❄️", defaultSelected: true },
-  { label: "Eau courante", icon: "💧", defaultSelected: true },
-  { label: "WiFi fibre", icon: "📶", defaultSelected: true },
-  { label: "Meublé", icon: "🛋", defaultSelected: false },
-  { label: "Ascenseur", icon: "🏗", defaultSelected: false },
-  { label: "Balcon/Terrasse", icon: "🌅", defaultSelected: false },
-  { label: "Parking", icon: "🅿️", defaultSelected: false },
-  { label: "Chauffe-eau", icon: "🔥", defaultSelected: false },
+  { value: "piscine", icon: "🏊", defaultSelected: false },
+  { value: "jardin", icon: "🌿", defaultSelected: true },
+  { value: "garage", icon: "🚗", defaultSelected: true },
+  { value: "groupeElectrogene", icon: "⚡", defaultSelected: true },
+  { value: "gardiennage", icon: "🛡", defaultSelected: true },
+  { value: "cuisineEquipee", icon: "🍳", defaultSelected: true },
+  { value: "climatisation", icon: "❄️", defaultSelected: true },
+  { value: "eauCourante", icon: "💧", defaultSelected: true },
+  { value: "wifi", icon: "📶", defaultSelected: true },
+  { value: "meuble", icon: "🛋", defaultSelected: false },
+  { value: "ascenseur", icon: "🏗", defaultSelected: false },
+  { value: "balcon", icon: "🌅", defaultSelected: false },
+  { value: "parking", icon: "🅿️", defaultSelected: false },
+  { value: "chauffeEau", icon: "🔥", defaultSelected: false },
 ];
 
-export function amenityFull(a: AmenityDef) {
-  return `${a.icon} ${a.label}`;
+/** Libellé affichable d'un équipement. `t` = `useTranslations("Amenities")` côté appelant. */
+export function amenityLabel(value: string, t: Translate): string {
+  return t(value);
+}
+
+/** Icône d'un équipement à partir de sa clé stockée (fallback neutre pour une valeur inconnue — voir la note sur AmenityDef.value). */
+export function amenityIcon(value: string): string {
+  return AMENITIES.find((a) => a.value === value)?.icon ?? "✓";
 }
 
 // ═══════════════════════════════════════════════
@@ -278,69 +319,38 @@ export type FaqCategory = "locataire" | "proprietaire" | "compte" | "securite";
 
 export interface FaqItem {
   cat: FaqCategory;
-  q: string;
-  a: string;
+  /**
+   * Clé de traduction (namespace "FaqItems", voir messages/fr.json et
+   * messages/en.json) — la question et la réponse vivent dans les
+   * dictionnaires, pas ici, pour pouvoir être traduites.
+   */
+  key: string;
 }
 
 export const FAQ_ITEMS: FaqItem[] = [
-  {
-    cat: "compte",
-    q: "La création d'un compte est-elle gratuite sur 237Logement ?",
-    a: "Oui, la création d'un compte est entièrement gratuite, que vous soyez locataire ou propriétaire. Les locataires accèdent à toutes les fonctionnalités (recherche, favoris, alertes, contact des propriétaires) sans aucun frais. Les propriétaires peuvent publier leurs annonces et gérer leurs biens sans commission ni abonnement obligatoire.",
-  },
-  {
-    cat: "locataire",
-    q: "Comment rechercher un logement adapté à mes besoins ?",
-    a: "Utilisez la barre de recherche principale et nos filtres avancés : sélectionnez votre ville (Yaoundé, Douala, Bafoussam…), votre quartier, le type de location (courte ou longue durée), votre budget maximum et le nombre de chambres souhaité. Chaque fiche logement affiche ensuite sa localisation précise pour identifier les biens dans votre zone préférée.",
-  },
-  {
-    cat: "proprietaire",
-    q: "Comment publier une annonce pour mon bien ?",
-    a: "C'est simple ! Créez un compte Propriétaire, puis cliquez sur \"Publier une annonce\". Notre formulaire en 5 étapes vous guide : localisation, détails du bien (chambres, surface, équipements), photos, tarification et aperçu final. Votre annonce est vérifiée par notre équipe dans les 24 heures, puis publiée automatiquement. Vous pouvez modifier ou supprimer votre annonce à tout moment depuis votre tableau de bord.",
-  },
-  {
-    cat: "locataire",
-    q: "Y a-t-il des frais d'agence à payer ?",
-    a: "Non, 237Logement ne prélève aucun frais d'agence sur les transactions entre locataires et propriétaires. Notre modèle est basé sur la mise en relation directe et transparente. Vous négociez directement avec le propriétaire les conditions de location : loyer, caution, charges, durée. Aucun intermédiaire ne se glisse entre vous.",
-  },
-  {
-    cat: "securite",
-    q: "Comment sont vérifiés les propriétaires sur la plateforme ?",
-    a: "Notre équipe vérifie l'identité de chaque propriétaire avant de lui attribuer le badge \"Vérifié\" : vérification de la pièce d'identité nationale, confirmation du numéro de téléphone et validation de la propriété du bien (titre foncier ou contrat de bail). Les propriétaires vérifiés affichent un badge doré sur leurs annonces. Nous vous recommandons de privilégier ces annonces pour plus de sécurité.",
-  },
-  {
-    cat: "locataire",
-    q: "Puis-je louer un logement pour une courte durée (week-end, vacances) ?",
-    a: "Absolument ! 237Logement propose deux types de location : la longue durée (location mensuelle classique) et la courte durée (à la nuit ou à la semaine). Utilisez le filtre \"Type de location\" dans la recherche pour n'afficher que les offres de court séjour. Ces logements sont souvent meublés et équipés, idéaux pour les voyageurs d'affaires ou les vacanciers.",
-  },
-  {
-    cat: "locataire",
-    q: "Comment sauvegarder des annonces qui m'intéressent ?",
-    a: "Cliquez sur le cœur ❤️ présent sur chaque annonce (dans les résultats de recherche ou sur la fiche détaillée) pour l'ajouter à vos favoris. Vos favoris sont accessibles dans votre espace visiteur, dans la section \"Mes favoris\". Vous devez être connecté pour sauvegarder des annonces. Vos favoris sont conservés indéfiniment jusqu'à ce que vous les supprimiez vous-même.",
-  },
-  {
-    cat: "securite",
-    q: "Comment signaler une annonce frauduleuse ou suspecte ?",
-    a: "Si vous suspectez une annonce frauduleuse (demande de virement avant visite, prix anormalement bas, photos qui semblent copiées d'un autre site…), contactez notre équipe via le formulaire de la page \"Contact\" (objet \"Signaler une fraude\") ou par téléphone/WhatsApp. Nous traitons chaque signalement sous 24h et supprimons immédiatement les annonces frauduleuses confirmées. Ne versez jamais d'argent sans avoir visité physiquement le logement.",
-  },
-  {
-    cat: "proprietaire",
-    q: "Combien d'annonces puis-je publier en tant que propriétaire ?",
-    a: "Il n'y a pas de limite au nombre d'annonces que vous pouvez publier. Que vous ayez un appartement ou un portefeuille de plusieurs dizaines de biens, notre tableau de bord propriétaire s'adapte à vos besoins. Vous gérez toutes vos annonces depuis un espace unique, avec statistiques et messagerie centralisés.",
-  },
-  {
-    cat: "compte",
-    q: "Comment modifier ou supprimer mon compte ?",
-    a: "Vous pouvez modifier vos informations personnelles depuis les \"Paramètres\" de votre tableau de bord. Pour supprimer définitivement votre compte, contactez notre support via la page \"Contact\" (ou par téléphone/WhatsApp) avec votre adresse email d'inscription. La suppression est traitée sous 72 heures et entraîne la suppression de toutes vos données et annonces.",
-  },
+  { cat: "compte", key: "q1" },
+  { cat: "locataire", key: "q2" },
+  { cat: "proprietaire", key: "q3" },
+  { cat: "locataire", key: "q4" },
+  { cat: "securite", key: "q5" },
+  { cat: "locataire", key: "q6" },
+  { cat: "locataire", key: "q7" },
+  { cat: "securite", key: "q8" },
+  { cat: "proprietaire", key: "q9" },
+  { cat: "compte", key: "q10" },
 ];
 
-export const FAQ_CATEGORIES: { value: FaqCategory | "all"; label: string }[] = [
-  { value: "all", label: "Tous" },
-  { value: "locataire", label: "Locataires" },
-  { value: "proprietaire", label: "Propriétaires" },
-  { value: "compte", label: "Comptes" },
-  { value: "securite", label: "Sécurité" },
+/**
+ * Libellés des catégories — même principe que FAQ_ITEMS : la clé
+ * correspond directement à la valeur, traduite via le namespace
+ * "FaqCategories".
+ */
+export const FAQ_CATEGORIES: { value: FaqCategory | "all" }[] = [
+  { value: "all" },
+  { value: "locataire" },
+  { value: "proprietaire" },
+  { value: "compte" },
+  { value: "securite" },
 ];
 
 export const DEFAULT_AVATAR =

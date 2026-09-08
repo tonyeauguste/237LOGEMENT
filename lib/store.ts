@@ -28,6 +28,19 @@ function saveFavorites(favorites: number[]) {
 }
 
 /**
+ * Cookie technique posé par proxy.ts (voir son commentaire) — identifie un
+ * visiteur anonyme pour dédupliquer les favoris côté serveur, même
+ * identité que pour les vues (register_property_view).
+ */
+function getVisitorCookie(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  return document.cookie
+    .split("; ")
+    .find((c) => c.startsWith("v_id="))
+    ?.split("=")[1];
+}
+
+/**
  * Compose le `User` applicatif à partir de la session Supabase Auth +
  * de la ligne `profiles` associée (rôle, statut, nom, téléphone, avatar).
  * Le rôle stocké en profil sert uniquement à l'affichage (quel tableau
@@ -105,12 +118,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       has ? "💔 Retiré des favoris" : "❤️ Ajouté aux favoris !",
       has ? "info" : "success"
     );
-    // Best-effort : fait évoluer le compteur "favoris" affiché au
-    // propriétaire. Une fonction dédiée (plutôt qu'un UPDATE direct sur
-    // `properties`) car les favoris sont utilisables sans compte — voir
-    // la migration add_real_auth_profiles_and_ownership.
+    // Tâche "corriger-compteur-vues" (suite favoris) — l'ancienne RPC
+    // adjust_property_favs faisait confiance au delta ±1 envoyé par le
+    // client sans identité visiteur ni déduplication côté serveur : le
+    // même visiteur favorisant depuis deux appareils (ou après un vidage
+    // de stockage local) gonflait le compteur pour une seule vraie
+    // personne. set_property_favorite déduplique par (annonce, visiteur),
+    // même identité que pour les vues — compte utilisateur si connecté,
+    // sinon le cookie technique posé par proxy.ts. Les favoris restent
+    // utilisables sans compte, donc pas de visitorId -> pas d'appel
+    // (le favori reste local uniquement, best-effort comme avant).
+    const { currentUser } = get();
+    const cookieId = getVisitorCookie();
+    const visitor = currentUser ? `user:${currentUser.id}` : cookieId ? `anon:${cookieId}` : null;
+    if (!visitor) return;
     createClient()
-      .rpc("adjust_property_favs", { prop_id: id, delta: has ? -1 : 1 })
+      .rpc("set_property_favorite", { prop_id: id, visitor, is_fav: !has })
       .then(({ error }) => {
         if (error) console.error("Échec de la mise à jour du compteur de favoris :", error);
       });

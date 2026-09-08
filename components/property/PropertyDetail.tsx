@@ -24,17 +24,22 @@ import {
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore } from "@/lib/store";
-import { FIELD_VISIBILITY_RULES, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, amenityIcon, amenityLabel, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
 import Button from "@/components/ui/Button";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 type DetailTab = "desc" | "amenities" | "map";
 
 export default function PropertyDetail({ p, similar = [] }: { p: Property; similar?: Property[] }) {
+  const tKind = useTranslations("PropertyKinds");
+  const tTx = useTranslations("Transaction");
+  const tAmenities = useTranslations("Amenities");
+  const t = useTranslations("PropertyDetail");
   const group = propertyGroup(p.kind);
-  const typeMeta = transactionMeta(p.transactionType, p.type, group);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
   // B.2/B.4 — voir le commentaire équivalent dans PropertyCard.tsx : ne
   // concerne que le court séjour, le longue durée supprime l'annonce.
@@ -86,9 +91,9 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   async function copyLink() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      showToast("🔗 Lien copié dans le presse-papiers !", "success");
+      showToast(t("toastLinkCopied"), "success");
     } catch {
-      showToast("❌ Impossible de copier le lien.", "error");
+      showToast(t("toastLinkCopyError"), "error");
     }
   }
 
@@ -99,7 +104,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
 
   async function sendMessage() {
     if (!msg.trim()) {
-      showToast("⚠️ Veuillez écrire un message avant d'envoyer.", "error");
+      showToast(t("toastEmptyMessage"), "error");
       return;
     }
     setSending(true);
@@ -109,11 +114,11 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
       .insert({ property_id: p.id, message: msg.trim() });
     setSending(false);
     if (error) {
-      showToast("❌ Une erreur est survenue. Veuillez réessayer.", "error");
+      showToast(t("toastSendError"), "error");
       return;
     }
     setSent(true);
-    showToast("✅ Message envoyé avec succès !", "success");
+    showToast(t("toastMessageSent"), "success");
   }
 
   return (
@@ -121,7 +126,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
       {/* Fil d'ariane + retour aux résultats */}
       <div className="flex justify-between items-center gap-4 mb-6 flex-wrap">
         <div className="flex gap-2 items-center text-[13px] text-muted">
-          <Link href="/" className="text-gold hover:underline">Accueil</Link>
+          <Link href="/" className="text-gold hover:underline">{t("home")}</Link>
           <span className="text-dim">/</span>
           <Link href="/recherche" className="text-gold hover:underline">
             {typeMeta.shortLabel}
@@ -131,7 +136,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
         </div>
         <Link href="/recherche">
           <Button variant="ghost" size="sm">
-            <ArrowLeft size={14} /> Retour aux résultats
+            <ArrowLeft size={14} /> {t("backButton")}
           </Button>
         </Link>
       </div>
@@ -167,7 +172,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             {isOccupied && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <Tag color="red" className="!text-[13px] !px-4 !py-1.5">
-                  🔴 Bien occupé — photos temporairement masquées
+                  {t("occupiedPhotosHidden")}
                 </Tag>
               </div>
             )}
@@ -176,14 +181,14 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               <>
                 <button
                   onClick={prevImg}
-                  aria-label="Photo précédente"
+                  aria-label={t("prevPhoto")}
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm border border-white/15 text-white flex items-center justify-center hover:bg-black/65 transition-colors"
                 >
                   <ChevronLeft size={20} />
                 </button>
                 <button
                   onClick={nextImg}
-                  aria-label="Photo suivante"
+                  aria-label={t("nextPhoto")}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/45 backdrop-blur-sm border border-white/15 text-white flex items-center justify-center hover:bg-black/65 transition-colors"
                 >
                   <ChevronRight size={20} />
@@ -208,7 +213,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 >
                   <Image
                     src={src}
-                    alt={`Miniature ${i + 1}`}
+                    alt={t("thumbnail", { n: i + 1 })}
                     fill
                     sizes="92px"
                     className={`object-cover ${isOccupied ? "blur-md pointer-events-none scale-105" : ""}`}
@@ -222,9 +227,9 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           <div className="mb-6">
             <div className="flex gap-2 items-center mb-3 flex-wrap">
               <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
-              {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
-              {p.verified && <Tag color="blue">🛡 Propriétaire vérifié</Tag>}
-              {p.available ? <Tag color="green">✅ Disponible</Tag> : <Tag color="red">❌ Non disponible</Tag>}
+              {isOccupied && <Tag color="red">🔴 {t("occupied")}</Tag>}
+              {p.verified && <Tag color="blue">{t("verifiedOwner")}</Tag>}
+              {p.available ? <Tag color="green">{t("available")}</Tag> : <Tag color="red">{t("notAvailable")}</Tag>}
             </div>
             <h1 className="font-display text-[clamp(22px,3vw,36px)] font-bold text-text mb-2">{p.title}</h1>
             <div className="flex items-center gap-1.5 text-muted text-[15px]">
@@ -234,39 +239,47 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           </div>
 
           {/* Caractéristiques — chambres/salles de bain masquées pour un
-              bureau, une boutique ou un terrain (voir FIELD_VISIBILITY_RULES). */}
-          <div
-            className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
-              rules.rooms || rules.baths ? "grid-cols-3" : "grid-cols-1"
-            }`}
-          >
-            {rules.rooms && (
-              <div className="p-[18px] text-center border-r border-border">
-                <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
-                <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
-                <div className="text-xs text-muted">Chambre{p.rooms > 1 ? "s" : ""}</div>
-              </div>
-            )}
-            {rules.baths && (
-              <div className="p-[18px] text-center border-r border-border">
-                <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
-                <div className="font-semibold text-[15px] text-text">{p.baths}</div>
-                <div className="text-xs text-muted">Salle{p.baths > 1 ? "s" : ""} de bain</div>
-              </div>
-            )}
-            <div className="p-[18px] text-center">
-              <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
-              <div className="text-xs text-muted">m² de surface</div>
+              bureau, une boutique ou un terrain ; surface masquée en
+              location sauf pour un terrain (voir FIELD_VISIBILITY_RULES,
+              Tâche 4.1 du prompt "publier-et-auth"). */}
+          {(rules.rooms || rules.baths || rules.surface) && (
+            <div
+              className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
+                [rules.rooms, rules.baths, rules.surface].filter(Boolean).length > 1
+                  ? "grid-cols-3"
+                  : "grid-cols-1"
+              }`}
+            >
+              {rules.rooms && (
+                <div className="p-[18px] text-center border-r border-border">
+                  <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
+                  <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
+                  <div className="text-xs text-muted">{p.rooms > 1 ? t("rooms") : t("room")}</div>
+                </div>
+              )}
+              {rules.baths && (
+                <div className="p-[18px] text-center border-r border-border">
+                  <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
+                  <div className="font-semibold text-[15px] text-text">{p.baths}</div>
+                  <div className="text-xs text-muted">{p.baths > 1 ? t("bathrooms") : t("bathroom")}</div>
+                </div>
+              )}
+              {rules.surface && (
+                <div className="p-[18px] text-center">
+                  <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
+                  <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
+                  <div className="text-xs text-muted">{t("surfaceM2")}</div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Onglets */}
           <div className="flex border-b border-border mb-6">
             {([
-              ["desc", "Description"],
-              ["amenities", "Équipements"],
-              ["map", "Localisation"],
+              ["desc", t("tabDesc")],
+              ["amenities", t("tabAmenities")],
+              ["map", t("tabMap")],
             ] as [DetailTab, string][]).map(([key, label]) => (
               <button
                 key={key}
@@ -284,11 +297,10 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             {tab === "desc" && (
               <motion.div key="desc" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                 <p className="text-muted text-[15px] leading-[1.8] whitespace-pre-line">
-                  {p.desc || "Aucune description fournie pour ce bien."}
+                  {p.desc || t("noDescription")}
                 </p>
                 <div className="bg-card2 border border-border rounded-xl px-[18px] py-4 mt-[18px] flex gap-5 flex-wrap text-[13px] text-muted">
-                  <span>👁 {p.views} vues</span>
-                  <span>❤️ {p.favs} favoris</span>
+                  <span>❤️ {p.favs} {t("favs")}</span>
                   <span>📅 {fmtRelativeDate(p.createdAt)}</span>
                 </div>
               </motion.div>
@@ -302,7 +314,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 className="grid grid-cols-1 sm:grid-cols-2 gap-2.5"
               >
                 {p.amenities.length === 0 ? (
-                  <p className="text-muted text-sm">Aucun équipement renseigné.</p>
+                  <p className="text-muted text-sm">{t("noAmenities")}</p>
                 ) : (
                   p.amenities.map((a) => (
                     <div
@@ -310,7 +322,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                       className="flex items-center gap-2.5 px-3.5 py-3 bg-card border border-border rounded-[10px] text-sm text-text"
                     >
                       <Check size={14} className="text-gold shrink-0" />
-                      {a}
+                      {amenityIcon(a)} {amenityLabel(a, tAmenities)}
                     </div>
                   ))
                 )}
@@ -318,27 +330,37 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             )}
             {tab === "map" && (
               <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-[260px] bg-[#091626] rounded-2xl border border-border overflow-hidden relative">
-                  <div
-                    className="w-full h-full relative"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(28,46,64,.3) 40px,rgba(28,46,64,.3) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(28,46,64,.3) 40px,rgba(28,46,64,.3) 41px)",
-                    }}
-                  >
-                    <motion.div
-                      animate={{ y: [0, -6, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute left-1/2 top-[45%] -translate-x-1/2 flex flex-col items-center"
-                    >
-                      <strong className="text-gold text-sm mb-1 whitespace-nowrap">{p.title}</strong>
-                      <span className="w-3.5 h-3.5 rounded-full bg-gold border-2 border-white shadow-[0_0_0_6px_rgba(200,155,60,.25)]" />
-                    </motion.div>
-                    <div className="absolute bottom-3 right-3.5 bg-card border border-border2 rounded-lg px-3 py-1.5 text-xs text-muted">
-                      {p.quartier}, {p.city}
-                    </div>
-                  </div>
+                <div className="bg-card2 border border-border rounded-xl px-[18px] py-3.5 mb-4 flex items-center gap-2 text-sm text-text">
+                  <MapPin size={15} className="text-gold shrink-0" />
+                  {p.quartier}, {p.city}
                 </div>
+                {/* Tâche 2 — adresse précise et repères saisis à l'étape 1
+                    du formulaire /publier : auparavant capturés mais
+                    jamais affichés (voir rowToProperty dans
+                    lib/supabase/mappers.ts). Un champ non renseigné est
+                    omis proprement, jamais affiché vide. */}
+                {p.address || p.precisionDesc ? (
+                  <div className="flex flex-col gap-3">
+                    {p.address && (
+                      <div>
+                        <div className="text-[11px] tracking-[1px] uppercase text-muted font-semibold mb-1">
+                          {t("address")}
+                        </div>
+                        <p className="text-sm text-text">{p.address}</p>
+                      </div>
+                    )}
+                    {p.precisionDesc && (
+                      <div>
+                        <div className="text-[11px] tracking-[1px] uppercase text-muted font-semibold mb-1">
+                          {t("locationDetails")}
+                        </div>
+                        <p className="text-sm text-muted leading-relaxed">{p.precisionDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted text-sm">{t("noLocationDetails")}</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -349,7 +371,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           {/* Bloc prix + partage + sauvegarde */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-1">
-              {typeMeta.shortLabel} · {kindLabel(p.kind)}
+              {typeMeta.shortLabel} · {kindLabel(p.kind, tKind)}
             </div>
             <div className="text-[13px] text-muted mb-3">{p.quartier}, {p.city}</div>
 
@@ -361,18 +383,82 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             )}
             <div className="text-[12px] text-dim mb-4">{fmtRelativeDate(p.createdAt)}</div>
 
+            {/* Tâche 2 — Conditions financières : selon le type de
+                transaction, jamais les deux jeux de champs à la fois (voir
+                le payload envoyé par le formulaire /publier). Chaque ligne
+                n'apparaît que si le champ correspondant est renseigné. */}
+            {p.transactionType === "location" ? (
+              (p.deposit || p.advancePayment || p.charges || p.minDuration) && (
+                <div className="border-t border-border pt-3 mb-4 flex flex-col gap-1.5 text-[13px]">
+                  {p.deposit != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("deposit")}</span>
+                      <span className="text-text font-medium">{fmtPrice(p.deposit)}</span>
+                    </div>
+                  )}
+                  {p.advancePayment != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("advance")}</span>
+                      <span className="text-text font-medium">{fmtPrice(p.advancePayment)}</span>
+                    </div>
+                  )}
+                  {p.charges && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("charges")}</span>
+                      <span className="text-text font-medium">
+                        {p.charges === "oui"
+                          ? t("chargesIncluded")
+                          : p.charges === "partiel"
+                            ? t("chargesPartial")
+                            : t("chargesExcluded")}
+                      </span>
+                    </div>
+                  )}
+                  {p.minDuration && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("minDuration")}</span>
+                      <span className="text-text font-medium">{p.minDuration}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            ) : (
+              (p.landTitleStatus || p.priceNegotiable != null) && (
+                <div className="border-t border-border pt-3 mb-4 flex flex-col gap-1.5 text-[13px]">
+                  {p.landTitleStatus && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("landTitle")}</span>
+                      <span className="text-text font-medium">
+                        {p.landTitleStatus === "oui"
+                          ? t("landTitleAvailable")
+                          : p.landTitleStatus === "non"
+                            ? t("landTitleNotAvailable")
+                            : t("landTitleInProgress")}
+                      </span>
+                    </div>
+                  )}
+                  {p.priceNegotiable != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("priceNegotiable")}</span>
+                      <span className="text-text font-medium">{p.priceNegotiable ? t("yes") : t("no")}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
+
             <div className="flex gap-2 flex-wrap mb-4">
               <button
                 onClick={handleShare}
                 className="flex items-center gap-1.5 text-[12px] text-muted hover:text-gold underline underline-offset-2 transition-colors"
               >
-                <Share2 size={13} /> Partager
+                <Share2 size={13} /> {t("share")}
               </button>
               <button
                 onClick={copyLink}
                 className="flex items-center gap-1.5 text-[12px] text-muted hover:text-gold underline underline-offset-2 transition-colors"
               >
-                <Link2 size={13} /> Copier le lien
+                <Link2 size={13} /> {t("copyLink")}
               </button>
               <button
                 onClick={shareOnWhatsApp}
@@ -384,14 +470,14 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
 
             <Button variant="gold" full size="lg" onClick={() => toggleFav(p.id)}>
               <Heart size={16} className={isFav ? "fill-current" : ""} />
-              {isFav ? "Annonce sauvegardée ✓" : "Sauvegarder l'annonce"}
+              {isFav ? t("saved") : t("save")}
             </Button>
           </div>
 
           {/* Proposé par */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-3">
-              Proposé par
+              {t("proposedBy")}
             </div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-full border-2 border-gold overflow-hidden relative shrink-0">
@@ -401,7 +487,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 <div className="font-semibold text-[15px] text-text truncate">{p.owner.name}</div>
                 {p.verified && (
                   <div className="text-[12px] text-green2 flex items-center gap-1">
-                    <Check size={12} strokeWidth={3} /> Propriétaire vérifié
+                    <Check size={12} strokeWidth={3} /> {t("verifiedOwnerShort")}
                   </div>
                 )}
               </div>
@@ -409,7 +495,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             <div className="flex gap-2 items-center text-[13px] text-muted flex-wrap">
               <Stars rating={p.owner.rating} />
               <span>
-                {p.owner.rating} · {p.owner.listings} annonce{p.owner.listings > 1 ? "s" : ""}
+                {p.owner.rating} · {p.owner.listings} {p.owner.listings > 1 ? t("listings") : t("listing")}
               </span>
             </div>
           </div>
@@ -417,27 +503,25 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           {/* Contact */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <h4 className="font-semibold text-base text-text mb-4 flex items-center gap-2">
-              <MessageSquare size={16} className="text-gold" /> Contacter le propriétaire
+              <MessageSquare size={16} className="text-gold" /> {t("contactOwner")}
             </h4>
             {sent ? (
               <div className="text-center py-6">
                 <div className="text-[40px] mb-3">✅</div>
-                <h5 className="font-semibold text-[16px] text-text mb-1.5">Message envoyé !</h5>
-                <p className="text-muted text-sm">
-                  Le propriétaire vous répondra sous 24h.
-                </p>
+                <h5 className="font-semibold text-[16px] text-text mb-1.5">{t("messageSentTitle")}</h5>
+                <p className="text-muted text-sm">{t("messageSentText")}</p>
               </div>
             ) : (
               <>
                 <textarea
                   className="form-control mb-3"
                   style={{ minHeight: 100 }}
-                  placeholder="Bonjour, je suis intéressé(e) par votre logement. Pourriez-vous me donner plus d'informations ?"
+                  placeholder={t("messagePlaceholder")}
                   value={msg}
                   onChange={(e) => setMsg(e.target.value)}
                 />
                 <Button variant="gold" full loading={sending} onClick={sendMessage} className="mb-2.5">
-                  Envoyer le message
+                  {t("sendMessage")}
                 </Button>
                 {p.owner.phone ? (
                   <a
@@ -447,7 +531,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                     <Phone size={15} /> {p.owner.phone}
                   </a>
                 ) : (
-                  <p className="text-center text-xs text-dim italic">Numéro non communiqué</p>
+                  <p className="text-center text-xs text-dim italic">{t("noPhoneProvided")}</p>
                 )}
               </>
             )}
@@ -457,31 +541,31 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               locataire et limite les arnaques au faux versement d'avance. */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <div className="text-[11px] tracking-[2px] uppercase text-muted font-semibold mb-3 flex items-center gap-1.5">
-              <ShieldCheck size={13} className="text-gold" /> Conseils de sécurité
+              <ShieldCheck size={13} className="text-gold" /> {t("securityTipsTitle")}
             </div>
             <div className="flex gap-1.5 flex-wrap mb-3">
-              <Tag color="gold">Propriétaire vérifié</Tag>
-              <Tag color="green">Annonce vérifiée</Tag>
+              <Tag color="gold">{t("verifiedOwnerTag")}</Tag>
+              <Tag color="green">{t("verifiedListingTag")}</Tag>
             </div>
             <ul className="text-[13px] text-muted leading-relaxed flex flex-col gap-1.5">
-              <li>• Visitez toujours le bien avant de payer.</li>
-              <li>• Privilégiez les contacts vérifiés.</li>
-              <li>• Ne versez jamais d&apos;argent à l&apos;avance sans visite.</li>
+              <li>• {t("tip1")}</li>
+              <li>• {t("tip2")}</li>
+              <li>• {t("tip3")}</li>
               <li>
                 •{" "}
                 <Link href="/contact" className="text-gold hover:underline">
-                  Signalez
+                  {t("tip4Link")}
                 </Link>{" "}
-                toute annonce suspecte.
+                {t("tip4Rest")}
               </li>
             </ul>
           </div>
 
           {/* Annonces similaires */}
           <div className="bg-card border border-border rounded-2xl p-5">
-            <h4 className="font-semibold text-sm text-text mb-3.5">Annonces similaires</h4>
+            <h4 className="font-semibold text-sm text-text mb-3.5">{t("similarListings")}</h4>
             {similar.length === 0 ? (
-              <p className="text-muted text-[13px]">Aucune annonce similaire pour le moment.</p>
+              <p className="text-muted text-[13px]">{t("noSimilar")}</p>
             ) : (
               <div className="flex flex-col gap-1">
                 {similar.map((s) => (
@@ -514,7 +598,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            aria-label="Remonter en haut"
+            aria-label={t("backToTop")}
             // Voir le commentaire équivalent dans Toaster.tsx (safe-area-inset).
             className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] right-6 z-50 w-12 h-12 rounded-full bg-gold text-[#07111e] shadow-[0_8px_28px_rgba(200,155,60,.4)] flex items-center justify-center hover:brightness-110 transition-[filter]"
           >

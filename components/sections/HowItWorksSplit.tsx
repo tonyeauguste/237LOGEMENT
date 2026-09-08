@@ -1,55 +1,41 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
-
-const STEPS = [
-  {
-    icon: "🔍",
-    num: "ÉTAPE 01",
-    title: "Recherchez et filtrez",
-    desc: "Utilisez nos filtres avancés : ville, quartier, budget, type de location, nombre de chambres. Trouvez exactement ce que vous cherchez en quelques secondes.",
-  },
-  {
-    icon: "📋",
-    num: "ÉTAPE 02",
-    title: "Comparez les annonces",
-    desc: "Consultez les photos en haute définition, lisez les descriptions détaillées et vérifiez le profil du propriétaire avant tout contact.",
-  },
-  {
-    icon: "💬",
-    num: "ÉTAPE 03",
-    title: "Contactez directement",
-    desc: (
-      <>
-        Envoyez un message ou appelez le propriétaire directement. Aucun intermédiaire. 🔥{" "}
-        <strong className="text-text">Promo Exceptionnelle : Publication Gratuite !</strong>{" "}
-        Déposez vos annonces à 0 FCFA au lieu des frais d&apos;agence habituels. Visitez le bien
-        et négociez librement.
-      </>
-    ),
-  },
-  {
-    icon: "🏠",
-    num: "ÉTAPE 04",
-    title: "Emménagez !",
-    desc: "Signez votre bail et emménagez dans votre nouveau foyer. Notre équipe reste disponible pour vous accompagner à chaque étape.",
-  },
-];
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function HowItWorksSplit() {
+  const t = useTranslations("Home.howItWorks");
+  const STEPS = [
+    { icon: "🔍", num: t("step1Num"), title: t("step1Title"), desc: t("step1Desc") },
+    { icon: "📋", num: t("step2Num"), title: t("step2Title"), desc: t("step2Desc") },
+    {
+      icon: "💬",
+      num: t("step3Num"),
+      title: t("step3Title"),
+      desc: (
+        <>
+          {t("step3DescPart1")} <strong className="text-text">{t("step3DescStrong")}</strong>{" "}
+          {t("step3DescPart2")}
+        </>
+      ),
+    },
+    { icon: "🏠", num: t("step4Num"), title: t("step4Title"), desc: t("step4Desc") },
+  ];
   return (
     <section className="py-20 bg-bg2 border-y border-border">
       <div className="max-w-[1240px] mx-auto px-[5%] grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
         <div>
           <Reveal as="span" className="text-[11px] tracking-[3px] uppercase text-gold font-semibold block">
-            Processus simple
+            {t("kicker")}
           </Reveal>
           <Reveal delay={0.06}>
             <h2 className="font-display text-[clamp(24px,3vw,40px)] font-bold text-text mt-2.5 leading-tight">
-              Trouver votre logement
+              {t("titleLine1")}
               <br />
-              n&apos;a jamais été <span className="text-gold">aussi simple</span>
+              {t("titleLine2")} <span className="text-gold">{t("titleHighlight")}</span>
             </h2>
           </Reveal>
           <Reveal delay={0.1}>
@@ -73,10 +59,10 @@ export default function HowItWorksSplit() {
           </Stagger>
           <div className="mt-8 flex gap-3 flex-wrap">
             <Link href="/recherche">
-              <Button variant="gold">Explorer les annonces</Button>
+              <Button variant="gold">{t("exploreButton")}</Button>
             </Link>
             <Link href="/comment-ca-marche">
-              <Button variant="outline">En savoir plus</Button>
+              <Button variant="outline">{t("learnMoreButton")}</Button>
             </Link>
           </div>
         </div>

@@ -22,6 +22,7 @@ import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
 import { propertyGroup, transactionMeta } from "@/lib/data";
 import type { ListingStatus, Property } from "@/lib/types";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 const PAGE_SIZE = 20;
 
@@ -33,6 +34,9 @@ const STATUS_OPTIONS: { value: ListingStatus | ""; label: string }[] = [
 ];
 
 export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: string }) {
+  // Adaptation minimale à la signature localisée de transactionMeta (voir
+  // lib/data.ts) — le reste de ce panneau admin n'est pas encore traduit.
+  const tTx = useTranslations("Transaction");
   const router = useRouter();
   const showToast = useAppStore((s) => s.showToast);
 
@@ -205,7 +209,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
       ) : (
         <div className="flex flex-col gap-3">
           {properties.map((p) => {
-            const meta = transactionMeta(p.transactionType, p.type, propertyGroup(p.kind));
+            const meta = transactionMeta(p.transactionType, p.type, propertyGroup(p.kind), tTx);
             return (
             <div
               key={p.id}

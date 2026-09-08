@@ -1,6 +1,34 @@
+/**
+ * Formate une valeur numérique (ou une chaîne de chiffres bruts) avec des
+ * séparateurs de milliers (espace normal) pour l'affichage dans un champ de
+ * saisie — ex. "300000" -> "300 000". Groupe les chiffres manuellement
+ * plutôt que de passer par toLocaleString("fr-FR") : ce dernier insère une
+ * espace insécable (parfois l'espace fine insécable, selon le moteur JS),
+ * peu fiable à l'affichage dans un input selon les polices/navigateurs.
+ * Voir Tâche 3 du prompt "publier-et-auth" (champs monétaires du
+ * formulaire /publier). Ne stocke jamais ce texte formaté — uniquement
+ * pour l'affichage, voir parseMoneyInput pour revenir à l'entier stocké en
+ * base.
+ */
+export function fmtMoneyInput(value: number | string): string {
+  const digits = String(value).replace(/[^0-9]/g, "");
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+/**
+ * Inverse de fmtMoneyInput : retire tout ce qui n'est pas un chiffre pour
+ * retrouver l'entier saisi (ex. "300 000" -> 300000), afin de ne jamais
+ * stocker de chaîne formatée en base — voir Tâche 3.
+ */
+export function parseMoneyInput(value: string): number | null {
+  const digits = value.replace(/[^0-9]/g, "");
+  return digits ? Number(digits) : null;
+}
+
 export function fmtPrice(p: number): string {
   if (p >= 1000000) return (p / 1000000).toFixed(1) + " M FCFA";
-  if (p >= 1000) return p.toLocaleString("fr-FR") + " FCFA";
+  if (p >= 1000) return fmtMoneyInput(p) + " FCFA";
   return p + " FCFA";
 }
 

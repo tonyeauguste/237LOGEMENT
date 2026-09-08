@@ -1,0 +1,339 @@
+"use client";
+
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { Search, LayoutGrid, List as ListIcon, X } from "lucide-react";
+import CityInput from "@/components/ui/CityInput";
+import ComingSoon from "@/components/ui/ComingSoon";
+import Button from "@/components/ui/Button";
+import { PROPERTY_KINDS, QUARTIERS, kindLabel } from "@/lib/data";
+import type { ListingView, Property, SearchFilters } from "@/lib/types";
+import { useTranslations } from "@/i18n/IntlProvider";
+import { createClient } from "@/lib/supabase/client";
+import { rowToProperty } from "@/lib/supabase/mappers";
+import PropertyCard from "@/components/property/PropertyCard";
+import PropertyListCard from "@/components/property/PropertyListCard";
+
+/**
+ * Tolérance appliquée au budget saisi sur la page d'accueil : on montre
+ * les biens à plus ou moins 25 % du montant, pour ne pas écarter une
+ * annonce à 210 000 FCFA quand l'utilisateur a tapé 200 000.
+ */
+const BUDGET_TOLERANCE = 0.25;
+
+/**
+ * Minuscules + accents retirés : la ville étant saisie librement, une
+ * recherche "yaounde" doit remonter les annonces de "Yaoundé".
+ */
+function normalize(v: string): string {
+  return v
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function SearchPageInner() {
+  const tKind = useTranslations("PropertyKinds");
+  const t = useTranslations("Search");
+  const params = useSearchParams();
+
+  const [filters, setFilters] = useState<SearchFilters>({
+    query: "",
+    city: params.get("city") || "",
+    type: (params.get("type") as SearchFilters["type"]) || "",
+    kind: params.get("kind") || "",
+    quartier: "",
+    rooms: params.get("rooms") || "",
+    minPrice: "",
+    maxPrice: params.get("maxp") || "",
+    budget: params.get("budget") || "",
+    // Arrivé avec un budget → on trie spontanément du plus proche du montant.
+    sort: params.get("budget") ? "budget" : "recent",
+  });
+  const [view, setView] = useState<ListingView>("grid");
+  const [allProperties, setAllProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = createClient();
+    supabase
+      .from("properties")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setAllProperties((data ?? []).map(rowToProperty));
+        setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function set<K extends keyof SearchFilters>(key: K, value: SearchFilters[K]) {
+    setFilters((f) => ({ ...f, [key]: value }));
+  }
+
+  function resetFilters() {
+    setFilters({
+      query: "",
+      city: "",
+      type: "",
+      kind: "",
+      quartier: "",
+      rooms: "",
+      minPrice: "",
+      maxPrice: "",
+      budget: "",
+      sort: "recent",
+    });
+  }
+
+  // Logique de filtrage / tri appliquée aux annonces chargées depuis Supabase.
+  const results = useMemo(() => {
+    let list = allProperties.filter((p) => {
+      if (
+        filters.query &&
+        !`${p.title} ${p.city} ${p.quartier}`
+          .toLowerCase()
+          .includes(filters.query.toLowerCase())
+      )
+        return false;
+      if (filters.city && normalize(p.city) !== normalize(filters.city)) return false;
+      if (filters.type && p.type !== filters.type) return false;
+      if (filters.kind && p.kind !== filters.kind) return false;
+      if (filters.quartier && p.quartier !== filters.quartier) return false;
+      if (filters.rooms && p.rooms < parseInt(filters.rooms, 10)) return false;
+      if (filters.minPrice && p.price < parseInt(filters.minPrice, 10)) return false;
+      if (filters.maxPrice && p.price > parseInt(filters.maxPrice, 10)) return false;
+      if (filters.budget) {
+        const target = parseInt(filters.budget, 10);
+        if (Number.isFinite(target) && target > 0) {
+          if (
+            p.price < target * (1 - BUDGET_TOLERANCE) ||
+            p.price > target * (1 + BUDGET_TOLERANCE)
+          )
+            return false;
+        }
+      }
+      return true;
+    });
+    switch (filters.sort) {
+      case "prix-asc":
+        list = [...list].sort((a, b) => a.price - b.price);
+        break;
+      case "prix-desc":
+        list = [...list].sort((a, b) => b.price - a.price);
+        break;
+      case "rating":
+        list = [...list].sort((a, b) => b.owner.rating - a.owner.rating);
+        break;
+      case "budget": {
+        // Le plus proche du montant visé d'abord (écart absolu croissant).
+        const target = parseInt(filters.budget, 10);
+        if (Number.isFinite(target)) {
+          list = [...list].sort(
+            (a, b) => Math.abs(a.price - target) - Math.abs(b.price - target)
+          );
+        }
+        break;
+      }
+    }
+    return list;
+  }, [filters, allProperties]);
+
+  return (
+    <div className="pt-[70px]">
+      {/* Sticky topbar */}
+      <div className="bg-bg2 border-b border-border px-[5%] py-3.5 sticky top-[70px] z-[100]">
+        <div className="max-w-[1240px] mx-auto flex flex-col md:flex-row gap-2.5 md:items-center">
+          <div className="flex-1 relative">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-dim pointer-events-none" />
+            <input
+              className="w-full bg-card border-[1.5px] border-border text-text pl-[38px] pr-3.5 py-2.5 rounded-[10px] text-base outline-none focus:border-gold transition-colors placeholder:text-dim"
+              placeholder={t("searchPlaceholder")}
+              value={filters.query}
+              onChange={(e) => set("query", e.target.value)}
+            />
+          </div>
+          {/* Saisie libre : toutes les villes du Cameroun ne figurent pas
+              dans la liste de suggestions. */}
+          <CityInput
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold"
+            placeholder={t("allCitiesPlaceholder")}
+            value={filters.city}
+            onChange={(e) => set("city", e.target.value)}
+          />
+          <select
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+            value={filters.type}
+            onChange={(e) => set("type", e.target.value as SearchFilters["type"])}
+          >
+            <option value="">{t("allTypes")}</option>
+            <option value="longue">{t("typeLong")}</option>
+            <option value="courte">{t("typeShort")}</option>
+          </select>
+          <Button variant="gold" size="sm">
+            <Search size={14} /> {t("searchButton")}
+          </Button>
+        </div>
+      </div>
+
+      <div className="max-w-[1240px] mx-auto my-6 px-[5%]">
+        {/* Toolbar */}
+        <div className="flex justify-between items-center flex-wrap gap-3 mb-[18px]">
+          <div className="text-[15px] text-text">
+            <strong className="font-semibold">{results.length}</strong> {t("resultsFound")}
+            {/* Le budget élargit la recherche : on le dit explicitement,
+                sinon un résultat au-dessus du montant saisi surprend. */}
+            {filters.budget && (
+              <span className="text-[13px] text-muted ml-2">
+                {t("budgetAround", { amount: parseInt(filters.budget, 10).toLocaleString("fr-FR") })}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2 items-center">
+            <select
+              className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+              value={filters.sort}
+              onChange={(e) => set("sort", e.target.value as SearchFilters["sort"])}
+            >
+              <option value="recent">{t("sortRecent")}</option>
+              <option value="prix-asc">{t("sortPriceAsc")}</option>
+              <option value="prix-desc">{t("sortPriceDesc")}</option>
+              <option value="rating">{t("sortRating")}</option>
+              <option value="budget">{t("sortBudget")}</option>
+            </select>
+            <div className="flex border border-border rounded-lg overflow-hidden">
+              <button
+                onClick={() => setView("grid")}
+                className={`p-2 transition-colors ${view === "grid" ? "bg-gold3 text-gold" : "text-muted"}`}
+              >
+                <LayoutGrid size={14} />
+              </button>
+              <button
+                onClick={() => setView("list")}
+                className={`p-2 transition-colors ${view === "list" ? "bg-gold3 text-gold" : "text-muted"}`}
+              >
+                <ListIcon size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters bar */}
+        <div className="bg-card border border-border rounded-xl px-[18px] py-3.5 mb-[18px] flex gap-3 flex-wrap items-center">
+          <span className="text-[13px] text-muted font-medium shrink-0">{t("filtersLabel")}</span>
+          {/* Type de bien — alimenté aussi par ?kind= depuis la recherche
+              de la page d'accueil. */}
+          <select
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+            value={filters.kind}
+            onChange={(e) => set("kind", e.target.value)}
+          >
+            <option value="">{t("allKinds")}</option>
+            {PROPERTY_KINDS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {kindLabel(k.value, tKind)}
+              </option>
+            ))}
+          </select>
+          <select
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+            value={filters.quartier}
+            onChange={(e) => set("quartier", e.target.value)}
+          >
+            <option value="">{t("allQuartiers")}</option>
+            {QUARTIERS.map((q) => (
+              <option key={q}>{q}</option>
+            ))}
+          </select>
+          <select
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none cursor-pointer focus:border-gold"
+            value={filters.rooms}
+            onChange={(e) => set("rooms", e.target.value)}
+          >
+            <option value="">{t("roomsLabel")}</option>
+            <option value="1">1+</option>
+            <option value="2">2+</option>
+            <option value="3">3+</option>
+            <option value="4">4+</option>
+          </select>
+          <input
+            type="number"
+            placeholder={t("priceMinPlaceholder")}
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold w-[120px]"
+            value={filters.minPrice}
+            onChange={(e) => set("minPrice", e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder={t("priceMaxPlaceholder")}
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold w-[120px]"
+            value={filters.maxPrice}
+            onChange={(e) => set("maxPrice", e.target.value)}
+          />
+          <input
+            type="number"
+            min={0}
+            step={5000}
+            placeholder={t("budgetPlaceholder")}
+            title={t("budgetTitle")}
+            className="filter-select bg-card2 border border-border text-text px-3 py-[7px] rounded-lg text-base outline-none focus:border-gold w-[150px]"
+            value={filters.budget}
+            onChange={(e) => set("budget", e.target.value)}
+          />
+          <Button variant="danger" size="sm" onClick={resetFilters}>
+            <X size={13} /> {t("resetButton")}
+          </Button>
+        </div>
+
+        {/* Results */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="h-[360px] rounded-2xl bg-card border border-border animate-pulse" />
+            ))}
+          </div>
+        ) : results.length === 0 ? (
+          <ComingSoon
+            icon="🏗️"
+            title={t("emptyTitle")}
+            text={
+              <>
+                {t("emptyLine1")}
+                <br />
+                {t("emptyLine2")}
+              </>
+            }
+            badge={t("emptyBadge")}
+            className="!max-w-none"
+          />
+        ) : view === "grid" ? (
+          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {results.map((p) => (
+              <PropertyCard key={p.id} p={p} />
+            ))}
+          </motion.div>
+        ) : (
+          <motion.div layout className="flex flex-col gap-3.5">
+            {results.map((p) => (
+              <PropertyListCard key={p.id} p={p} />
+            ))}
+          </motion.div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={null}>
+      <SearchPageInner />
+    </Suspense>
+  );
+}

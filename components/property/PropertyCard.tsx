@@ -11,12 +11,15 @@ import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
 import TiltCard from "@/components/ui/TiltCard";
 import { motion } from "framer-motion";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function PropertyCard({ p }: { p: Property }) {
+  const t = useTranslations("Property");
+  const tTx = useTranslations("Transaction");
   const isFav = useAppStore((s) => s.isFav(p.id));
   const toggleFav = useAppStore((s) => s.toggleFav);
   const group = propertyGroup(p.kind);
-  const typeMeta = transactionMeta(p.transactionType, p.type, group);
+  const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   // Un bureau ou un terrain n'ont pas de "chambres" — même règle que le
   // formulaire /publier (FIELD_VISIBILITY_RULES), pour ne pas afficher
   // "0 ch. · 0 sdb" sur ce type d'annonce.
@@ -60,7 +63,7 @@ export default function PropertyCard({ p }: { p: Property }) {
           {!p.available && (
             <div className="absolute inset-0 bg-[rgba(7,17,30,.6)] flex items-center justify-center">
               <Tag color="red" className="!text-[13px] !px-4 !py-1.5">
-                Non disponible
+                {t("notAvailable")}
               </Tag>
             </div>
           )}
@@ -68,8 +71,8 @@ export default function PropertyCard({ p }: { p: Property }) {
         <div className="px-[18px] pt-4 pb-5">
           <div className="flex gap-1.5 mb-2">
             <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
-            {isOccupied && <Tag color="red">🔴 Occupé</Tag>}
-            {p.verified && <Tag color="blue">🛡 Vérifié</Tag>}
+            {isOccupied && <Tag color="red">🔴 {t("occupied")}</Tag>}
+            {p.verified && <Tag color="blue">🛡 {t("verified")}</Tag>}
           </div>
           <h3 className="font-display text-[17px] font-semibold text-text mb-1.5 leading-tight">
             {p.title}
@@ -81,12 +84,12 @@ export default function PropertyCard({ p }: { p: Property }) {
           <div className="flex gap-4 mb-3.5 pb-3.5 border-b border-border">
             {rules.rooms && (
               <div className="flex items-center gap-1 text-xs text-muted">
-                <Bed size={13} className="text-dim" /> {p.rooms} ch.
+                <Bed size={13} className="text-dim" /> {p.rooms} {t("roomsAbbr")}
               </div>
             )}
             {rules.baths && (
               <div className="flex items-center gap-1 text-xs text-muted">
-                <Bath size={13} className="text-dim" /> {p.baths} sdb
+                <Bath size={13} className="text-dim" /> {p.baths} {t("bathsAbbr")}
               </div>
             )}
             <div className="flex items-center gap-1 text-xs text-muted">

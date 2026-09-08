@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 
@@ -10,7 +11,8 @@ export default function RoleCard({
   active,
   onClick,
 }: {
-  icon: string;
+  /** Emoji (chaîne) ou icône de la bibliothèque lucide-react déjà utilisée dans le projet. */
+  icon: ReactNode;
   title: string;
   desc: string;
   active: boolean;
