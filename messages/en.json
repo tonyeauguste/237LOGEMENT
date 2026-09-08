@@ -106,6 +106,8 @@
     "feature4": "Direct contact, no middleman"
   },
   "Auth": {
+    "metaTitle": "Log in / Sign up – 237Logement",
+    "metaDescription": "Log in or create a free account to find a home or publish a listing on 237Logement.",
     "loginTab": "Log in",
     "registerTab": "Sign up",
     "loginTitle": "Welcome back!",
@@ -258,6 +260,8 @@
     "createAccountButton": "Create my free account"
   },
   "Contact": {
+    "metaTitle": "Contact – 237Logement",
+    "metaDescription": "Have a question, an issue, or a suggestion? Reach the 237Logement team — reply within 24 business hours.",
     "kicker": "Let's talk",
     "titlePrefix": "Contact",
     "titleHighlight": "our team",
@@ -336,6 +340,8 @@
     "q10A": "You can edit your personal information from your dashboard's \"Settings\". To permanently delete your account, contact our support via the \"Contact\" page (or by phone/WhatsApp) with your registration email address. Deletion is processed within 72 hours and results in the removal of all your data and listings."
   },
   "Faq": {
+    "metaTitle": "FAQ – 237Logement",
+    "metaDescription": "All the answers to your questions about 237Logement: creating an account, finding a home, publishing a listing, and safety.",
     "kicker": "Help center",
     "titlePrefix": "Frequently asked",
     "titleHighlight": "questions",
@@ -345,6 +351,8 @@
     "writeButton": "Write to us"
   },
   "Tarifs": {
+    "metaTitle": "Pricing – 237Logement",
+    "metaDescription": "Discover our plans for publishing property listings in Cameroon — free during the launch.",
     "bannerTitle": "Launch offer: everything is free",
     "bannerSubtitle": "Publish your properties at no cost, during the launch.",
     "plansKicker": "Our plans",
@@ -404,6 +412,8 @@
     }
   },
   "Search": {
+    "metaTitle": "Search listings – 237Logement",
+    "metaDescription": "Browse verified property listings in Yaoundé, Douala, Bafoussam and across Cameroon.",
     "searchPlaceholder": "Search by title, city, neighborhood…",
     "allCitiesPlaceholder": "All cities",
     "allTypes": "Any type",
@@ -517,6 +527,8 @@
     "toastMessageSent": "✅ Message sent successfully!"
   },
   "Publish": {
+    "metaTitle": "Publish a listing – 237Logement",
+    "metaDescription": "Publish your property in Cameroon for free in a few minutes, with no commission.",
     "kicker": "Owner",
     "editTitle": "Edit listing",
     "newTitle": "Publish a new listing",
@@ -622,6 +634,7 @@
     "toastPublishError": "❌ An error occurred while publishing. Please try again."
   },
   "Dashboard": {
+    "metaTitle": "My account – 237Logement",
     "loading": "Loading your space…",
     "myAccount": "🔑 My account",
     "navFavorites": "My favorites",
@@ -735,6 +748,7 @@
     "toastPasswordChanged": "✅ Password changed."
   },
   "ResetPassword": {
+    "metaTitle": "Reset password – 237Logement",
     "title": "New password",
     "subtitle": "Choose a password to secure your 237Logement account.",
     "checkingLink": "Checking link…",

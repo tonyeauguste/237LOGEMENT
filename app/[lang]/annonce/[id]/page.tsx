@@ -1,4 +1,6 @@
+import { cache } from "react";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { rowToProperty } from "@/lib/supabase/mappers";
@@ -8,11 +10,53 @@ import Button from "@/components/ui/Button";
 import { getMessages } from "@/i18n/dictionaries";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
-export default async function AnnonceDetailPage({
+type PageParams = { lang: string; id: string };
+
+// cache() : generateMetadata et le composant de page s'exécutent tous les
+// deux pour la même requête — sans ce cache, la fiche serait interrogée
+// deux fois en base à chaque chargement. React dédoublonne automatiquement
+// les appels partageant les mêmes arguments dans une même requête.
+const getPropertyRow = cache(async (numericId: number) => {
+  if (!Number.isFinite(numericId)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase.from("properties").select("*").eq("id", numericId).maybeSingle();
+  return data;
+});
+
+export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ lang: string; id: string }>;
-}) {
+  params: Promise<PageParams>;
+}): Promise<Metadata> {
+  const { lang, id } = await params;
+  const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
+  const row = await getPropertyRow(Number(id));
+
+  if (!row) {
+    const messages = await getMessages(locale);
+    const t = (messages as { AnnonceNotFound: { title: string } }).AnnonceNotFound;
+    // noindex : une fiche introuvable ne doit jamais apparaître dans les
+    // résultats de recherche.
+    return { title: `${t.title} – 237Logement`, robots: { index: false, follow: false } };
+  }
+
+  // Description tirée du texte réel de l'annonce (tronqué à une longueur
+  // raisonnable pour un extrait de résultat de recherche) plutôt qu'une
+  // phrase générique : plus pertinent pour le référencement d'une fiche
+  // individuelle, et déjà rédigé par le propriétaire.
+  const desc = (row.description || "").trim();
+  const description =
+    desc.length > 155
+      ? desc.slice(0, 155).trimEnd() + "…"
+      : desc || `${row.title} à ${row.quartier}, ${row.city} — à découvrir sur 237Logement.`;
+
+  return {
+    title: `${row.title} à ${row.city} – 237Logement`,
+    description,
+  };
+}
+
+export default async function AnnonceDetailPage({ params }: { params: Promise<PageParams> }) {
   const { lang, id } = await params;
   const numericId = Number(id);
 
@@ -45,14 +89,7 @@ export default async function AnnonceDetailPage({
     </div>
   );
 
-  if (!Number.isFinite(numericId)) return notFoundBlock;
-
-  const { data: row } = await supabase
-    .from("properties")
-    .select("*")
-    .eq("id", numericId)
-    .maybeSingle();
-
+  const row = await getPropertyRow(numericId);
   if (!row) return notFoundBlock;
 
   // Compteur de vues, dédupliqué par visiteur (voir le prompt
