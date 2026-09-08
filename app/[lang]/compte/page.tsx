@@ -52,7 +52,7 @@ import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
-import { propertyGroup, transactionMeta } from "@/lib/data";
+import { propertyGroup, transactionMeta, DEFAULT_AVATAR } from "@/lib/data";
 import type { Property } from "@/lib/types";
 import { useTranslations } from "@/i18n/IntlProvider";
 
@@ -109,6 +109,7 @@ export default function AccountDashboard() {
   const [formPhone, setFormPhone] = useState("");
   const [formCity, setFormCity] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [newPwd, setNewPwd] = useState("");
   const [newPwd2, setNewPwd2] = useState("");
   const [savingPwd, setSavingPwd] = useState(false);
@@ -351,6 +352,68 @@ export default function AccountDashboard() {
 
     setSavingProfile(false);
     showToast(emailPending ? t("toastProfileEmailPending") : t("toastProfileUpdated"), "success");
+  }
+
+  /**
+   * Photo de profil — jusqu'ici aucune fonctionnalité d'upload n'existait,
+   * seul un avatar par défaut était affiché partout (voir DEFAULT_AVATAR).
+   * Enregistrée à part de saveProfile() : le changement s'applique
+   * immédiatement au choix du fichier, sans attendre le bouton "Mettre à
+   * jour" du reste du formulaire — comportement attendu pour un avatar.
+   * Une fois profiles.avatar mis à jour, le trigger
+   * sync_owner_profile_fields (voir la migration du même nom) propage
+   * automatiquement la nouvelle photo aux annonces déjà publiées par ce
+   * propriétaire (owner_avatar).
+   */
+  async function handleAvatarChange(file: File) {
+    if (!user) return;
+
+    const type = file.type.toLowerCase();
+    const supportedType = ["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(type);
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    const supportedExt = ext === "jpg" || ext === "jpeg" || ext === "png" || ext === "webp";
+    // Même tolérance que PhotoUploader.tsx (composant équivalent pour les
+    // photos d'annonce) : certains navigateurs Android ne renvoient pas de
+    // type MIME standard, on retombe alors sur l'extension du fichier.
+    if (!supportedType && !(type === "" && supportedExt)) {
+      showToast(t("toastAvatarUnsupported"), "error");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(t("toastAvatarTooLarge"), "error");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const supabase = createClient();
+    const path = `${user.id}/${crypto.randomUUID()}.${ext || "jpg"}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { contentType: file.type || undefined });
+    if (uploadError) {
+      setUploadingAvatar(false);
+      showToast(t("toastAvatarError"), "error");
+      return;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("avatars").getPublicUrl(path);
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar: publicUrl })
+      .eq("id", user.id);
+
+    setUploadingAvatar(false);
+    if (updateError) {
+      showToast(t("toastAvatarError"), "error");
+      return;
+    }
+
+    setCurrentUser({ ...user, avatar: publicUrl });
+    showToast(t("toastAvatarUpdated"), "success");
   }
 
   /** Change le mot de passe de l'utilisateur connecté (sans passer par un email). */
@@ -759,6 +822,47 @@ export default function AccountDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-[780px]">
                   <div className="bg-card border border-border rounded-2xl p-5">
                     <h4 className="text-[15px] font-semibold text-text mb-[18px]">{t("profileTitle")}</h4>
+
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="w-16 h-16 rounded-full border-2 border-gold overflow-hidden shrink-0 relative">
+                        <img
+                          src={user.avatar || DEFAULT_AVATAR}
+                          alt={user.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {uploadingAvatar && (
+                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                            <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        {/* <label htmlFor> réel plutôt qu'un onClick sur
+                            l'input caché : même raison que
+                            PhotoUploader.tsx — plus fiable sur Android/iOS
+                            au tap qu'un déclenchement JS. */}
+                        <label
+                          htmlFor="avatar-upload-input"
+                          className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer px-4 py-[7px] text-[13px] rounded-lg bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold"
+                        >
+                          {t("changePhotoButton")}
+                        </label>
+                        <input
+                          id="avatar-upload-input"
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={uploadingAvatar}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleAvatarChange(file);
+                            e.target.value = "";
+                          }}
+                        />
+                        <p className="text-[11px] text-dim mt-1.5">{t("avatarHint")}</p>
+                      </div>
+                    </div>
+
                     <div className="mb-4">
                       <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("fullNameLabel")}</label>
                       <input
