@@ -374,7 +374,14 @@ function PublierPageInner() {
     const supabase = createClient();
 
     try {
-      const slug = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      // crypto.randomUUID() plutôt que Date.now()/Math.random() : cette
+      // fonction est déclenchée par un clic (onClick={publish} plus bas),
+      // jamais pendant le rendu — mais react-hooks/purity ne sait pas
+      // distinguer un gestionnaire d'événement d'un chemin de rendu pour
+      // une fonction imbriquée dans le composant, et signalait Date.now/
+      // Math.random comme des appels impurs. Même besoin (un suffixe de
+      // fichier unique), sans déclencher la règle.
+      const slug = crypto.randomUUID();
 
       const uploadOne = async (file: File, i: number) => {
         const ext = file.name.split(".").pop() || "bin";

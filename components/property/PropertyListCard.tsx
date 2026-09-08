@@ -50,7 +50,7 @@ export default function PropertyListCard({ p }: { p: Property }) {
             <div className="flex gap-3.5 text-xs text-muted">
               {rules.rooms && <span>🛏 {p.rooms} {t("roomsAbbr")}</span>}
               {rules.baths && <span>🚿 {p.baths} {t("bathsAbbr")}</span>}
-              <span>📐 {p.surface}m²</span>
+              {rules.surface && <span>📐 {p.surface}m²</span>}
             </div>
             <div className="font-display text-lg font-bold text-gold">{fmtPrice(p.price)}</div>
           </div>
