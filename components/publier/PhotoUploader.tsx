@@ -30,7 +30,7 @@ import { Upload, X } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { UploadedPhoto } from "@/lib/types";
 
-const PHOTO_MAX = 15;
+const PHOTO_MAX = 10;
 const PHOTO_SIZE_MB = 10;
 
 interface PhotoUploaderProps {
@@ -76,7 +76,7 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
     if (filesArray.length === 0) return;
     const remaining = PHOTO_MAX - photos.length;
     if (remaining <= 0) {
-      showToast("⚠️ Limite atteinte : 15 photos maximum.", "error");
+      showToast("⚠️ Limite atteinte : 10 photos maximum.", "error");
       return;
     }
     let error = "";
@@ -95,7 +95,7 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
     });
     if (added.length) onPhotosChange((prev) => [...prev, ...added]);
     if (filesArray.length > remaining) {
-      showToast(`⚠️ Seules les ${remaining} premières photos ont été ajoutées (limite : 15).`, "info");
+      showToast(`⚠️ Seules les ${remaining} premières photos ont été ajoutées (limite : 10).`, "info");
     }
     if (error) showToast(`❌ ${error} — max 10 Mo par photo.`, "error");
     if (unsupported > 0) {
@@ -160,7 +160,7 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
         <div className="flex gap-2 flex-wrap justify-center mt-2.5">
           <span className="tag-pill gold">JPG, PNG, WEBP</span>
           <span className="tag-pill blue">Max 10 Mo / photo</span>
-          <span className="tag-pill green">15 photos maximum</span>
+          <span className="tag-pill green">10 photos maximum</span>
           <span className="tag-pill neutral">Minimum 3 photos</span>
         </div>
       </label>
