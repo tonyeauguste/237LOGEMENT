@@ -106,6 +106,8 @@
     "feature4": "Contact direct, sans intermédiaire"
   },
   "Auth": {
+    "metaTitle": "Connexion / Inscription – 237Logement",
+    "metaDescription": "Connectez-vous ou créez un compte gratuit pour trouver un logement ou publier une annonce sur 237Logement.",
     "loginTab": "Connexion",
     "registerTab": "Inscription",
     "loginTitle": "Bon retour !",
@@ -258,6 +260,8 @@
     "createAccountButton": "Créer mon compte gratuitement"
   },
   "Contact": {
+    "metaTitle": "Contact – 237Logement",
+    "metaDescription": "Une question, un problème, une suggestion ? Contactez l'équipe 237Logement — réponse sous 24h ouvrées.",
     "kicker": "Parlons-nous",
     "titlePrefix": "Contactez",
     "titleHighlight": "notre équipe",
@@ -336,6 +340,8 @@
     "q10A": "Vous pouvez modifier vos informations personnelles depuis les \"Paramètres\" de votre tableau de bord. Pour supprimer définitivement votre compte, contactez notre support via la page \"Contact\" (ou par téléphone/WhatsApp) avec votre adresse email d'inscription. La suppression est traitée sous 72 heures et entraîne la suppression de toutes vos données et annonces."
   },
   "Faq": {
+    "metaTitle": "FAQ – 237Logement",
+    "metaDescription": "Toutes les réponses à vos questions sur 237Logement : création de compte, recherche de logement, publication d'annonce, sécurité.",
     "kicker": "Centre d'aide",
     "titlePrefix": "Questions",
     "titleHighlight": "fréquentes",
@@ -345,6 +351,8 @@
     "writeButton": "Nous écrire"
   },
   "Tarifs": {
+    "metaTitle": "Tarifs – 237Logement",
+    "metaDescription": "Découvrez nos formules pour publier vos annonces immobilières au Cameroun — offertes pendant le lancement.",
     "bannerTitle": "Offre de lancement : tout est offert",
     "bannerSubtitle": "Publiez vos biens sans payer, pendant le lancement.",
     "plansKicker": "Nos formules",
@@ -370,6 +378,8 @@
     }
   },
   "Search": {
+    "metaTitle": "Rechercher un logement – 237Logement",
+    "metaDescription": "Parcourez les annonces immobilières vérifiées à Yaoundé, Douala, Bafoussam et partout au Cameroun.",
     "searchPlaceholder": "Rechercher par titre, ville, quartier…",
     "allCitiesPlaceholder": "Toutes les villes",
     "allTypes": "Tout type",
@@ -483,6 +493,8 @@
     "toastMessageSent": "✅ Message envoyé avec succès !"
   },
   "Publish": {
+    "metaTitle": "Publier une annonce – 237Logement",
+    "metaDescription": "Publiez gratuitement votre bien immobilier au Cameroun en quelques minutes, sans commission.",
     "kicker": "Propriétaire",
     "editTitle": "Modifier l'annonce",
     "newTitle": "Publier une nouvelle annonce",
@@ -588,6 +600,7 @@
     "toastPublishError": "❌ Une erreur est survenue lors de la publication. Réessayez."
   },
   "Dashboard": {
+    "metaTitle": "Mon compte – 237Logement",
     "loading": "Chargement de votre espace…",
     "myAccount": "🔑 Mon compte",
     "navFavorites": "Mes favoris",
@@ -701,6 +714,7 @@
     "toastPasswordChanged": "✅ Mot de passe modifié."
   },
   "ResetPassword": {
+    "metaTitle": "Réinitialiser le mot de passe – 237Logement",
     "title": "Nouveau mot de passe",
     "subtitle": "Choisissez un mot de passe pour sécuriser votre compte 237Logement.",
     "checkingLink": "Vérification du lien…",
