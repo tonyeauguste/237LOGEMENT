@@ -456,6 +456,9 @@ export default function AccountDashboard() {
     <div className="pt-[70px] grid grid-cols-1 lg:grid-cols-[250px_1fr] min-h-screen">
       <DashSidebar
         user={user}
+        onAvatarChange={handleAvatarChange}
+        avatarUploading={uploadingAvatar}
+        avatarEditLabel={t("changePhotoButton")}
         roleBadge={
           isAdmin ? (
             <div className="flex flex-col items-center gap-1.5">

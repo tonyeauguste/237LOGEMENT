@@ -105,9 +105,15 @@ export default function PropertyCard({ p }: { p: Property }) {
                 <span className="text-xs text-muted font-body font-normal">{typeMeta.priceSuffix}</span>
               )}
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted">
-              <Stars rating={p.owner.rating} /> {p.owner.rating}
-            </div>
+            {/* ratingCount à 0 -> pas de vraie note reçue, on ne montre pas
+                un chiffre inventé (voir owner_ratings côté base). */}
+            {p.owner.ratingCount > 0 ? (
+              <div className="flex items-center gap-1 text-xs text-muted">
+                <Stars rating={p.owner.rating} /> {p.owner.rating}
+              </div>
+            ) : (
+              <div className="text-xs text-dim">{t("newOwner")}</div>
+            )}
           </div>
         </div>
       </Link>

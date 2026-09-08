@@ -47,6 +47,44 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_ratings: {
+        Row: {
+          created_at: string
+          id: number
+          owner_id: string
+          property_id: number | null
+          rater_id: string
+          rating: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          owner_id: string
+          property_id?: number | null
+          rater_id: string
+          rating: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          owner_id?: string
+          property_id?: number | null
+          rater_id?: string
+          rating?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_ratings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar: string | null
@@ -106,6 +144,7 @@ export type Database = {
           owner_name: string
           owner_phone: string | null
           owner_rating: number
+          owner_rating_count: number
           precision_desc: string | null
           price: number
           price_negotiable: boolean | null
@@ -146,6 +185,7 @@ export type Database = {
           owner_name?: string
           owner_phone?: string | null
           owner_rating?: number
+          owner_rating_count?: number
           precision_desc?: string | null
           price?: number
           price_negotiable?: boolean | null
@@ -186,6 +226,7 @@ export type Database = {
           owner_name?: string
           owner_phone?: string | null
           owner_rating?: number
+          owner_rating_count?: number
           precision_desc?: string | null
           price?: number
           price_negotiable?: boolean | null
@@ -323,6 +364,15 @@ export type Database = {
       }
       set_property_favorite: {
         Args: { is_fav: boolean; prop_id: number; visitor: string }
+        Returns: undefined
+      }
+      submit_owner_rating: {
+        Args: {
+          prop_id: number
+          rater: string
+          stars: number
+          target_owner: string
+        }
         Returns: undefined
       }
     }

@@ -24,17 +24,6 @@ export default function ContactPage() {
 
   const DETAILS = [
     {
-      icon: "📍",
-      title: t("addressTitle"),
-      text: (
-        <>
-          {CONTACT.addressLine1}
-          <br />
-          {CONTACT.addressLine2}
-        </>
-      ),
-    },
-    {
       icon: "📞",
       title: t("phoneTitle"),
       text: (

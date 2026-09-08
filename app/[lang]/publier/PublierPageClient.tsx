@@ -680,14 +680,31 @@ function PublierPageInner() {
                         title={t("longTermTitle")}
                         desc={t("longTermDesc")}
                         active={listingType === "longue"}
-                        onClick={() => setListingType("longue")}
+                        onClick={() => {
+                          // Repart sur la valeur par défaut mensuelle au
+                          // changement effectif de type — sans ce garde-fou
+                          // sur la transition, une durée déjà valide dans les
+                          // deux listes (ex: "1 mois") ne serait jamais
+                          // recalée sur son propre défaut lors du passage
+                          // court -> long.
+                          if (listingType !== "longue") setMinDuration(t("duration1Month"));
+                          setListingType("longue");
+                        }}
                       />
                       <RoleCard
                         icon="🌴"
                         title={t("shortTermTitle")}
                         desc={t("shortTermDesc")}
                         active={listingType === "courte"}
-                        onClick={() => setListingType("courte")}
+                        onClick={() => {
+                          // Symétrique : un court séjour se loue à la nuitée,
+                          // la durée minimale doit démarrer à 1 jour plutôt
+                          // que de garder le "1 mois" hérité de la longue
+                          // durée (qui reste un choix valide dans la liste
+                          // courte, donc jamais recalé sans ce garde-fou).
+                          if (listingType !== "courte") setMinDuration(t("duration1Day"));
+                          setListingType("courte");
+                        }}
                       />
                     </div>
                   </div>
@@ -832,10 +849,23 @@ function PublierPageInner() {
                       </Field>
                       <Field label={t("minDurationLabel")}>
                         <select className="form-control" value={minDuration} onChange={(e) => setMinDuration(e.target.value)}>
-                          <option>{t("duration1Month")}</option>
-                          <option>{t("duration3Months")}</option>
-                          <option>{t("duration6Months")}</option>
-                          <option>{t("duration1Year")}</option>
+                          {listingType === "courte" ? (
+                            <>
+                              <option>{t("duration1Day")}</option>
+                              <option>{t("duration2Days")}</option>
+                              <option>{t("duration3Days")}</option>
+                              <option>{t("duration1Week")}</option>
+                              <option>{t("duration2Weeks")}</option>
+                              <option>{t("duration1Month")}</option>
+                            </>
+                          ) : (
+                            <>
+                              <option>{t("duration1Month")}</option>
+                              <option>{t("duration3Months")}</option>
+                              <option>{t("duration6Months")}</option>
+                              <option>{t("duration1Year")}</option>
+                            </>
+                          )}
                         </select>
                       </Field>
                     </div>
