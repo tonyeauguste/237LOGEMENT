@@ -72,9 +72,17 @@ export default function Navbar() {
       <motion.nav
         initial={false}
         animate={{
-          backgroundColor: scrolled ? "rgba(7,17,30,.96)" : "rgba(7,17,30,0)",
+          // .55 plutôt que 0 en haut de page : le "237" du logo est doré
+          // (text-gold) pour rester lisible sur le fond sombre habituel du
+          // site, mais devenait invisible — doré sur doré — sur une page
+          // dont le tout premier bloc est lui-même orange doré plein cadre
+          // (le bandeau de /tarifs). Un fond sombre translucide, même léger,
+          // garantit assez de contraste quel que soit ce qu'il y a derrière
+          // (image de hero sombre, bandeau clair…), sans changement visible
+          // sur les pages déjà sombres (--bg est presque la même teinte).
+          backgroundColor: scrolled ? "rgba(7,17,30,.96)" : "rgba(7,17,30,.55)",
           borderColor: scrolled ? "#1C2E40" : "rgba(28,46,64,0)",
-          backdropFilter: scrolled ? "blur(20px)" : "blur(0px)",
+          backdropFilter: scrolled ? "blur(20px)" : "blur(4px)",
         }}
         transition={{ duration: 0.35, ease: "easeOut" }}
         className="fixed top-0 left-0 right-0 z-[999] h-[70px] flex items-center px-[5%] border-b"
