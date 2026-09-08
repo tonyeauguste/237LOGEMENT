@@ -78,8 +78,6 @@ export const CONTACT = {
   hoursShort: "Lun – Ven, 9h00 – 17h00",
   /** Version détaillée, pour la page Contact. */
   hoursLong: "Lundi – Vendredi : 9h00 – 17h00",
-  addressLine1: "Quartier Ebomé, Avant l'hôpital",
-  addressLine2: "Kribi, Sud, Cameroun",
 } as const;
 
 // ═══════════════════════════════════════════════

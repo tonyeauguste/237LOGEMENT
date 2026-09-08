@@ -47,7 +47,12 @@ export function rowToProperty(row: PropertyRow): Property {
     owner: {
       name: row.owner_name || "Propriétaire",
       avatar: row.owner_avatar || DEFAULT_AVATAR,
-      rating: Number(row.owner_rating) || 4.5,
+      // Plus de repli fictif à 4.5 : owner_rating/owner_rating_count sont la
+      // vraie moyenne + le vrai nombre d'avis (table owner_ratings, tenus à
+      // jour par le trigger sync_owner_rating_agg). 0 avis -> rating à 0,
+      // à afficher comme "pas encore noté" côté UI plutôt qu'une fausse note.
+      rating: Number(row.owner_rating) || 0,
+      ratingCount: row.owner_rating_count ?? 0,
       listings: row.owner_listings ?? 1,
       phone: row.owner_phone || "",
     },

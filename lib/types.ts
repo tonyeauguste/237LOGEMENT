@@ -43,7 +43,10 @@ export type LandTitleStatus = "oui" | "non" | "en_cours";
 export interface Owner {
   name: string;
   avatar: string;
+  /** Moyenne réelle des notes reçues (owner_ratings) — 0 tant que ratingCount est 0, jamais une valeur inventée. */
   rating: number;
+  /** Nombre de notes réellement reçues — sert à distinguer "pas encore noté" (0) d'une vraie note. */
+  ratingCount: number;
   listings: number;
   phone: string;
 }

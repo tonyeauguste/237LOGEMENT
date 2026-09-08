@@ -41,6 +41,18 @@ function getVisitorCookie(): string | undefined {
 }
 
 /**
+ * Identité visiteur partagée par toutes les RPC dédupliquées côté client
+ * (favoris, notes propriétaire…) : compte connecté si disponible, sinon le
+ * cookie technique posé par proxy.ts. `null` si ni l'un ni l'autre n'est
+ * disponible (cookie pas encore posé) — l'appelant doit alors renoncer à
+ * l'appel plutôt que d'envoyer un identifiant vide.
+ */
+export function getVisitorId(currentUser: User | null): string | null {
+  const cookieId = getVisitorCookie();
+  return currentUser ? `user:${currentUser.id}` : cookieId ? `anon:${cookieId}` : null;
+}
+
+/**
  * Compose le `User` applicatif à partir de la session Supabase Auth +
  * de la ligne `profiles` associée (rôle, statut, nom, téléphone, avatar).
  * Le rôle stocké en profil sert uniquement à l'affichage (quel tableau
@@ -128,9 +140,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     // sinon le cookie technique posé par proxy.ts. Les favoris restent
     // utilisables sans compte, donc pas de visitorId -> pas d'appel
     // (le favori reste local uniquement, best-effort comme avant).
-    const { currentUser } = get();
-    const cookieId = getVisitorCookie();
-    const visitor = currentUser ? `user:${currentUser.id}` : cookieId ? `anon:${cookieId}` : null;
+    const visitor = getVisitorId(get().currentUser);
     if (!visitor) return;
     createClient()
       .rpc("set_property_favorite", { prop_id: id, visitor, is_fav: !has })

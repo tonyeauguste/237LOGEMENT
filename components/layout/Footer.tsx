@@ -68,7 +68,6 @@ export default function Footer() {
           </ul>
           <div className="mt-[18px] pt-4 border-t border-border">
             <div className="text-xs text-muted leading-relaxed">
-              <div className="mb-[5px]">📍 {CONTACT.addressLine1}<br />{CONTACT.addressLine2}</div>
               <div className="mb-[5px]">📞 <a href={`tel:${CONTACT.phoneRaw}`} className="text-gold">{CONTACT.phone}</a></div>
               <div className="mb-[5px]">✉️ <a href={`mailto:${CONTACT.email}`} className="text-gold break-all">{CONTACT.email}</a></div>
               <div className="text-dim">🕐 {CONTACT.hoursShort}</div>

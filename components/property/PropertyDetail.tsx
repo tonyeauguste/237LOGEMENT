@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
-import { useAppStore } from "@/lib/store";
+import { useAppStore, getVisitorId } from "@/lib/store";
 import { FIELD_VISIBILITY_RULES, amenityIcon, amenityLabel, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
@@ -54,6 +54,57 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   const isFav = useAppStore((s) => s.isFav(p.id));
   const toggleFav = useAppStore((s) => s.toggleFav);
   const showToast = useAppStore((s) => s.showToast);
+  const currentUser = useAppStore((s) => s.currentUser);
+
+  // Notation honnête du propriétaire — remplace l'ancienne owner_rating
+  // figée à 4.5 par défaut sur toute annonce (voir owner_ratings +
+  // submit_owner_rating côté base). Un propriétaire ne peut pas se noter
+  // lui-même : le widget de notation reste masqué sur ses propres annonces.
+  const isOwnListing = !!currentUser && !!p.ownerId && currentUser.id === p.ownerId;
+  const [myRating, setMyRating] = useState<number | null>(null);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+
+  // Pré-remplit l'étoile déjà donnée par ce visiteur (compte ou cookie
+  // anonyme), s'il en a déjà laissé une — sinon le widget repart de 0 et un
+  // nouveau clic crée la note (submit_owner_rating fait un upsert).
+  useEffect(() => {
+    if (isOwnListing || !p.ownerId) return;
+    const visitor = getVisitorId(currentUser);
+    if (!visitor) return;
+    let cancelled = false;
+    createClient()
+      .from("owner_ratings")
+      .select("rating")
+      .eq("owner_id", p.ownerId)
+      .eq("rater_id", visitor)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled && data) setMyRating(data.rating);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [p.ownerId, currentUser, isOwnListing]);
+
+  async function submitRating(stars: number) {
+    if (!p.ownerId || ratingSubmitting) return;
+    const visitor = getVisitorId(currentUser);
+    if (!visitor) return;
+    setRatingSubmitting(true);
+    const { error } = await createClient().rpc("submit_owner_rating", {
+      target_owner: p.ownerId,
+      prop_id: p.id,
+      rater: visitor,
+      stars,
+    });
+    setRatingSubmitting(false);
+    if (error) {
+      showToast(t("toastRatingError"), "error");
+      return;
+    }
+    setMyRating(stars);
+    showToast(t("toastRatingSent"), "success");
+  }
 
   // Bouton "remonter en haut" : la fiche est longue (galerie + onglets +
   // annonces similaires), on l'affiche dès qu'on a défilé une hauteur d'écran.
@@ -493,11 +544,47 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               </div>
             </div>
             <div className="flex gap-2 items-center text-[13px] text-muted flex-wrap">
-              <Stars rating={p.owner.rating} />
+              {/* ratingCount à 0 -> aucune vraie note reçue, on l'affiche
+                  honnêtement comme "Nouveau" plutôt que d'inventer un 4.5
+                  (voir owner_ratings/submit_owner_rating). */}
+              {p.owner.ratingCount > 0 ? (
+                <>
+                  <Stars rating={p.owner.rating} />
+                  <span>
+                    {p.owner.rating} · {p.owner.ratingCount}{" "}
+                    {p.owner.ratingCount > 1 ? t("reviewsPlural") : t("reviewSingular")}
+                  </span>
+                </>
+              ) : (
+                <span className="text-dim">{t("newOwnerLabel")}</span>
+              )}
+              <span className="text-dim">·</span>
               <span>
-                {p.owner.rating} · {p.owner.listings} {p.owner.listings > 1 ? t("listings") : t("listing")}
+                {p.owner.listings} {p.owner.listings > 1 ? t("listings") : t("listing")}
               </span>
             </div>
+
+            {!isOwnListing && p.ownerId && (
+              <div className="mt-3 pt-3 border-t border-border">
+                <div className="text-[12px] text-muted mb-1.5">
+                  {myRating ? t("rateOwnerUpdateLabel") : t("rateOwnerLabel")}
+                </div>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      disabled={ratingSubmitting}
+                      onClick={() => submitRating(n)}
+                      aria-label={t("rateOwnerStarAria", { n })}
+                      className="text-xl leading-none disabled:opacity-50"
+                    >
+                      <span className={n <= (myRating ?? 0) ? "text-gold" : "text-dim"}>★</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Contact */}
