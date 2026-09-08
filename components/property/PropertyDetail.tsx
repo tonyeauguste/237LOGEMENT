@@ -239,32 +239,40 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           </div>
 
           {/* Caractéristiques — chambres/salles de bain masquées pour un
-              bureau, une boutique ou un terrain (voir FIELD_VISIBILITY_RULES). */}
-          <div
-            className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
-              rules.rooms || rules.baths ? "grid-cols-3" : "grid-cols-1"
-            }`}
-          >
-            {rules.rooms && (
-              <div className="p-[18px] text-center border-r border-border">
-                <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
-                <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
-                <div className="text-xs text-muted">{p.rooms > 1 ? t("rooms") : t("room")}</div>
-              </div>
-            )}
-            {rules.baths && (
-              <div className="p-[18px] text-center border-r border-border">
-                <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
-                <div className="font-semibold text-[15px] text-text">{p.baths}</div>
-                <div className="text-xs text-muted">{p.baths > 1 ? t("bathrooms") : t("bathroom")}</div>
-              </div>
-            )}
-            <div className="p-[18px] text-center">
-              <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
-              <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
-              <div className="text-xs text-muted">{t("surfaceM2")}</div>
+              bureau, une boutique ou un terrain ; surface masquée en
+              location sauf pour un terrain (voir FIELD_VISIBILITY_RULES,
+              Tâche 4.1 du prompt "publier-et-auth"). */}
+          {(rules.rooms || rules.baths || rules.surface) && (
+            <div
+              className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
+                [rules.rooms, rules.baths, rules.surface].filter(Boolean).length > 1
+                  ? "grid-cols-3"
+                  : "grid-cols-1"
+              }`}
+            >
+              {rules.rooms && (
+                <div className="p-[18px] text-center border-r border-border">
+                  <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
+                  <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
+                  <div className="text-xs text-muted">{p.rooms > 1 ? t("rooms") : t("room")}</div>
+                </div>
+              )}
+              {rules.baths && (
+                <div className="p-[18px] text-center border-r border-border">
+                  <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
+                  <div className="font-semibold text-[15px] text-text">{p.baths}</div>
+                  <div className="text-xs text-muted">{p.baths > 1 ? t("bathrooms") : t("bathroom")}</div>
+                </div>
+              )}
+              {rules.surface && (
+                <div className="p-[18px] text-center">
+                  <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
+                  <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
+                  <div className="text-xs text-muted">{t("surfaceM2")}</div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Onglets */}
           <div className="flex border-b border-border mb-6">
@@ -292,7 +300,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                   {p.desc || t("noDescription")}
                 </p>
                 <div className="bg-card2 border border-border rounded-xl px-[18px] py-4 mt-[18px] flex gap-5 flex-wrap text-[13px] text-muted">
-                  <span>👁 {p.views} {t("views")}</span>
                   <span>❤️ {p.favs} {t("favs")}</span>
                   <span>📅 {fmtRelativeDate(p.createdAt)}</span>
                 </div>
@@ -323,27 +330,37 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             )}
             {tab === "map" && (
               <motion.div key="map" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <div className="h-[260px] bg-[#091626] rounded-2xl border border-border overflow-hidden relative">
-                  <div
-                    className="w-full h-full relative"
-                    style={{
-                      backgroundImage:
-                        "repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(28,46,64,.3) 40px,rgba(28,46,64,.3) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(28,46,64,.3) 40px,rgba(28,46,64,.3) 41px)",
-                    }}
-                  >
-                    <motion.div
-                      animate={{ y: [0, -6, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute left-1/2 top-[45%] -translate-x-1/2 flex flex-col items-center"
-                    >
-                      <strong className="text-gold text-sm mb-1 whitespace-nowrap">{p.title}</strong>
-                      <span className="w-3.5 h-3.5 rounded-full bg-gold border-2 border-white shadow-[0_0_0_6px_rgba(200,155,60,.25)]" />
-                    </motion.div>
-                    <div className="absolute bottom-3 right-3.5 bg-card border border-border2 rounded-lg px-3 py-1.5 text-xs text-muted">
-                      {p.quartier}, {p.city}
-                    </div>
-                  </div>
+                <div className="bg-card2 border border-border rounded-xl px-[18px] py-3.5 mb-4 flex items-center gap-2 text-sm text-text">
+                  <MapPin size={15} className="text-gold shrink-0" />
+                  {p.quartier}, {p.city}
                 </div>
+                {/* Tâche 2 — adresse précise et repères saisis à l'étape 1
+                    du formulaire /publier : auparavant capturés mais
+                    jamais affichés (voir rowToProperty dans
+                    lib/supabase/mappers.ts). Un champ non renseigné est
+                    omis proprement, jamais affiché vide. */}
+                {p.address || p.precisionDesc ? (
+                  <div className="flex flex-col gap-3">
+                    {p.address && (
+                      <div>
+                        <div className="text-[11px] tracking-[1px] uppercase text-muted font-semibold mb-1">
+                          {t("address")}
+                        </div>
+                        <p className="text-sm text-text">{p.address}</p>
+                      </div>
+                    )}
+                    {p.precisionDesc && (
+                      <div>
+                        <div className="text-[11px] tracking-[1px] uppercase text-muted font-semibold mb-1">
+                          {t("locationDetails")}
+                        </div>
+                        <p className="text-sm text-muted leading-relaxed">{p.precisionDesc}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-muted text-sm">{t("noLocationDetails")}</p>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -365,6 +382,70 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               <div className="text-[13px] text-muted mt-1 mb-1">{typeMeta.priceSuffix}</div>
             )}
             <div className="text-[12px] text-dim mb-4">{fmtRelativeDate(p.createdAt)}</div>
+
+            {/* Tâche 2 — Conditions financières : selon le type de
+                transaction, jamais les deux jeux de champs à la fois (voir
+                le payload envoyé par le formulaire /publier). Chaque ligne
+                n'apparaît que si le champ correspondant est renseigné. */}
+            {p.transactionType === "location" ? (
+              (p.deposit || p.advancePayment || p.charges || p.minDuration) && (
+                <div className="border-t border-border pt-3 mb-4 flex flex-col gap-1.5 text-[13px]">
+                  {p.deposit != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("deposit")}</span>
+                      <span className="text-text font-medium">{fmtPrice(p.deposit)}</span>
+                    </div>
+                  )}
+                  {p.advancePayment != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("advance")}</span>
+                      <span className="text-text font-medium">{fmtPrice(p.advancePayment)}</span>
+                    </div>
+                  )}
+                  {p.charges && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("charges")}</span>
+                      <span className="text-text font-medium">
+                        {p.charges === "oui"
+                          ? t("chargesIncluded")
+                          : p.charges === "partiel"
+                            ? t("chargesPartial")
+                            : t("chargesExcluded")}
+                      </span>
+                    </div>
+                  )}
+                  {p.minDuration && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("minDuration")}</span>
+                      <span className="text-text font-medium">{p.minDuration}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            ) : (
+              (p.landTitleStatus || p.priceNegotiable != null) && (
+                <div className="border-t border-border pt-3 mb-4 flex flex-col gap-1.5 text-[13px]">
+                  {p.landTitleStatus && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("landTitle")}</span>
+                      <span className="text-text font-medium">
+                        {p.landTitleStatus === "oui"
+                          ? t("landTitleAvailable")
+                          : p.landTitleStatus === "non"
+                            ? t("landTitleNotAvailable")
+                            : t("landTitleInProgress")}
+                      </span>
+                    </div>
+                  )}
+                  {p.priceNegotiable != null && (
+                    <div className="flex justify-between">
+                      <span className="text-muted">{t("priceNegotiable")}</span>
+                      <span className="text-text font-medium">{p.priceNegotiable ? t("yes") : t("no")}</span>
+                    </div>
+                  )}
+                </div>
+              )
+            )}
 
             <div className="flex gap-2 flex-wrap mb-4">
               <button

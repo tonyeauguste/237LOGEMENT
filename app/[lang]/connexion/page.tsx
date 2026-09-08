@@ -29,6 +29,14 @@ function AuthPageInner() {
   const showToast = useAppStore((s) => s.showToast);
 
   const urlTab = params.get("tab") as AuthTab | null;
+  // Tâche 1 du prompt "publier-et-auth" — ?returnTo=/publier permet à un
+  // CTA (ex: "Publier mon bien" sur l'accueil) de ramener l'utilisateur là
+  // où il voulait aller plutôt que systématiquement vers /compte. On ne
+  // fait confiance qu'à un chemin interne (commence par "/", jamais "//" —
+  // qui serait interprété comme une URL protocole-relative vers un autre
+  // domaine, donc une redirection ouverte).
+  const rawReturnTo = params.get("returnTo");
+  const returnTo = rawReturnTo && rawReturnTo.startsWith("/") && !rawReturnTo.startsWith("//") ? rawReturnTo : "/compte";
   const [tab, setTab] = useState<AuthTab>(urlTab || "login");
   const [loading, setLoading] = useState(false);
 
@@ -99,7 +107,7 @@ function AuthPageInner() {
     }
     setCurrentUser(user);
     showToast(t("toastWelcome", { name: user.name }), "success");
-    router.push("/compte");
+    router.push(returnTo);
   }
 
   /** Validation de l'étape courante avant de passer à la suivante. */
@@ -194,7 +202,7 @@ function AuthPageInner() {
     }
     setCurrentUser(user);
     showToast(t("toastAccountCreatedWelcome", { name: fname }), "success");
-    router.push("/compte");
+    router.push(returnTo);
   }
 
   const stepVariants = {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Menu } from "lucide-react";
+import { Menu, LogIn, UserPlus } from "lucide-react";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import Button from "@/components/ui/Button";
 import { useAppStore } from "@/lib/store";
@@ -20,6 +20,7 @@ export default function Navbar() {
   const NAV_LINKS = [
     { href: "/", label: t("home") },
     { href: "/recherche", label: t("search") },
+    { href: "/tarifs", label: t("pricing") },
     { href: "/comment-ca-marche", label: t("howItWorks") },
     { href: "/a-propos", label: t("about") },
     { href: "/contact", label: t("contact") },
@@ -79,10 +80,14 @@ export default function Navbar() {
         className="fixed top-0 left-0 right-0 z-[999] h-[70px] flex items-center px-[5%] border-b"
       >
         <div className="max-w-[1240px] mx-auto w-full flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0">
             <CameroonFlag width={28} height={20} />
+            {/* text-[18px] en dessous de lg : sur un écran étroit (360px),
+                le logo doit laisser assez de place aux boutons
+                connexion/inscription + au bouton menu ☰ sur la même ligne
+                (voir plus bas). */}
             <span
-              className="font-logo text-[22px] font-black tracking-wide text-text"
+              className="font-logo text-[18px] lg:text-[22px] font-black tracking-wide text-text whitespace-nowrap"
             >
               <span className="text-gold">237</span>Logement
             </span>
@@ -164,13 +169,41 @@ export default function Navbar() {
             <LanguageSwitcher />
           </div>
 
+          {/* Connexion/Inscription directement sur la barre mobile, à côté
+              du menu ☰ — jusqu'ici ces liens n'existaient qu'à l'intérieur
+              du menu déplié (MobileMenu.tsx), un visiteur pressé pouvait ne
+              jamais les voir. Icônes plutôt que du texte : à 360px de large,
+              logo + deux boutons texte + le bouton menu ne tenaient pas sur
+              une seule ligne (le bouton menu se retrouvait poussé hors de
+              l'écran, inatteignable) — vérifié en le mesurant en direct. */}
+          {ready && !currentUser && (
+            <div className="lg:hidden flex items-center gap-1.5 shrink-0">
+              <Link
+                href="/connexion?tab=login"
+                aria-label={t("login")}
+                title={t("login")}
+                className="flex items-center justify-center w-8 h-8 rounded-lg border border-border2 text-text/80"
+              >
+                <LogIn size={15} />
+              </Link>
+              <Link
+                href="/connexion?tab=register"
+                aria-label={t("register")}
+                title={t("register")}
+                className="flex items-center justify-center w-8 h-8 rounded-lg bg-gold text-[#07111E]"
+              >
+                <UserPlus size={15} />
+              </Link>
+            </div>
+          )}
+
           <button
             onClick={() => setMobileOpen((v) => !v)}
             aria-label={t("menu")}
             // p-2.5 plutôt que p-1.5 : ~42px de zone tactile au lieu de
             // ~34px, plus proche des ~44px recommandés pour un bouton tapé
             // au doigt.
-            className="lg:hidden text-text p-2.5 -m-1 rounded-lg"
+            className="lg:hidden text-text p-2.5 -m-1 rounded-lg shrink-0"
           >
             <Menu size={22} />
           </button>

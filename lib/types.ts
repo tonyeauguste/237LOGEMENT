@@ -37,6 +37,9 @@ export type OccupancyStatus = "disponible" | "occupe";
  */
 export type PropertyKind = string;
 
+/** Disponibilité du titre foncier — pertinent uniquement en vente. */
+export type LandTitleStatus = "oui" | "non" | "en_cours";
+
 export interface Owner {
   name: string;
   avatar: string;
@@ -54,6 +57,8 @@ export interface Property {
   city: string;
   quartier: string;
   address?: string;
+  /** Précision sur l'emplacement (repères, accès…) — saisie libre à l'étape 1 du formulaire. */
+  precisionDesc?: string;
   /** Vente ou location. */
   transactionType: TransactionType;
   /** Durée de location (longue/courte) — `null` en vente ou pour un terrain en location. */
@@ -63,8 +68,21 @@ export interface Property {
   /** `null` si non applicable (vente, foncier) — voir OccupancyStatus. */
   occupancyStatus: OccupancyStatus | null;
   price: number;
+  /** Caution — pertinente uniquement en location (`null` en vente). */
+  deposit: number | null;
+  /** Avance de loyer — distincte de la caution, pertinente uniquement en location. */
+  advancePayment: number | null;
+  /** Charges incluses dans le loyer — pertinent uniquement en location. */
+  charges: "non" | "oui" | "partiel" | null;
+  /** Durée minimale de location (ex: "1 mois") — pertinent uniquement en location. */
+  minDuration: string | null;
+  /** Disponibilité du titre foncier — pertinent uniquement en vente. */
+  landTitleStatus: LandTitleStatus | null;
+  /** Prix négociable — pertinent uniquement en vente. */
+  priceNegotiable: boolean | null;
   rooms: number;
   baths: number;
+  /** 0 si le champ Surface ne s'applique pas à cette combinaison (voir FIELD_VISIBILITY_RULES.surface) — même convention que `rooms`/`baths`, déjà affichés via `p.surface || "—"`. */
   surface: number;
   desc: string;
   imgs: string[];

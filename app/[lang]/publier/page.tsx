@@ -3,12 +3,14 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { Handshake } from "lucide-react";
 import StepIndicator from "@/components/publier/StepIndicator";
 import PhotoUploader from "@/components/publier/PhotoUploader";
 import RoleCard from "@/components/ui/RoleCard";
 import AmenityChip from "@/components/ui/AmenityChip";
 import CityInput from "@/components/ui/CityInput";
 import Button from "@/components/ui/Button";
+import MoneyField from "@/components/ui/MoneyField";
 import {
   AMENITIES,
   amenityLabel,
@@ -20,10 +22,18 @@ import {
   propertyGroup,
   transactionMeta,
 } from "@/lib/data";
+import { fmtMoneyInput } from "@/lib/format";
+import { validatePublishForm } from "@/lib/validation";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
-import type { ListingKind, OccupancyStatus, TransactionType, UploadedPhoto } from "@/lib/types";
+import type {
+  LandTitleStatus,
+  ListingKind,
+  OccupancyStatus,
+  TransactionType,
+  UploadedPhoto,
+} from "@/lib/types";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 function PublierPageInner() {
@@ -127,10 +137,59 @@ function PublierPageInner() {
   // Step 4
   const [price, setPrice] = useState("");
   const [deposit, setDeposit] = useState("");
+  // Tâche 3 — boutons rapides "1 mois"/"2 mois"/"Personnalisé" au-dessus de
+  // la Caution : "custom" dès que l'utilisateur tape lui-même une valeur.
+  const [depositMode, setDepositMode] = useState<"1mois" | "2mois" | "custom">("custom");
+  const [advance, setAdvance] = useState("");
   const [charges, setCharges] = useState<"non" | "oui" | "partiel">("non");
   const [minDuration, setMinDuration] = useState("1 mois");
+  // Tâche 4.2 — uniquement pertinents en vente.
+  const [landTitleStatus, setLandTitleStatus] = useState<LandTitleStatus>("en_cours");
+  const [priceNegotiable, setPriceNegotiable] = useState(false);
+
+  // Recalcule la caution en direct si "1 mois"/"2 mois" est actif et que le
+  // loyer change ensuite — cohérent avec "calculent automatiquement" de la
+  // Tâche 3. Fait pendant le rendu (même pattern que les autres resets de
+  // ce fichier) plutôt que dans un effet.
+  const [prevPriceForDeposit, setPrevPriceForDeposit] = useState(price);
+  if (price !== prevPriceForDeposit) {
+    setPrevPriceForDeposit(price);
+    if (depositMode === "1mois") setDeposit(price);
+    if (depositMode === "2mois") setDeposit(price ? String(Number(price) * 2) : "");
+  }
 
   const [publishing, setPublishing] = useState(false);
+  // Tâche 6 — erreurs de validation par champ, affichées sous chaque champ
+  // concerné (voir validatePublishForm dans lib/validation.ts).
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Tâche 4.4 — un champ masqué doit être retiré de l'état, pas seulement
+  // caché en CSS : sans ça, une valeur résiduelle d'un mode précédent (ex :
+  // caution saisie en Location, puis bascule vers Vente) resterait en
+  // mémoire et purgerait `errors` que sur les champs encore pertinents.
+  const [prevTransactionType, setPrevTransactionType] = useState(transactionType);
+  if (transactionType !== prevTransactionType) {
+    setPrevTransactionType(transactionType);
+    if (transactionType === "vente") {
+      setDeposit("");
+      setDepositMode("custom");
+      setAdvance("");
+      setCharges("non");
+      setMinDuration("1 mois");
+    } else {
+      setLandTitleStatus("en_cours");
+      setPriceNegotiable(false);
+    }
+    setErrors({});
+  }
+  // Surface : purgée dès qu'elle redevient masquée (voir
+  // FIELD_VISIBILITY_RULES.surface, Tâche 4.1) — ex. bascule vers Location
+  // sur un bien résidentiel/commercial (le terrain, lui, l'affiche toujours).
+  const [prevSurfaceVisible, setPrevSurfaceVisible] = useState(rules.surface);
+  if (rules.surface !== prevSurfaceVisible) {
+    setPrevSurfaceVisible(rules.surface);
+    if (!rules.surface) setSurface("");
+  }
 
   // Les aperçus photo (voir PhotoUploader) passent par URL.createObjectURL
   // — sans révocation, chaque photo ajoutée pendant la session laisse un
@@ -199,8 +258,11 @@ function PublierPageInner() {
         setAmenities(data.amenities || []);
         setPrice(data.price != null ? String(data.price) : "");
         setDeposit(data.deposit != null ? String(data.deposit) : "");
+        setAdvance(data.advance_payment != null ? String(data.advance_payment) : "");
         setCharges((data.charges as "non" | "oui" | "partiel") || "non");
         setMinDuration(data.min_duration || "1 mois");
+        setLandTitleStatus((data.land_title_status as LandTitleStatus) || "en_cours");
+        setPriceNegotiable(data.price_negotiable ?? false);
         setLoadingExisting(false);
       });
     return () => {
@@ -226,17 +288,58 @@ function PublierPageInner() {
     setAmenities((prev) => (prev.includes(value) ? prev.filter((a) => a !== value) : [...prev, value]));
   }
 
+  // Tâche 6 — efface le message d'erreur d'un champ dès que l'utilisateur
+  // le modifie, plutôt que de le laisser affiché (à tort) jusqu'à la
+  // prochaine validation complète.
+  function clearError(field: keyof ReturnType<typeof runValidation>) {
+    setErrors((prev) => {
+      if (!(field in prev)) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
+  // Tâche 6 — validation par étape : seuls les champs de l'étape qu'on
+  // quitte sont vérifiés ici (les champs des étapes suivantes ne sont pas
+  // encore remplis). La vérification complète refait surface dans
+  // publish() comme filet de sécurité final.
+  function runValidation() {
+    const result = validatePublishForm({
+      city,
+      quartier,
+      title,
+      transactionType,
+      group,
+      photosCount: photos.length,
+      price,
+      surface,
+      surfaceVisible: rules.surface,
+      surfaceRequired: rules.surface && group === "foncier",
+      deposit,
+      advance,
+      landTitleStatus,
+    });
+    setErrors(result);
+    return result;
+  }
+
   function goNext() {
-    if (step === 1 && (!city || !quartier)) {
+    const validation = runValidation();
+    if (step === 1 && (validation.city || validation.quartier)) {
       showToast(t("toastFillLocation"), "error");
       return;
     }
-    if (step === 2 && !title) {
-      showToast(t("toastFillTitle"), "error");
+    if (step === 2 && (validation.title || validation.surface)) {
+      showToast(validation.surface || t("toastFillTitle"), "error");
       return;
     }
     if (step === 3 && photos.length < 3) {
       showToast(t("toastMinPhotos"), "error");
+      return;
+    }
+    if (step === 4 && (validation.price || validation.deposit || validation.advance)) {
+      showToast(validation.price || validation.deposit || validation.advance || "", "error");
       return;
     }
     if (step < 5) {
@@ -257,6 +360,16 @@ function PublierPageInner() {
   }
 
   async function publish() {
+    // Tâche 6 — filet de sécurité final : revalide tout le formulaire quel
+    // que soit l'étape affichée (ex : retour en arrière puis modification
+    // d'un champ déjà validé, sans repasser par goNext()).
+    const finalErrors = runValidation();
+    if (Object.keys(finalErrors).length > 0) {
+      const firstError = Object.values(finalErrors)[0];
+      showToast(firstError ?? t("toastPublishError"), "error");
+      return;
+    }
+
     setPublishing(true);
     const supabase = createClient();
 
@@ -313,12 +426,19 @@ function PublierPageInner() {
         kind,
         occupancy_status: submittedOccupancy,
         price: price ? Number(price) : 0,
-        deposit: deposit ? Number(deposit) : null,
-        charges,
-        min_duration: minDuration,
+        // Tâche 4.4 — un champ masqué est retiré du payload, pas seulement
+        // de l'affichage : les champs Location (caution/avance/charges/
+        // durée min.) n'ont pas de sens en Vente, et inversement pour le
+        // titre foncier/prix négociable — jamais les deux à la fois.
+        deposit: submittedTransaction === "location" && deposit ? Number(deposit) : null,
+        advance_payment: submittedTransaction === "location" && advance ? Number(advance) : null,
+        charges: submittedTransaction === "location" ? charges : null,
+        min_duration: submittedTransaction === "location" ? minDuration : null,
+        land_title_status: submittedTransaction === "vente" ? landTitleStatus : null,
+        price_negotiable: submittedTransaction === "vente" ? priceNegotiable : null,
         rooms: rules.rooms ? Number(rooms) : 0,
         baths: rules.baths ? Number(baths) : 0,
-        surface: surface ? Number(surface) : null,
+        surface: rules.surface && surface ? Number(surface) : null,
         images: imageUrls,
         amenities,
       };
@@ -384,21 +504,27 @@ function PublierPageInner() {
               <div>
                 <StepTitle icon="📍" text={t("step1Title")} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <Field label={t("cityLabel")}>
+                  <Field label={t("cityLabel")} error={errors.city}>
                     {/* Saisie libre : un propriétaire d'une localité absente
                         de nos suggestions doit pouvoir publier malgré tout. */}
                     <CityInput
                       placeholder={t("cityPlaceholder")}
                       value={city}
-                      onChange={(e) => setCity(e.target.value)}
+                      onChange={(e) => {
+                        setCity(e.target.value);
+                        clearError("city");
+                      }}
                     />
                   </Field>
-                  <Field label={t("quartierLabel")}>
+                  <Field label={t("quartierLabel")} error={errors.quartier}>
                     <input
                       className="form-control"
                       placeholder={t("quartierPlaceholder")}
                       value={quartier}
-                      onChange={(e) => setQuartier(e.target.value)}
+                      onChange={(e) => {
+                        setQuartier(e.target.value);
+                        clearError("quartier");
+                      }}
                     />
                   </Field>
                 </div>
@@ -428,12 +554,15 @@ function PublierPageInner() {
             {step === 2 && (
               <div>
                 <StepTitle icon="🏠" text={t("step2Title")} />
-                <Field label={t("titleLabel")}>
+                <Field label={t("titleLabel")} error={errors.title}>
                   <input
                     className="form-control"
                     placeholder={t("titlePlaceholder")}
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      clearError("title");
+                    }}
                   />
                 </Field>
                 <Field label={t("kindLabel")}>
@@ -463,7 +592,7 @@ function PublierPageInner() {
                     />
                     {saleEligible && (
                       <RoleCard
-                        icon="💰"
+                        icon={<Handshake size={22} />}
                         title={t("saleTitle")}
                         desc={t("saleDesc")}
                         active={transactionType === "vente"}
@@ -482,43 +611,52 @@ function PublierPageInner() {
                     champs ne s'affichent que pour le groupe résidentiel
                     (voir FIELD_VISIBILITY_RULES) : ni un bureau, ni un
                     terrain n'ont de "chambres". */}
-                <div
-                  className={`grid grid-cols-1 gap-3.5 ${
-                    rules.rooms || rules.baths ? "sm:grid-cols-3" : ""
-                  }`}
-                >
-                  {rules.rooms && (
-                    <Field label={t("roomsLabel")}>
-                      <select className="form-control" value={rooms} onChange={(e) => setRooms(e.target.value)}>
-                        {["1", "2", "3", "4", "5", "6"].map((n) => (
-                          <option key={n} value={n}>
-                            {n === "6" ? "6+" : n}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  )}
-                  {rules.baths && (
-                    <Field label={t("bathsLabel")}>
-                      <select className="form-control" value={baths} onChange={(e) => setBaths(e.target.value)}>
-                        {["1", "2", "3", "4"].map((n) => (
-                          <option key={n} value={n}>
-                            {n === "4" ? "4+" : n}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  )}
-                  <Field label={tTx(rules.surfaceLabelKey)}>
-                    <input
-                      className="form-control"
-                      type="number"
-                      placeholder={t("surfacePlaceholder")}
-                      value={surface}
-                      onChange={(e) => setSurface(e.target.value)}
-                    />
-                  </Field>
-                </div>
+                {(rules.rooms || rules.baths || rules.surface) && (
+                  <div
+                    className={`grid grid-cols-1 gap-3.5 ${
+                      [rules.rooms, rules.baths, rules.surface].filter(Boolean).length > 1 ? "sm:grid-cols-3" : ""
+                    }`}
+                  >
+                    {rules.rooms && (
+                      <Field label={t("roomsLabel")}>
+                        <select className="form-control" value={rooms} onChange={(e) => setRooms(e.target.value)}>
+                          {["1", "2", "3", "4", "5", "6"].map((n) => (
+                            <option key={n} value={n}>
+                              {n === "6" ? "6+" : n}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    )}
+                    {rules.baths && (
+                      <Field label={t("bathsLabel")}>
+                        <select className="form-control" value={baths} onChange={(e) => setBaths(e.target.value)}>
+                          {["1", "2", "3", "4"].map((n) => (
+                            <option key={n} value={n}>
+                              {n === "4" ? "4+" : n}
+                            </option>
+                          ))}
+                        </select>
+                      </Field>
+                    )}
+                    {/* Tâche 4.1 — masqué en location sauf pour un terrain
+                        (voir FIELD_VISIBILITY_RULES.surface dans lib/data.ts). */}
+                    {rules.surface && (
+                      <Field label={tTx(rules.surfaceLabelKey)} error={errors.surface}>
+                        <input
+                          className="form-control"
+                          type="number"
+                          placeholder={t("surfacePlaceholder")}
+                          value={surface}
+                          onChange={(e) => {
+                            setSurface(e.target.value);
+                            clearError("surface");
+                          }}
+                        />
+                      </Field>
+                    )}
+                  </div>
+                )}
 
                 {/* A.2 — Longue/Courte durée : uniquement en Location,
                     résidentiel ou commercial (rules.listingDuration). Un
@@ -594,47 +732,137 @@ function PublierPageInner() {
             {step === 4 && (
               <div>
                 <StepTitle icon="💰" text={t("step4Title")} />
-                <Field label={transactionMeta(transactionType, rules.listingDuration ? listingType : null, group, tTx).priceFieldLabel}>
-                  <input
-                    className="form-control !text-xl !font-semibold !px-[18px] !py-[14px]"
-                    type="number"
-                    placeholder={t("pricePlaceholder")}
+                <Field
+                  label={transactionMeta(transactionType, rules.listingDuration ? listingType : null, group, tTx).priceFieldLabel}
+                  error={errors.price}
+                >
+                  <MoneyField
                     value={price}
-                    onChange={(e) => setPrice(e.target.value)}
+                    onChange={(v) => {
+                      setPrice(v);
+                      clearError("price");
+                    }}
+                    placeholder={t("pricePlaceholder")}
+                    inputClassName="!text-xl !font-semibold !px-[18px] !py-[14px]"
                   />
                 </Field>
-                <p className="text-xs text-muted -mt-2 mb-4">{t("priceTip")}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                  <Field label={t("depositLabel")}>
-                    <input
-                      className="form-control"
-                      type="number"
-                      placeholder={t("depositPlaceholder")}
-                      value={deposit}
-                      onChange={(e) => setDeposit(e.target.value)}
-                    />
-                  </Field>
-                  <Field label={t("chargesLabel")}>
-                    <select
-                      className="form-control"
-                      value={charges}
-                      onChange={(e) => setCharges(e.target.value as typeof charges)}
-                    >
-                      <option value="non">{t("chargesNo")}</option>
-                      <option value="oui">{t("chargesYes")}</option>
-                      <option value="partiel">{t("chargesPartial")}</option>
-                    </select>
-                  </Field>
-                </div>
-                <Field label={t("minDurationLabel")}>
-                  <select className="form-control" value={minDuration} onChange={(e) => setMinDuration(e.target.value)}>
-                    <option>{t("duration1Month")}</option>
-                    <option>{t("duration3Months")}</option>
-                    <option>{t("duration6Months")}</option>
-                    <option>{t("duration1Year")}</option>
-                  </select>
-                </Field>
-                <div className="px-4 py-3.5 bg-[rgba(61,153,112,.07)] border border-[rgba(61,153,112,.2)] rounded-[10px] text-[13px] text-green2">
+                <p className="text-xs text-muted -mt-2 mb-4">
+                  {transactionType === "vente" ? t("priceTipVente") : t("priceTip")}
+                </p>
+
+                {transactionType === "location" ? (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      <Field label={t("depositLabel")} error={errors.deposit}>
+                        {/* Tâche 3 — boutons rapides : "1 mois"/"2 mois"
+                            calculent la caution depuis le loyer déjà saisi
+                            ci-dessus ; "Personnalisé" libère le champ. Les
+                            deux premiers sont désactivés tant que le loyer
+                            n'est pas renseigné. */}
+                        <div className="flex gap-1.5 mb-2">
+                          {(
+                            [
+                              ["1mois", t("depositQuick1Month")],
+                              ["2mois", t("depositQuick2Months")],
+                              ["custom", t("depositQuickCustom")],
+                            ] as const
+                          ).map(([mode, label]) => (
+                            <button
+                              key={mode}
+                              type="button"
+                              disabled={mode !== "custom" && !price}
+                              onClick={() => {
+                                setDepositMode(mode);
+                                if (mode === "1mois") setDeposit(price);
+                                if (mode === "2mois") setDeposit(price ? String(Number(price) * 2) : "");
+                              }}
+                              className={`px-3 py-1.5 rounded-full text-[12px] font-semibold border-[1.5px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+                                depositMode === mode
+                                  ? "border-gold bg-gold3 text-gold"
+                                  : "border-border text-muted hover:border-gold"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        {!price && (
+                          <p className="text-[11px] text-dim mb-1.5">{t("depositHelpNeedPrice")}</p>
+                        )}
+                        <MoneyField
+                          value={deposit}
+                          disabled={depositMode !== "custom"}
+                          onChange={(v) => {
+                            setDepositMode("custom");
+                            setDeposit(v);
+                            clearError("deposit");
+                          }}
+                          placeholder={t("depositPlaceholder")}
+                        />
+                      </Field>
+                      <Field label={t("advanceLabel")} error={errors.advance}>
+                        <MoneyField
+                          value={advance}
+                          onChange={(v) => {
+                            setAdvance(v);
+                            clearError("advance");
+                          }}
+                          placeholder={t("advancePlaceholder")}
+                        />
+                      </Field>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                      <Field label={t("chargesLabel")}>
+                        <select
+                          className="form-control"
+                          value={charges}
+                          onChange={(e) => setCharges(e.target.value as typeof charges)}
+                        >
+                          <option value="non">{t("chargesNo")}</option>
+                          <option value="oui">{t("chargesYes")}</option>
+                          <option value="partiel">{t("chargesPartial")}</option>
+                        </select>
+                      </Field>
+                      <Field label={t("minDurationLabel")}>
+                        <select className="form-control" value={minDuration} onChange={(e) => setMinDuration(e.target.value)}>
+                          <option>{t("duration1Month")}</option>
+                          <option>{t("duration3Months")}</option>
+                          <option>{t("duration6Months")}</option>
+                          <option>{t("duration1Year")}</option>
+                        </select>
+                      </Field>
+                    </div>
+                  </>
+                ) : (
+                  // Tâche 4.2 — champs propres à la Vente : ni loyer/
+                  // caution/avance/charges (masqués ci-dessus), ni "Type de
+                  // location" (masqué à l'étape 2, voir rules.listingDuration).
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                    <Field label={t("landTitleLabel")}>
+                      <select
+                        className="form-control"
+                        value={landTitleStatus}
+                        onChange={(e) => setLandTitleStatus(e.target.value as LandTitleStatus)}
+                      >
+                        <option value="oui">{t("landTitleYes")}</option>
+                        <option value="non">{t("landTitleNo")}</option>
+                        <option value="en_cours">{t("landTitleInProgress")}</option>
+                      </select>
+                    </Field>
+                    <Field label={t("negotiableLabel")}>
+                      <select
+                        className="form-control"
+                        value={priceNegotiable ? "oui" : "non"}
+                        onChange={(e) => setPriceNegotiable(e.target.value === "oui")}
+                      >
+                        <option value="non">{t("chargesNo")}</option>
+                        <option value="oui">{t("chargesYes")}</option>
+                      </select>
+                    </Field>
+                  </div>
+                )}
+
+                <div className="px-4 py-3.5 bg-[rgba(61,153,112,.07)] border border-[rgba(61,153,112,.2)] rounded-[10px] text-[13px] text-green2 mt-4">
                   {t("pricingTip")}
                 </div>
               </div>
@@ -667,14 +895,46 @@ function PublierPageInner() {
                     />
                   )}
                   {rules.rooms && <PreviewRow k={t("previewRooms")} v={t("previewRoomsValue", { n: rooms })} />}
-                  <PreviewRow
-                    k={group === "foncier" ? t("previewSurfaceArea") : t("previewSurface")}
-                    v={surface ? `${surface} m²` : t("emptyValue")}
-                  />
+                  {/* Tâche 4.1 — la ligne Surface n'apparaît que si le champ
+                      est réellement affiché pour cette combinaison. */}
+                  {rules.surface && (
+                    <PreviewRow
+                      k={group === "foncier" ? t("previewSurfaceArea") : t("previewSurface")}
+                      v={surface ? `${surface} m²` : t("emptyValue")}
+                    />
+                  )}
                   <PreviewRow k={t("previewPhotos")} v={`${photos.length} photo${photos.length > 1 ? "s" : ""}`} />
+                  {/* Tâche 2 — conditions financières complètes, cohérentes
+                      avec ce qui sera réellement envoyé (voir payload dans
+                      publish()) : jamais les deux jeux de champs à la fois. */}
+                  {transactionType === "location" ? (
+                    <>
+                      {deposit && <PreviewRow k={t("depositLabel")} v={`${fmtMoneyInput(deposit)} FCFA`} />}
+                      {advance && <PreviewRow k={t("advanceLabel")} v={`${fmtMoneyInput(advance)} FCFA`} />}
+                      <PreviewRow
+                        k={t("chargesLabel")}
+                        v={charges === "oui" ? t("chargesYes") : charges === "partiel" ? t("chargesPartial") : t("chargesNo")}
+                      />
+                      <PreviewRow k={t("minDurationLabel")} v={minDuration} />
+                    </>
+                  ) : (
+                    <>
+                      <PreviewRow
+                        k={t("landTitleLabel")}
+                        v={
+                          landTitleStatus === "oui"
+                            ? t("landTitleYes")
+                            : landTitleStatus === "non"
+                              ? t("landTitleNo")
+                              : t("landTitleInProgress")
+                        }
+                      />
+                      <PreviewRow k={t("negotiableLabel")} v={priceNegotiable ? t("chargesYes") : t("chargesNo")} />
+                    </>
+                  )}
                   <PreviewRow
                     k={t("previewPrice")}
-                    v={price ? `${parseInt(price, 10).toLocaleString("fr-FR")} FCFA` : t("emptyValue")}
+                    v={price ? `${fmtMoneyInput(price)} FCFA` : t("emptyValue")}
                     gold
                     last
                   />
@@ -748,11 +1008,21 @@ function StepTitle({ icon, text }: { icon: string; text: string }) {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  /** Tâche 6 — message d'erreur affiché sous le champ, s'il y en a un. */
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="mb-4">
       <label className="block text-[13px] text-muted mb-[7px] font-medium">{label}</label>
       {children}
+      {error && <p className="text-[12px] text-red mt-1.5">{error}</p>}
     </div>
   );
 }

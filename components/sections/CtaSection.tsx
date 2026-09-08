@@ -5,10 +5,16 @@ import Image from "next/image";
 import { Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { Reveal } from "@/components/ui/Reveal";
+import { useAppStore } from "@/lib/store";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function CtaSection() {
   const t = useTranslations("Home.cta");
+  // Tâche 1 du prompt "publier-et-auth" — le CTA "Publier mon bien" doit
+  // amener directement au formulaire si l'utilisateur est déjà connecté,
+  // et le ramener vers /publier (au lieu de /compte par défaut) une fois
+  // connecté sinon — voir ?returnTo dans app/[lang]/connexion/page.tsx.
+  const currentUser = useAppStore((s) => s.currentUser);
   return (
     <section className="pt-0 pb-20">
       <div className="max-w-[1240px] mx-auto px-[5%]">
@@ -24,16 +30,33 @@ export default function CtaSection() {
             </h2>
             <p className="text-muted text-[15px] leading-[1.65] mb-7">{t("text")}</p>
             <div className="flex gap-3 flex-wrap">
-              <Link href="/connexion?tab=register">
-                <Button variant="gold" size="lg">
-                  {t("publishButton")}
-                </Button>
-              </Link>
-              <Link href="/connexion?tab=login">
-                <Button variant="ghost" size="lg">
-                  {t("loginButton")}
-                </Button>
-              </Link>
+              {currentUser ? (
+                <>
+                  <Link href="/publier">
+                    <Button variant="gold" size="lg">
+                      {t("publishButton")}
+                    </Button>
+                  </Link>
+                  <Link href="/compte">
+                    <Button variant="ghost" size="lg">
+                      {t("dashboardButton")}
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/connexion?tab=register&returnTo=/publier">
+                    <Button variant="gold" size="lg">
+                      {t("publishButton")}
+                    </Button>
+                  </Link>
+                  <Link href="/connexion?tab=login&returnTo=/publier">
+                    <Button variant="ghost" size="lg">
+                      {t("loginButton")}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
             <div className="flex gap-5 mt-[22px] flex-wrap">
               {[t("feature1"), t("feature2"), t("feature3")].map((f) => (

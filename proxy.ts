@@ -33,18 +33,50 @@ function detectLocale(request: NextRequest): string {
   return DEFAULT_LOCALE;
 }
 
+// Tâche "corriger-compteur-vues" — identifiant technique pour dédupliquer
+// les vues et les favoris d'un visiteur anonyme (register_property_view /
+// set_property_favorite en base). Posé ici plutôt que dans une page : un
+// Server Component ne peut pas écrire de cookie (limitation Next.js —
+// seuls le proxy, une Server Action ou un Route Handler le peuvent), alors
+// que ce proxy tourne déjà avant chaque page.
+//
+// PAS httpOnly (contrairement à un premier choix pour les seules vues,
+// lues côté serveur) : les favoris se togglent depuis des composants
+// client (cœur sur PropertyCard, etc.) qui appellent la RPC Supabase
+// directement depuis le navigateur — ce code doit donc pouvoir lire ce
+// cookie via document.cookie (voir lib/store.ts, getVisitorCookie). Aucune
+// donnée sensible dedans : un simple id de corrélation aléatoire.
+const VISITOR_COOKIE = "v_id";
+const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 90; // 90 jours
+
+function ensureVisitorCookie(request: NextRequest, response: NextResponse) {
+  if (request.cookies.get(VISITOR_COOKIE)?.value) return;
+  response.cookies.set(VISITOR_COOKIE, crypto.randomUUID(), {
+    maxAge: VISITOR_COOKIE_MAX_AGE,
+    httpOnly: false,
+    sameSite: "lax",
+    path: "/",
+  });
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const hasLocalePrefix = LOCALES.some(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
-  if (hasLocalePrefix) return NextResponse.next();
+  if (hasLocalePrefix) {
+    const response = NextResponse.next();
+    ensureVisitorCookie(request, response);
+    return response;
+  }
 
   const locale = detectLocale(request);
   const url = request.nextUrl.clone();
   url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(url);
+  ensureVisitorCookie(request, response);
+  return response;
 }
 
 export const config = {

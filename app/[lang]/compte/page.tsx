@@ -180,11 +180,15 @@ export default function AccountDashboard() {
     };
   }, [favorites]);
 
-  const totalViews = listings.reduce((sum, p) => sum + p.views, 0);
   const totalFavs = listings.reduce((sum, p) => sum + p.favs, 0);
+  // Tâche "retirer-vues" — la tuile "Vues cumulées" a été retirée de ce
+  // récapitulatif à la demande explicite du propriétaire du produit (le
+  // classement par vues de l'onglet Statistiques, lui, reste intact : il
+  // relève de l'exception "statistiques internes / classement des annonces
+  // les plus populaires" prévue par la même demande). p.views continue
+  // d'être suivi en base et utilisé par cet onglet.
   const stats = [
     { icon: "📊", val: String(listings.length), label: t("statPublished"), color: "text-gold" },
-    { icon: "👁", val: String(totalViews), label: t("statViews"), color: "text-blue" },
     { icon: "💬", val: String(messages.length), label: t("statMessages"), color: "text-green2" },
     { icon: "❤️", val: String(totalFavs), label: t("statFavs"), color: "text-red" },
   ];
@@ -473,7 +477,11 @@ export default function AccountDashboard() {
                     </Button>
                   </Link>
                 </div>
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+                {/* Tâche "retirer-vues" — grille repassée de 4 à 3 colonnes
+                    (au lieu de grid-cols-2 lg:grid-cols-4) : avec 3 tuiles,
+                    l'ancienne grille à 2 colonnes laissait la 3e tuile
+                    seule sur sa ligne, orpheline. */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
                   {stats.map((s) => (
                     <div key={s.label} className="bg-card border border-border rounded-2xl px-5 py-[18px]">
                       <div className="text-[22px] mb-2">{s.icon}</div>
@@ -541,12 +549,6 @@ export default function AccountDashboard() {
                             <div className="text-[13px] text-muted">{p.quartier}, {p.city}</div>
                           </div>
                           <div className="flex gap-6 shrink-0">
-                            <div className="text-center">
-                              <div className="font-semibold text-base text-text flex items-center gap-1 justify-center">
-                                <Eye size={13} /> {p.views}
-                              </div>
-                              <div className="text-[11px] text-muted">{t("views")}</div>
-                            </div>
                             <div className="text-center">
                               <div className="font-semibold text-base text-text flex items-center gap-1 justify-center">
                                 <Heart size={13} /> {p.favs}

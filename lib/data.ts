@@ -156,6 +156,13 @@ export interface FieldVisibilityRule {
   /** Champ "Salles de bain" pertinent pour cette combinaison. */
   baths: boolean;
   /**
+   * Champ "Surface" pertinent pour cette combinaison. Règle : toujours
+   * affiché pour un terrain (prime sur tout — voir PROPERTY_KINDS/group
+   * "foncier" ci-dessus), masqué en location pour tout le reste, affiché en
+   * vente. Voir la Tâche 4.1 du prompt "publier-et-auth".
+   */
+  surface: boolean;
+  /**
    * Clé de traduction du libellé du champ Surface (namespace "Transaction",
    * voir messages/fr.json et messages/en.json) — varie pour le foncier
    * (contenance). Appeler `t(rules.surfaceLabelKey)` côté composant.
@@ -167,18 +174,20 @@ export interface FieldVisibilityRule {
 
 export const FIELD_VISIBILITY_RULES: Record<TransactionType, Record<PropertyGroup, FieldVisibilityRule>> = {
   location: {
-    residentiel: { rooms: true, baths: true, surfaceLabelKey: "surfaceM2", listingDuration: true },
-    commercial: { rooms: false, baths: false, surfaceLabelKey: "surfaceM2", listingDuration: true },
+    residentiel: { rooms: true, baths: true, surface: false, surfaceLabelKey: "surfaceM2", listingDuration: true },
+    commercial: { rooms: false, baths: false, surface: false, surfaceLabelKey: "surfaceM2", listingDuration: true },
     // Terrain en location = bail, sans durée courte/longue à proprement
     // parler (voir la note explicative affichée à la place dans le
-    // formulaire) — surface devient "contenance".
-    foncier: { rooms: false, baths: false, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
+    // formulaire) — surface devient "contenance", et reste affichée
+    // (seul cas où la location montre la surface : la règle "terrain"
+    // prime sur la règle "masqué en location").
+    foncier: { rooms: false, baths: false, surface: true, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
   },
   vente: {
     // Une vente n'a pas de durée : listingDuration toujours false ici.
-    residentiel: { rooms: true, baths: true, surfaceLabelKey: "surfaceM2", listingDuration: false },
-    commercial: { rooms: false, baths: false, surfaceLabelKey: "surfaceM2", listingDuration: false },
-    foncier: { rooms: false, baths: false, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
+    residentiel: { rooms: true, baths: true, surface: true, surfaceLabelKey: "surfaceM2", listingDuration: false },
+    commercial: { rooms: false, baths: false, surface: true, surfaceLabelKey: "surfaceM2", listingDuration: false },
+    foncier: { rooms: false, baths: false, surface: true, surfaceLabelKey: "surfaceFoncier", listingDuration: false },
   },
 };
 

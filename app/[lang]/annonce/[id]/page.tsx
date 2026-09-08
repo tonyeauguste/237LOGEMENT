@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyDetail from "@/components/property/PropertyDetail";
@@ -54,20 +55,44 @@ export default async function AnnonceDetailPage({
 
   if (!row) return notFoundBlock;
 
-  // Compteur de vues : la colonne existe en base mais n'était jamais
-  // incrémentée nulle part, donc le tableau de bord propriétaire affichait
-  // toujours "0 vue" quel que soit le trafic réel sur l'annonce. On passe
-  // par une fonction RPC dédiée (plutôt qu'un UPDATE direct) car un
-  // visiteur non connecté doit pouvoir déclencher ce compteur sans avoir
-  // pour autant le droit de modifier le reste de l'annonce — voir la
-  // migration add_real_auth_profiles_and_ownership. Best-effort : une
-  // erreur ici ne doit pas empêcher l'affichage de la fiche.
-  const { error: viewError } = await supabase.rpc("increment_property_views", {
-    prop_id: row.id,
-  });
-  if (viewError) console.error("Échec de l'incrément des vues :", viewError);
+  // Compteur de vues, dédupliqué par visiteur (voir le prompt
+  // "corriger-compteur-vues" — l'ancien increment_property_views
+  // incrémentait sans condition à chaque chargement, y compris pour un
+  // même visiteur revenant plusieurs fois). register_property_view fait
+  // un upsert atomique dans property_views ; c'est le trigger
+  // trg_property_views_sync (base) qui fait progresser properties.views,
+  // une seule fois par (annonce, visiteur) distinct — jamais pour le
+  // propriétaire consultant sa propre fiche (exclusion faite côté RPC).
+  //
+  // Identité du visiteur : son compte s'il est connecté, sinon le cookie
+  // technique posé par proxy.ts (seul endroit qui peut écrire un cookie —
+  // un Server Component ne le peut pas). getSession() plutôt que getUser()
+  // ici : décodage local du JWT, pas d'aller-retour réseau vers le serveur
+  // d'auth — l'enjeu (à qui attribuer une vue) ne justifie pas ce coût sur
+  // une page à fort trafic, voir la contrainte de performance du prompt.
+  const [{ data: { session } }, cookieStore] = await Promise.all([
+    supabase.auth.getSession(),
+    cookies(),
+  ]);
+  const visitorId = session
+    ? `user:${session.user.id}`
+    : cookieStore.get("v_id")?.value
+      ? `anon:${cookieStore.get("v_id")!.value}`
+      : null;
 
-  const property = rowToProperty(viewError ? row : { ...row, views: row.views + 1 });
+  // Best-effort : une erreur ici ne doit pas empêcher l'affichage de la
+  // fiche. Pas d'incrément optimiste côté application — désormais
+  // conditionnel (déduplication + exclusion propriétaire), donc `row.views`
+  // tel que lu reste la seule valeur fiable à afficher pour ce chargement.
+  if (visitorId) {
+    const { error: viewError } = await supabase.rpc("register_property_view", {
+      prop_id: row.id,
+      visitor: visitorId,
+    });
+    if (viewError) console.error("Échec de l'enregistrement de la vue :", viewError);
+  }
+
+  const property = rowToProperty(row);
 
   const { data: similarRows } = await supabase
     .from("properties")

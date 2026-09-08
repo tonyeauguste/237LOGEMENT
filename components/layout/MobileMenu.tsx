@@ -13,6 +13,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
   const LINKS = [
     { href: "/", label: `🏠 ${t("home")}` },
     { href: "/recherche", label: `🔍 ${t("search")}` },
+    { href: "/tarifs", label: `💳 ${t("pricing")}` },
     { href: "/comment-ca-marche", label: `📋 ${t("howItWorks")}` },
     { href: "/a-propos", label: `ℹ️ ${t("about")}` },
     { href: "/faq", label: `❓ ${t("faq")}` },

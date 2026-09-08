@@ -50,6 +50,7 @@ export default function Footer() {
           <h4 className="font-semibold text-sm text-text mb-4">{t("ownersTitle")}</h4>
           <ul className="space-y-2.5">
             <li><Link href="/connexion?tab=register" className="text-muted text-[13px] hover:text-gold transition-colors">{t("publishListing")}</Link></li>
+            <li><Link href="/tarifs" className="text-muted text-[13px] hover:text-gold transition-colors">{t("pricing")}</Link></li>
             <li><Link href="/comment-ca-marche" className="text-muted text-[13px] hover:text-gold transition-colors">{t("ownerGuide")}</Link></li>
             <li><Link href="/faq" className="text-muted text-[13px] hover:text-gold transition-colors">{t("ownerFaq")}</Link></li>
             <li><Link href="/compte" className="text-muted text-[13px] hover:text-gold transition-colors">{t("dashboard")}</Link></li>
