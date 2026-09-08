@@ -7,7 +7,7 @@ import clsx from "clsx";
 import Button from "@/components/ui/Button";
 import { fmtMoneyInput } from "@/lib/format";
 import type { FormuleTarif } from "@/lib/tarifs";
-import { useTranslations } from "@/i18n/IntlProvider";
+import { useTranslations, useLocale } from "@/i18n/IntlProvider";
 
 /**
  * Carte tarifaire — sait afficher les deux états lus depuis
@@ -38,8 +38,24 @@ export default function PricingCard({
   publishHref: string;
 }) {
   const t = useTranslations("Tarifs");
+  const locale = useLocale();
   const prixFmt = `${fmtMoneyInput(formule.prixNormal)} FCFA`;
   const suffixe = formule.periodicite === "mois" ? t("perMonth") : "";
+
+  // lib/tarifs.ts reste la source unique des montants/volumes (réutilisée
+  // telle quelle par le futur système de notification, toujours en
+  // français) — mais l'affichage doit suivre la langue active. Plutôt que
+  // de dupliquer tout GRILLE_TARIFAIRE en anglais, on ne traduit que ce qui
+  // s'affiche, via messages/en.json → Tarifs.plans.<id>, avec repli sur le
+  // texte français si une traduction venait à manquer. Trouvé lors de
+  // l'audit pré-déploiement : la page /tarifs en anglais montrait un
+  // mélange anglais (habillage) / français (contenu des formules).
+  const nom = locale === "en" ? t(`plans.${formule.id}.nom`) : formule.nom;
+  const volume = locale === "en" ? t(`plans.${formule.id}.volume`) : formule.volume;
+  const features =
+    locale === "en"
+      ? formule.features.map((f, i) => t(`plans.${formule.id}.feature${i + 1}`))
+      : formule.features;
 
   return (
     <motion.div
@@ -58,8 +74,8 @@ export default function PricingCard({
         </span>
       )}
 
-      <h3 className="text-[15px] font-semibold text-text">{formule.nom}</h3>
-      <p className="text-[12px] text-muted mt-0.5 mb-4">{formule.volume}</p>
+      <h3 className="text-[15px] font-semibold text-text">{nom}</h3>
+      <p className="text-[12px] text-muted mt-0.5 mb-4">{volume}</p>
 
       {promoActive ? (
         <div className="mb-4">
@@ -87,8 +103,8 @@ export default function PricingCard({
       )}
 
       <ul className="flex flex-col gap-2 mb-6">
-        {formule.features.map((f) => (
-          <li key={f} className="flex items-start gap-2 text-[12.5px] text-text/85 leading-snug">
+        {features.map((f, i) => (
+          <li key={i} className="flex items-start gap-2 text-[12.5px] text-text/85 leading-snug">
             <Check size={14} className="text-gold shrink-0 mt-[2px]" />
             {f}
           </li>

@@ -249,7 +249,7 @@
     "visitorFeature6": "Recent search history",
     "ownerTitle": "Owner account",
     "ownerSub": "For owners looking to rent out their property",
-    "ownerFeature1": "Free and unlimited listing publishing",
+    "ownerFeature1": "Free listing publishing during the launch",
     "ownerFeature2": "Full listing management (edit, delete)",
     "ownerFeature3": "Dashboard with detailed statistics",
     "ownerFeature4": "Built-in messaging with tenants",
@@ -331,7 +331,7 @@
     "q8Q": "How do I report a fraudulent or suspicious listing?",
     "q8A": "If you suspect a fraudulent listing (request for a transfer before a visit, abnormally low price, photos that look copied from another site…), contact our team via the \"Contact\" page form (subject \"Report fraud\") or by phone/WhatsApp. We handle every report within 24h and immediately remove confirmed fraudulent listings. Never send money without having physically visited the home.",
     "q9Q": "How many listings can I publish as an owner?",
-    "q9A": "There's no limit to the number of listings you can publish. Whether you have one apartment or a portfolio of dozens of properties, our owner dashboard adapts to your needs. You manage all your listings from a single space, with centralized statistics and messaging.",
+    "q9A": "During our launch offer, you can publish as many listings as you like, at no cost. Our plans (Single listing, Individual, Independent agent, Agency — see our Pricing page) define the volumes each profile will have once billing is in place; you'll be notified individually before any change. Whether you have one apartment or a portfolio of several properties, our owner dashboard adapts to your needs, with centralized statistics and messaging.",
     "q10Q": "How do I edit or delete my account?",
     "q10A": "You can edit your personal information from your dashboard's \"Settings\". To permanently delete your account, contact our support via the \"Contact\" page (or by phone/WhatsApp) with your registration email address. Deletion is processed within 72 hours and results in the removal of all your data and listings."
   },
@@ -367,6 +367,40 @@
       "changePlanA": "Yes, at any time.",
       "payLaterQ": "How will I pay later?",
       "payLaterA": "Via MTN Mobile Money or Orange Money, once the payment system is in place."
+    },
+    "plans": {
+      "annonce-simple": {
+        "nom": "Single listing",
+        "volume": "1 property, 30 days",
+        "feature1": "1 listing visible for 30 days",
+        "feature2": "Direct WhatsApp contact"
+      },
+      "particulier": {
+        "nom": "Individual",
+        "volume": "10 properties",
+        "feature1": "Up to 10 listings",
+        "feature2": "Direct WhatsApp contact",
+        "feature3": "Dashboard"
+      },
+      "agent": {
+        "nom": "Independent agent",
+        "volume": "25 properties",
+        "feature1": "Up to 25 listings",
+        "feature2": "\"Verified\" badge",
+        "feature3": "Public profile page",
+        "feature4": "3 featured boosts per month",
+        "feature5": "Dashboard"
+      },
+      "agence": {
+        "nom": "Agency",
+        "volume": "Unlimited listings",
+        "feature1": "Unlimited listings",
+        "feature2": "\"Verified\" badge",
+        "feature3": "Public profile page",
+        "feature4": "Logo shown on listings",
+        "feature5": "Automatic featured boosts",
+        "feature6": "Priority support"
+      }
     }
   },
   "Search": {
@@ -403,6 +437,13 @@
     "line2": "Explore our other pages while we prepare the official launch.",
     "badge": "🚀 Launching soon",
     "backButton": "Back to listings"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "line1": "The link you followed may be broken, or the page may have moved.",
+    "line2": "Check the address, or head back to the homepage.",
+    "badge": "404",
+    "backButton": "Back to homepage"
   },
   "PropertyDetail": {
     "home": "Home",

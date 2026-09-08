@@ -7,8 +7,8 @@ import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 // Date affichée en bas de page et dans l'intro — à mettre à jour à la main
 // si le contenu de cette page est modifié plus tard.
-const LAST_UPDATED = "26 août 2026";
-const LAST_UPDATED_EN = "August 26, 2026";
+const LAST_UPDATED = "8 septembre 2026";
+const LAST_UPDATED_EN = "September 8, 2026";
 
 // ═══════════════════════════════════════════════
 // Contenu légal directement ici (pas dans messages/*.json) : chaque
@@ -63,10 +63,21 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
         body: (
           <>
             <p>
-              The Site uses only one essential technical cookie, set by our authentication
-              provider, to keep you logged into your account across pages. It has no advertising
-              purpose.
+              The Site uses two technical, first-party cookies only — never shared with any
+              third party, and neither used for advertising:
             </p>
+            <ul className="list-disc pl-5 space-y-1.5">
+              <li>
+                An essential cookie, set by our authentication provider, to keep you logged into
+                your account across pages.
+              </li>
+              <li>
+                A functional cookie that recognizes a returning visitor for up to 90 days, so
+                that browsing the same listing several times isn&apos;t counted as several
+                different visitors in view and favorite counts. It carries no personal
+                information and cannot identify you.
+              </li>
+            </ul>
             <p>
               We currently use no advertising or analytics cookies or trackers (no Google
               Analytics, no Facebook pixel, etc.). If this ever changes, this page will be updated
@@ -252,10 +263,22 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
       body: (
         <>
           <p>
-            Le Site utilise uniquement un cookie technique indispensable, déposé par notre
-            hébergeur d&apos;authentification, pour vous garder connecté à votre compte d&apos;une
-            page à l&apos;autre. Il n&apos;a pas de finalité publicitaire.
+            Le Site utilise seulement deux cookies techniques, internes au Site — jamais partagés
+            avec un tiers, et aucun des deux à finalité publicitaire :
           </p>
+          <ul className="list-disc pl-5 space-y-1.5">
+            <li>
+              Un cookie indispensable, déposé par notre hébergeur d&apos;authentification, pour
+              vous garder connecté à votre compte d&apos;une page à l&apos;autre.
+            </li>
+            <li>
+              Un cookie fonctionnel qui reconnaît un visiteur revenant sur le Site pendant 90
+              jours au maximum, pour qu&apos;une même personne consultant plusieurs fois la même
+              annonce ne soit pas comptée comme plusieurs visiteurs distincts dans le nombre de
+              vues et de favoris. Il ne contient aucune information personnelle et ne permet pas
+              de vous identifier.
+            </li>
+          </ul>
           <p>
             Nous n&apos;utilisons aujourd&apos;hui aucun cookie ni traceur publicitaire ou
             statistique (pas de Google Analytics, pas de pixel Facebook, etc.). Si cela change un

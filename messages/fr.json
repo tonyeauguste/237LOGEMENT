@@ -249,7 +249,7 @@
     "visitorFeature6": "Historique des recherches récentes",
     "ownerTitle": "Compte Propriétaire",
     "ownerSub": "Pour les propriétaires souhaitant louer leur bien",
-    "ownerFeature1": "Publication gratuite et illimitée d'annonces",
+    "ownerFeature1": "Publication gratuite d'annonces pendant le lancement",
     "ownerFeature2": "Gestion complète des annonces (modifier, supprimer)",
     "ownerFeature3": "Tableau de bord avec statistiques détaillées",
     "ownerFeature4": "Messagerie intégrée avec les locataires",
@@ -331,7 +331,7 @@
     "q8Q": "Comment signaler une annonce frauduleuse ou suspecte ?",
     "q8A": "Si vous suspectez une annonce frauduleuse (demande de virement avant visite, prix anormalement bas, photos qui semblent copiées d'un autre site…), contactez notre équipe via le formulaire de la page \"Contact\" (objet \"Signaler une fraude\") ou par téléphone/WhatsApp. Nous traitons chaque signalement sous 24h et supprimons immédiatement les annonces frauduleuses confirmées. Ne versez jamais d'argent sans avoir visité physiquement le logement.",
     "q9Q": "Combien d'annonces puis-je publier en tant que propriétaire ?",
-    "q9A": "Il n'y a pas de limite au nombre d'annonces que vous pouvez publier. Que vous ayez un appartement ou un portefeuille de plusieurs dizaines de biens, notre tableau de bord propriétaire s'adapte à vos besoins. Vous gérez toutes vos annonces depuis un espace unique, avec statistiques et messagerie centralisés.",
+    "q9A": "Pendant notre offre de lancement, vous pouvez publier autant d'annonces que vous le souhaitez, sans frais. Nos formules (Annonce simple, Particulier, Agent indépendant, Agence — voir notre page Tarifs) définissent les volumes prévus pour chaque profil une fois la facturation en place ; vous serez prévenu individuellement avant tout changement. Que vous ayez un appartement ou un portefeuille de plusieurs biens, notre tableau de bord propriétaire s'adapte à vos besoins, avec statistiques et messagerie centralisés.",
     "q10Q": "Comment modifier ou supprimer mon compte ?",
     "q10A": "Vous pouvez modifier vos informations personnelles depuis les \"Paramètres\" de votre tableau de bord. Pour supprimer définitivement votre compte, contactez notre support via la page \"Contact\" (ou par téléphone/WhatsApp) avec votre adresse email d'inscription. La suppression est traitée sous 72 heures et entraîne la suppression de toutes vos données et annonces."
   },
@@ -403,6 +403,13 @@
     "line2": "Explorez nos autres pages en attendant le lancement officiel.",
     "badge": "🚀 Bientôt opérationnel",
     "backButton": "Retour aux annonces"
+  },
+  "NotFound": {
+    "title": "Page introuvable",
+    "line1": "Le lien suivi est peut-être incorrect, ou la page a été déplacée.",
+    "line2": "Vérifiez l'adresse, ou repartez de l'accueil.",
+    "badge": "404",
+    "backButton": "Retour à l'accueil"
   },
   "PropertyDetail": {
     "home": "Accueil",

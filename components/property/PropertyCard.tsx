@@ -92,9 +92,11 @@ export default function PropertyCard({ p }: { p: Property }) {
                 <Bath size={13} className="text-dim" /> {p.baths} {t("bathsAbbr")}
               </div>
             )}
-            <div className="flex items-center gap-1 text-xs text-muted">
-              <Ruler size={13} className="text-dim" /> {p.surface} m²
-            </div>
+            {rules.surface && (
+              <div className="flex items-center gap-1 text-xs text-muted">
+                <Ruler size={13} className="text-dim" /> {p.surface} m²
+              </div>
+            )}
           </div>
           <div className="flex justify-between items-end">
             <div className="font-display text-[21px] font-bold text-gold leading-none">
