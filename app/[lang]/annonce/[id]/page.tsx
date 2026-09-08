@@ -80,28 +80,27 @@ export default async function AnnonceDetailPage({
       ? `anon:${cookieStore.get("v_id")!.value}`
       : null;
 
+  const property = rowToProperty(row);
+
   // Best-effort : une erreur ici ne doit pas empêcher l'affichage de la
   // fiche. Pas d'incrément optimiste côté application — désormais
   // conditionnel (déduplication + exclusion propriétaire), donc `row.views`
   // tel que lu reste la seule valeur fiable à afficher pour ce chargement.
-  if (visitorId) {
-    const { error: viewError } = await supabase.rpc("register_property_view", {
-      prop_id: row.id,
-      visitor: visitorId,
-    });
-    if (viewError) console.error("Échec de l'enregistrement de la vue :", viewError);
-  }
+  //
+  // En parallèle avec les annonces similaires plutôt qu'avant : ces deux
+  // requêtes ne dépendent pas l'une de l'autre, les enchaîner ajoutait un
+  // aller-retour réseau complet au temps de réponse (mesuré : ~1,2s de
+  // TTFB sur cette page contre ~50-250ms ailleurs — trouvé lors du dernier
+  // passage de vérification avant déploiement).
+  const [viewResult, similarResult] = await Promise.all([
+    visitorId
+      ? supabase.rpc("register_property_view", { prop_id: row.id, visitor: visitorId })
+      : Promise.resolve({ error: null }),
+    supabase.from("properties").select("*").eq("city", property.city).neq("id", property.id).limit(3),
+  ]);
+  if (viewResult.error) console.error("Échec de l'enregistrement de la vue :", viewResult.error);
 
-  const property = rowToProperty(row);
-
-  const { data: similarRows } = await supabase
-    .from("properties")
-    .select("*")
-    .eq("city", property.city)
-    .neq("id", property.id)
-    .limit(3);
-
-  const similar = (similarRows ?? []).map(rowToProperty);
+  const similar = (similarResult.data ?? []).map(rowToProperty);
 
   return <PropertyDetail p={property} similar={similar} />;
 }
