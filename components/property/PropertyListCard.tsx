@@ -6,7 +6,7 @@ import { MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
-import { FIELD_VISIBILITY_RULES, propertyGroup, transactionMeta } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, propertyGroup, showsRoomCount, transactionMeta } from "@/lib/data";
 import Tag from "@/components/ui/Tag";
 import { useTranslations } from "@/i18n/IntlProvider";
 
@@ -16,6 +16,10 @@ export default function PropertyListCard({ p }: { p: Property }) {
   const group = propertyGroup(p.kind);
   const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
+  // Studio/Chambre : toujours 1 pièce/1 salle de bain par construction,
+  // sans intérêt à afficher (voir showsRoomCount dans lib/data.ts).
+  const showRooms = rules.rooms && showsRoomCount(p.kind);
+  const showBaths = rules.baths && showsRoomCount(p.kind);
   // Voir le commentaire équivalent dans PropertyCard.tsx.
   const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
   return (
@@ -48,8 +52,8 @@ export default function PropertyListCard({ p }: { p: Property }) {
           </div>
           <div className="flex justify-between items-end">
             <div className="flex gap-3.5 text-xs text-muted">
-              {rules.rooms && <span>🛏 {p.rooms} {t("roomsAbbr")}</span>}
-              {rules.baths && <span>🚿 {p.baths} {t("bathsAbbr")}</span>}
+              {showRooms && <span>🛏 {p.rooms} {t("roomsAbbr")}</span>}
+              {showBaths && <span>🚿 {p.baths} {t("bathsAbbr")}</span>}
               {rules.surface && <span>📐 {p.surface}m²</span>}
             </div>
             <div className="font-display text-lg font-bold text-gold">{fmtPrice(p.price)}</div>

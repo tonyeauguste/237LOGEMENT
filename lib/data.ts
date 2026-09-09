@@ -140,6 +140,20 @@ export function isSaleEligible(kind: string): boolean {
   return PROPERTY_KINDS.find((k) => k.value === kind)?.saleEligible ?? true;
 }
 
+// Une chambre louée à l'unité ou un studio ne font par construction qu'UNE
+// pièce/UNE salle de bain — afficher "1 Chambre · 1 Salle de bain" n'apporte
+// aucune information (toujours vrai, jamais variable), contrairement à une
+// villa, un appartement, etc. où ce nombre varie réellement et vaut donc
+// d'être affiché. FIELD_VISIBILITY_RULES reste au niveau du groupe
+// (résidentiel/commercial/foncier) pour le formulaire /publier ; cette
+// exclusion, elle, ne concerne que l'affichage public (fiche + cartes).
+const SINGLE_ROOM_KINDS = new Set(["chambre", "studio"]);
+
+/** Le nombre de chambres/salles de bain a-t-il un sens à afficher pour ce type de bien ? */
+export function showsRoomCount(kind: string): boolean {
+  return !SINGLE_ROOM_KINDS.has(kind);
+}
+
 /**
  * Règles de visibilité des champs de l'étape "Détails du bien" du
  * formulaire /publier, selon le type de transaction (Vente/Location) ET le

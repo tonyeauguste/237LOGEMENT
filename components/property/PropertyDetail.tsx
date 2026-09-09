@@ -10,7 +10,6 @@ import {
   Bath,
   Ruler,
   MapPin,
-  Phone,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -23,7 +22,7 @@ import {
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
 import { useAppStore, getVisitorId } from "@/lib/store";
-import { FIELD_VISIBILITY_RULES, amenityIcon, amenityLabel, kindLabel, propertyGroup, transactionMeta } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, amenityIcon, amenityLabel, kindLabel, propertyGroup, showsRoomCount, transactionMeta } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -41,6 +40,11 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   const group = propertyGroup(p.kind);
   const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
+  // Studio/Chambre : toujours 1 pièce/1 salle de bain par construction, donc
+  // sans intérêt à afficher (voir showsRoomCount) — même si rules.rooms/
+  // rules.baths sont vrais pour le groupe résidentiel.
+  const showRooms = rules.rooms && showsRoomCount(p.kind);
+  const showBaths = rules.baths && showsRoomCount(p.kind);
   // B.2/B.4 — voir le commentaire équivalent dans PropertyCard.tsx : ne
   // concerne que le court séjour, le longue durée supprime l'annonce.
   const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
@@ -268,25 +272,27 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           </div>
 
           {/* Caractéristiques — chambres/salles de bain masquées pour un
-              bureau, une boutique ou un terrain ; surface masquée en
-              location sauf pour un terrain (voir FIELD_VISIBILITY_RULES,
-              Tâche 4.1 du prompt "publier-et-auth"). */}
-          {(rules.rooms || rules.baths || rules.surface) && (
+              bureau, une boutique ou un terrain (FIELD_VISIBILITY_RULES,
+              Tâche 4.1 du prompt "publier-et-auth"), ET pour un studio/une
+              chambre où ce nombre est toujours 1 et n'apporte donc aucune
+              information (voir showsRoomCount) ; surface masquée en
+              location sauf pour un terrain. */}
+          {(showRooms || showBaths || rules.surface) && (
             <div
               className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
-                [rules.rooms, rules.baths, rules.surface].filter(Boolean).length > 1
+                [showRooms, showBaths, rules.surface].filter(Boolean).length > 1
                   ? "grid-cols-3"
                   : "grid-cols-1"
               }`}
             >
-              {rules.rooms && (
+              {showRooms && (
                 <div className="p-[18px] text-center border-r border-border">
                   <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
                   <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
                   <div className="text-xs text-muted">{p.rooms > 1 ? t("rooms") : t("room")}</div>
                 </div>
               )}
-              {rules.baths && (
+              {showBaths && (
                 <div className="p-[18px] text-center border-r border-border">
                   <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
                   <div className="font-semibold text-[15px] text-text">{p.baths}</div>
@@ -565,20 +571,13 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             )}
           </div>
 
-          {/* Contact — bouton WhatsApp direct vers le propriétaire, à la
-              place de l'ancien chat interne (property_messages). Voir
-              ContactOwnerButton pour le format du lien wa.me et le message
-              pré-rempli. */}
+          {/* Contact — uniquement le bouton WhatsApp direct vers le
+              propriétaire, à la place de l'ancien chat interne
+              (property_messages). Le numéro n'est plus affiché en clair sur
+              la fiche (demande explicite) : voir ContactOwnerButton pour le
+              format du lien wa.me et le message pré-rempli. */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
             <ContactOwnerButton phone={p.owner.phone} propertyTitle={p.title} />
-            {p.owner.phone && (
-              <a
-                href={`tel:${p.owner.phone.replace(/[^+\d]/g, "")}`}
-                className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer w-full px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold mt-2.5"
-              >
-                <Phone size={15} /> {p.owner.phone}
-              </a>
-            )}
           </div>
 
           {/* Conseils de sécurité — repris du modèle Rent237 : rassure le
