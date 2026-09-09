@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Heart, Bed, Bath, Ruler, MapPin } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice } from "@/lib/format";
-import { FIELD_VISIBILITY_RULES, propertyGroup, transactionMeta } from "@/lib/data";
+import { FIELD_VISIBILITY_RULES, propertyGroup, showsRoomCount, transactionMeta } from "@/lib/data";
 import { useAppStore } from "@/lib/store";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
@@ -24,6 +24,10 @@ export default function PropertyCard({ p }: { p: Property }) {
   // formulaire /publier (FIELD_VISIBILITY_RULES), pour ne pas afficher
   // "0 ch. · 0 sdb" sur ce type d'annonce.
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
+  // Studio/Chambre : toujours 1 pièce/1 salle de bain par construction,
+  // donc sans intérêt à afficher ici non plus (voir showsRoomCount).
+  const showRooms = rules.rooms && showsRoomCount(p.kind);
+  const showBaths = rules.baths && showsRoomCount(p.kind);
   // B.2/B.4 — le flou + badge "Occupé" ne concernent que le court séjour :
   // en longue durée, marquer un bien occupé le supprime immédiatement (voir
   // handleMarkAsRented dans app/compte/page.tsx), il ne reste donc jamais
@@ -82,12 +86,12 @@ export default function PropertyCard({ p }: { p: Property }) {
             {p.quartier}, {p.city}
           </div>
           <div className="flex gap-4 mb-3.5 pb-3.5 border-b border-border">
-            {rules.rooms && (
+            {showRooms && (
               <div className="flex items-center gap-1 text-xs text-muted">
                 <Bed size={13} className="text-dim" /> {p.rooms} {t("roomsAbbr")}
               </div>
             )}
-            {rules.baths && (
+            {showBaths && (
               <div className="flex items-center gap-1 text-xs text-muted">
                 <Bath size={13} className="text-dim" /> {p.baths} {t("bathsAbbr")}
               </div>
