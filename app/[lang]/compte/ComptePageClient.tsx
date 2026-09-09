@@ -4,7 +4,7 @@
 // Tableau de bord UNIFIÉ — remplace les deux espaces séparés
 // (/compte/visiteur et /compte/proprietaire) qui obligeaient à choisir son
 // camp à l'inscription. Désormais tout compte a le même espace : favoris,
-// annonces, statistiques, messages, paramètres — et, pour l'admin
+// annonces, statistiques, paramètres — et, pour l'admin
 // uniquement, la section Administration.
 // ═══════════════════════════════════════════════
 
@@ -18,7 +18,6 @@ import {
   Heart,
   PlusCircle,
   BarChart3,
-  MessageSquare,
   Settings,
   LogOut,
   Eye,
@@ -56,7 +55,7 @@ import { propertyGroup, transactionMeta, DEFAULT_AVATAR } from "@/lib/data";
 import type { Property } from "@/lib/types";
 import { useTranslations } from "@/i18n/IntlProvider";
 
-type UserSection = "favoris" | "listings" | "stats" | "messages" | "settings";
+type UserSection = "favoris" | "listings" | "stats" | "settings";
 type AdminSection = "admin-overview" | "admin-annonces" | "admin-users";
 type Section = UserSection | AdminSection;
 
@@ -95,9 +94,6 @@ export default function AccountDashboard() {
   // remontage du Toggle concerné (voir son usage plus bas) — sinon son
   // bascule optimiste reste affiché à tort après une erreur serveur.
   const [toggleNonce, setToggleNonce] = useState(0);
-  const [messages, setMessages] = useState<
-    { id: number; message: string; created_at: string; property_title: string; property_id: number }[]
-  >([]);
   const [loading, setLoading] = useState(true);
 
   // ── Formulaire "Paramètres" ──────────────────────
@@ -125,35 +121,21 @@ export default function AccountDashboard() {
     setFormCity(user.city ?? "");
   }
 
-  // Annonces publiées par cet utilisateur + messages reçus sur celles-ci.
+  // Annonces publiées par cet utilisateur.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     const supabase = createClient();
-    Promise.all([
-      supabase
-        .from("properties")
-        .select("*")
-        .eq("owner_id", user.id)
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("property_messages")
-        .select("id, message, created_at, property_id, properties(title)")
-        .order("created_at", { ascending: false }),
-    ]).then(([propsRes, msgRes]) => {
-      if (cancelled) return;
-      setListings((propsRes.data ?? []).map(rowToProperty));
-      setMessages(
-        (msgRes.data ?? []).map((m) => ({
-          id: m.id,
-          message: m.message,
-          created_at: m.created_at,
-          property_id: m.property_id ?? 0,
-          property_title: (m.properties as { title?: string } | null)?.title ?? t("deletedListing"),
-        }))
-      );
-      setLoading(false);
-    });
+    supabase
+      .from("properties")
+      .select("*")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (cancelled) return;
+        setListings((data ?? []).map(rowToProperty));
+        setLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -190,7 +172,6 @@ export default function AccountDashboard() {
   // d'être suivi en base et utilisé par cet onglet.
   const stats = [
     { icon: "📊", val: String(listings.length), label: t("statPublished"), color: "text-gold" },
-    { icon: "💬", val: String(messages.length), label: t("statMessages"), color: "text-green2" },
     { icon: "❤️", val: String(totalFavs), label: t("statFavs"), color: "text-red" },
   ];
 
@@ -477,7 +458,6 @@ export default function AccountDashboard() {
           { key: "favoris", label: t("navFavorites"), icon: <Heart size={15} />, badge: favorites.length },
           { key: "listings", label: t("navListings"), icon: <List size={15} /> },
           { key: "stats", label: t("navStats"), icon: <BarChart3 size={15} /> },
-          { key: "messages", label: t("navMessages"), icon: <MessageSquare size={15} /> },
           { key: "settings", label: t("navSettings"), icon: <Settings size={15} /> },
           // Visible UNIQUEMENT pour l'admin.
           ...(isAdmin ? [{ key: "admin", label: t("navAdmin"), icon: <Shield size={15} /> }] : []),
@@ -783,37 +763,6 @@ export default function AccountDashboard() {
                           </Link>
                         );
                       })}
-                  </div>
-                )}
-              </>
-            )}
-
-            {section === "messages" && (
-              <>
-                <Header label={t("communicationLabel")} title={t("messagesTitle")} />
-                {loading ? null : messages.length === 0 ? (
-                  <div className="text-center py-[60px] px-5">
-                    <div className="text-[48px] mb-3.5">💬</div>
-                    <h3 className="text-lg font-semibold text-text mb-2">{t("noMessagesTitle")}</h3>
-                    <p className="text-sm text-muted">{t("noMessagesText")}</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2.5">
-                    {messages.map((m) => (
-                      <Link
-                        key={m.id}
-                        href={`/annonce/${m.property_id}`}
-                        className="block bg-card border border-border rounded-xl px-5 py-4 hover:border-gold transition-colors"
-                      >
-                        <div className="flex justify-between items-center mb-1.5 gap-3">
-                          <span className="font-semibold text-sm text-text">{m.property_title}</span>
-                          <span className="text-xs text-muted shrink-0">
-                            {new Date(m.created_at).toLocaleDateString("fr-FR")}
-                          </span>
-                        </div>
-                        <p className="text-[13px] text-muted leading-relaxed">{m.message}</p>
-                      </Link>
-                    ))}
                   </div>
                 )}
               </>

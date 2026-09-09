@@ -10,7 +10,6 @@ import {
   Bath,
   Ruler,
   MapPin,
-  MessageSquare,
   Phone,
   Check,
   ChevronLeft,
@@ -29,6 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
 import Stars from "@/components/ui/Stars";
 import Button from "@/components/ui/Button";
+import ContactOwnerButton from "@/components/property/ContactOwnerButton";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 type DetailTab = "desc" | "amenities" | "map";
@@ -46,9 +46,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [tab, setTab] = useState<DetailTab>("desc");
-  const [msg, setMsg] = useState("");
-  const [sent, setSent] = useState(false);
-  const [sending, setSending] = useState(false);
   const [showTop, setShowTop] = useState(false);
 
   const isFav = useAppStore((s) => s.isFav(p.id));
@@ -151,25 +148,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   function shareOnWhatsApp() {
     const url = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${window.location.href}`)}`;
     window.open(url, "_blank", "noopener,noreferrer");
-  }
-
-  async function sendMessage() {
-    if (!msg.trim()) {
-      showToast(t("toastEmptyMessage"), "error");
-      return;
-    }
-    setSending(true);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("property_messages")
-      .insert({ property_id: p.id, message: msg.trim() });
-    setSending(false);
-    if (error) {
-      showToast(t("toastSendError"), "error");
-      return;
-    }
-    setSent(true);
-    showToast(t("toastMessageSent"), "success");
   }
 
   return (
@@ -587,40 +565,19 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             )}
           </div>
 
-          {/* Contact */}
+          {/* Contact — bouton WhatsApp direct vers le propriétaire, à la
+              place de l'ancien chat interne (property_messages). Voir
+              ContactOwnerButton pour le format du lien wa.me et le message
+              pré-rempli. */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
-            <h4 className="font-semibold text-base text-text mb-4 flex items-center gap-2">
-              <MessageSquare size={16} className="text-gold" /> {t("contactOwner")}
-            </h4>
-            {sent ? (
-              <div className="text-center py-6">
-                <div className="text-[40px] mb-3">✅</div>
-                <h5 className="font-semibold text-[16px] text-text mb-1.5">{t("messageSentTitle")}</h5>
-                <p className="text-muted text-sm">{t("messageSentText")}</p>
-              </div>
-            ) : (
-              <>
-                <textarea
-                  className="form-control mb-3"
-                  style={{ minHeight: 100 }}
-                  placeholder={t("messagePlaceholder")}
-                  value={msg}
-                  onChange={(e) => setMsg(e.target.value)}
-                />
-                <Button variant="gold" full loading={sending} onClick={sendMessage} className="mb-2.5">
-                  {t("sendMessage")}
-                </Button>
-                {p.owner.phone ? (
-                  <a
-                    href={`tel:${p.owner.phone.replace(/[^+\d]/g, "")}`}
-                    className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer w-full px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold"
-                  >
-                    <Phone size={15} /> {p.owner.phone}
-                  </a>
-                ) : (
-                  <p className="text-center text-xs text-dim italic">{t("noPhoneProvided")}</p>
-                )}
-              </>
+            <ContactOwnerButton phone={p.owner.phone} propertyTitle={p.title} />
+            {p.owner.phone && (
+              <a
+                href={`tel:${p.owner.phone.replace(/[^+\d]/g, "")}`}
+                className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer w-full px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold mt-2.5"
+              >
+                <Phone size={15} /> {p.owner.phone}
+              </a>
             )}
           </div>
 
