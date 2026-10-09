@@ -194,7 +194,8 @@
     "toastEnterEmailFirst": "⚠️ Renseignez d'abord votre adresse email ci-dessus.",
     "toastResetEmailSent": "📧 Email de réinitialisation envoyé (si ce compte existe).",
     "toastResetEmailError": "❌ Une erreur est survenue. Réessayez.",
-    "toastLoginRequired": "🔒 Veuillez vous connecter pour accéder à cette page."
+    "toastLoginRequired": "🔒 Veuillez vous connecter pour accéder à cette page.",
+    "toastPasswordPwned": "🚨 Ce mot de passe figure dans des fuites de données connues ({count} fois). Choisissez-en un autre."
   },
   "About": {
     "metaTitle": "À propos – 237Logement",
@@ -757,7 +758,8 @@
     "toastPasswordMismatch": "⚠️ Les deux mots de passe ne correspondent pas.",
     "toastPasswordSameAsOld": "⚠️ Choisissez un mot de passe différent de l'actuel.",
     "toastPasswordChangeError": "❌ Impossible de changer le mot de passe. Réessayez.",
-    "toastPasswordChanged": "✅ Mot de passe modifié."
+    "toastPasswordChanged": "✅ Mot de passe modifié.",
+    "toastPasswordPwned": "🚨 Ce mot de passe figure dans des fuites de données connues ({count} fois). Choisissez-en un autre."
   },
   "ResetPassword": {
     "metaTitle": "Réinitialiser le mot de passe – 237Logement",
@@ -777,7 +779,8 @@
     "toastPasswordMismatch": "⚠️ Les deux mots de passe ne correspondent pas.",
     "toastPasswordSameAsOld": "⚠️ Choisissez un mot de passe différent de l'actuel.",
     "toastError": "❌ Impossible de changer le mot de passe. Le lien a peut-être expiré.",
-    "toastSuccess": "✅ Mot de passe modifié. Vous êtes connecté."
+    "toastSuccess": "✅ Mot de passe modifié. Vous êtes connecté.",
+    "toastPasswordPwned": "🚨 Ce mot de passe figure dans des fuites de données connues ({count} fois). Choisissez-en un autre."
   },
   "AdminAnnonces": {
     "administration": "Administration",

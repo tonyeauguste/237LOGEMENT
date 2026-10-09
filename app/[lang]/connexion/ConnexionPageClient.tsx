@@ -11,6 +11,7 @@ import PasswordField from "@/components/auth/PasswordField";
 import PasswordStrength from "@/components/auth/PasswordStrength";
 import { buildUserFromSession, useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
+import { isPasswordPwned } from "@/lib/pwned";
 import { DEFAULT_AVATAR } from "@/lib/data";
 import { useTranslations } from "@/i18n/IntlProvider";
 
@@ -147,6 +148,18 @@ function AuthPageInner() {
 
   async function handleRegister() {
     setLoading(true);
+
+    // Refus des mots de passe déjà apparus dans une fuite de données.
+    // Remplace l'option « Leaked password protection » de Supabase Auth,
+    // réservée au forfait Pro. Laisse passer si la vérification n'aboutit
+    // pas — voir lib/pwned.ts.
+    const pwned = await isPasswordPwned(regPwd);
+    if (pwned.pwned) {
+      setLoading(false);
+      showToast(t("toastPasswordPwned", { count: pwned.count.toLocaleString() }), "error");
+      return;
+    }
+
     const supabase = createClient();
     const name = `${fname} ${lname}`.trim();
     // Les objectifs déterminent le rôle stocké : dès que l'utilisateur

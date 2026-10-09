@@ -49,6 +49,7 @@ import AdminUsers from "@/components/dashboard/AdminUsers";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
+import { isPasswordPwned } from "@/lib/pwned";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
 import { propertyGroup, transactionMeta, DEFAULT_AVATAR } from "@/lib/data";
@@ -409,6 +410,15 @@ export default function AccountDashboard() {
     }
 
     setSavingPwd(true);
+
+    // Voir lib/pwned.ts : même garde-fou qu'à l'inscription.
+    const pwned = await isPasswordPwned(newPwd);
+    if (pwned.pwned) {
+      setSavingPwd(false);
+      showToast(t("toastPasswordPwned", { count: pwned.count.toLocaleString() }), "error");
+      return;
+    }
+
     const { error } = await createClient().auth.updateUser({ password: newPwd });
     setSavingPwd(false);
 

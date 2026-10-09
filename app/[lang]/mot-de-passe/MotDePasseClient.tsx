@@ -23,6 +23,7 @@ import PasswordStrength from "@/components/auth/PasswordStrength";
 import { useAppStore } from "@/lib/store";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { createClient } from "@/lib/supabase/client";
+import { isPasswordPwned } from "@/lib/pwned";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function NouveauMotDePassePage() {
@@ -47,6 +48,15 @@ export default function NouveauMotDePassePage() {
     }
 
     setSaving(true);
+
+    // Voir lib/pwned.ts : même garde-fou qu'à l'inscription.
+    const pwned = await isPasswordPwned(pwd);
+    if (pwned.pwned) {
+      setSaving(false);
+      showToast(t("toastPasswordPwned", { count: pwned.count.toLocaleString() }), "error");
+      return;
+    }
+
     const { error } = await createClient().auth.updateUser({ password: pwd });
     setSaving(false);
 
