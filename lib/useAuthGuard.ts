@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAppStore } from "./store";
 import { useAuthSession } from "./useAuthSession";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 /**
  * Redirige vers /connexion si l'utilisateur n'est pas authentifié.
@@ -25,11 +26,12 @@ export function useAuthGuard() {
   const showToast = useAppStore((s) => s.showToast);
   const router = useRouter();
   const ready = useAuthSession();
+  const t = useTranslations("Auth");
 
   useEffect(() => {
     if (!ready) return;
     if (!currentUser) {
-      showToast("🔒 Veuillez vous connecter pour accéder à cette page.", "info");
+      showToast(t("toastLoginRequired"), "info");
       router.replace("/connexion?tab=login");
     }
     // Volontairement dépendant de `ready` seul (pas de currentUser) : ce

@@ -777,6 +777,12 @@ export default function AccountDashboard() {
 
                     <div className="flex items-center gap-4 mb-5">
                       <div className="w-16 h-16 rounded-full border-2 border-gold overflow-hidden shrink-0 relative">
+                        {/* Avatar en <img> et non <Image /> : la source peut pointer vers
+                            n'importe quel hôte (photo importée par l'utilisateur, avatar
+                            par défaut), alors que next/image n'accepte que les domaines
+                            listés dans remotePatterns (next.config.ts) et échoue sur les
+                            autres. Même convention que PhotoUploader. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={user.avatar || DEFAULT_AVATAR}
                           alt={user.name}

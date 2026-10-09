@@ -20,8 +20,14 @@ import { DEFAULT_LOCALE, LOCALES, isLocale } from "@/i18n/config";
 // routage i18n (voir la même doc, section "Routing Overview").
 // ═══════════════════════════════════════════════
 
+// Mémorise la langue choisie. Posé par LanguageSwitcher au clic, et aussi
+// par ce proxy dès qu'une URL préfixée est servie (voir plus bas) : les
+// deux doivent utiliser le même nom et la même durée de vie.
+const LOCALE_COOKIE = "NEXT_LOCALE";
+const LOCALE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 an
+
 function detectLocale(request: NextRequest): string {
-  const cookieLocale = request.cookies.get("NEXT_LOCALE")?.value;
+  const cookieLocale = request.cookies.get(LOCALE_COOKIE)?.value;
   if (cookieLocale && isLocale(cookieLocale)) return cookieLocale;
 
   const acceptLanguage = request.headers.get("accept-language") || "";
@@ -62,11 +68,25 @@ function ensureVisitorCookie(request: NextRequest, response: NextResponse) {
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  const hasLocalePrefix = LOCALES.some(
+  const prefixLocale = LOCALES.find(
     (l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`)
   );
-  if (hasLocalePrefix) {
+  if (prefixLocale) {
     const response = NextResponse.next();
+    // L'URL fait foi : on aligne NEXT_LOCALE sur le préfixe effectivement
+    // visité. Sans ça, le cookie n'était posé que par LanguageSwitcher —
+    // quelqu'un arrivant sur un lien partagé /en/... avec un navigateur
+    // configuré en français repartait en français dès le premier lien
+    // interne (ils sont écrits sans préfixe, ex: href="/contact"), et
+    // perdait l'anglais sans avoir rien demandé.
+    if (request.cookies.get(LOCALE_COOKIE)?.value !== prefixLocale) {
+      response.cookies.set(LOCALE_COOKIE, prefixLocale, {
+        maxAge: LOCALE_COOKIE_MAX_AGE,
+        httpOnly: false,
+        sameSite: "lax",
+        path: "/",
+      });
+    }
     ensureVisitorCookie(request, response);
     return response;
   }

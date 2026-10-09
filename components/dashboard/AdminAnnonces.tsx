@@ -26,16 +26,14 @@ import { useTranslations } from "@/i18n/IntlProvider";
 
 const PAGE_SIZE = 20;
 
-const STATUS_OPTIONS: { value: ListingStatus | ""; label: string }[] = [
-  { value: "", label: "Tous les statuts" },
-  { value: "active", label: "Active" },
-  { value: "blocked", label: "Bloquée" },
-  { value: "pending", label: "En attente" },
-];
+// Valeurs seules : les libellés sont traduits au rendu (voir STATUS_OPTIONS
+// plus bas dans le composant). Les garder ici en dur laissait le filtre en
+// français alors que le reste du panneau admin passait en anglais.
+const STATUS_VALUES: (ListingStatus | "")[] = ["", "active", "blocked", "pending"];
 
 export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: string }) {
-  // Adaptation minimale à la signature localisée de transactionMeta (voir
-  // lib/data.ts) — le reste de ce panneau admin n'est pas encore traduit.
+  const t = useTranslations("AdminAnnonces");
+  // transactionMeta a sa propre signature localisée (voir lib/data.ts).
   const tTx = useTranslations("Transaction");
   const router = useRouter();
   const showToast = useAppStore((s) => s.showToast);
@@ -98,7 +96,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
     query.range(from, to).then(({ data, count, error }) => {
       if (cancelled) return;
       if (error) {
-        showToast("❌ Impossible de charger les annonces.", "error");
+        showToast(t("toastLoadError"), "error");
         setLoading(false);
         return;
       }
@@ -115,8 +113,8 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
 
   async function toggleBlock(p: Property) {
     const nextStatus: ListingStatus = p.status === "blocked" ? "active" : "blocked";
-    const label = nextStatus === "blocked" ? "bloquer" : "débloquer";
-    if (!window.confirm(`Voulez-vous vraiment ${label} l'annonce « ${p.title} » ?`)) return;
+    const action = t(nextStatus === "blocked" ? "confirmBlockAction" : "confirmUnblockAction");
+    if (!window.confirm(t("confirmBlockText", { action, title: p.title }))) return;
 
     setBusyId(p.id);
     const supabase = createClient();
@@ -128,18 +126,15 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
     setBusyId(null);
 
     if (error || !data || data.length === 0) {
-      showToast("❌ Action impossible. Réessayez.", "error");
+      showToast(t("toastActionError"), "error");
       return;
     }
     setProperties((prev) => prev.map((l) => (l.id === p.id ? { ...l, status: nextStatus } : l)));
-    showToast(
-      nextStatus === "blocked" ? "🚫 Annonce bloquée — masquée du site public." : "✅ Annonce débloquée.",
-      "success"
-    );
+    showToast(t(nextStatus === "blocked" ? "toastBlocked" : "toastUnblocked"), "success");
   }
 
   async function handleDelete(p: Property) {
-    if (!window.confirm(`Supprimer définitivement l'annonce « ${p.title} » ? Cette action est irréversible.`)) {
+    if (!window.confirm(t("confirmDeleteText", { title: p.title }))) {
       return;
     }
     setBusyId(p.id);
@@ -147,12 +142,12 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
     const { data, error } = await supabase.from("properties").delete().eq("id", p.id).select();
     setBusyId(null);
     if (error || !data || data.length === 0) {
-      showToast("❌ Impossible de supprimer l'annonce. Réessayez.", "error");
+      showToast(t("toastDeleteError"), "error");
       return;
     }
     setProperties((prev) => prev.filter((l) => l.id !== p.id));
-    setTotal((t) => Math.max(0, t - 1));
-    showToast("🗑️ Annonce supprimée définitivement.", "success");
+    setTotal((n) => Math.max(0, n - 1));
+    showToast(t("toastDeleted"), "success");
   }
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -160,10 +155,12 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
   return (
     <>
       <div className="mb-6">
-        <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">Administration</div>
-        <h2 className="font-display text-[26px] font-bold text-text mt-1">Toutes les annonces</h2>
+        <div className="text-[11px] tracking-[3px] uppercase text-gold font-semibold">{t("administration")}</div>
+        <h2 className="font-display text-[26px] font-bold text-text mt-1">{t("title")}</h2>
         <p className="text-sm text-muted mt-1.5">
-          {loading ? "Chargement…" : `${total} annonce${total > 1 ? "s" : ""} sur la plateforme.`}
+          {loading
+            ? t("loading")
+            : t("listingCount", { count: total, plural: total > 1 ? "s" : "" })}
         </p>
       </div>
 
@@ -172,7 +169,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
           <input
             className="form-control !pl-10"
-            placeholder="Rechercher par titre, ville ou propriétaire…"
+            placeholder={t("searchPlaceholder")}
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
@@ -180,7 +177,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
         {/* Saisie libre : les propriétaires peuvent publier dans une ville
             absente de la liste, l'admin doit donc pouvoir la filtrer aussi. */}
         <CityInput
-          placeholder="Toutes les villes"
+          placeholder={t("cityPlaceholder")}
           className="form-control sm:w-[200px]"
           value={city}
           onChange={(e) => handleCityChange(e.target.value)}
@@ -190,21 +187,29 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
           value={status}
           onChange={(e) => handleStatusChange(e.target.value as ListingStatus | "")}
         >
-          {STATUS_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
+          {STATUS_VALUES.map((value) => (
+            <option key={value} value={value}>
+              {t(
+                value === ""
+                  ? "statusAll"
+                  : value === "active"
+                    ? "statusActive"
+                    : value === "blocked"
+                      ? "statusBlocked"
+                      : "statusPending"
+              )}
             </option>
           ))}
         </select>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted text-center py-16">Chargement des annonces…</p>
+        <p className="text-sm text-muted text-center py-16">{t("loadingListings")}</p>
       ) : properties.length === 0 ? (
         <div className="text-center py-16 px-5">
           <div className="text-[40px] mb-3">🔍</div>
-          <h3 className="text-base font-semibold text-text mb-1.5">Aucune annonce ne correspond</h3>
-          <p className="text-sm text-muted">Essayez d&apos;élargir votre recherche ou vos filtres.</p>
+          <h3 className="text-base font-semibold text-text mb-1.5">{t("noMatchTitle")}</h3>
+          <p className="text-sm text-muted">{t("noMatchText")}</p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -223,10 +228,10 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
                   <div className="flex gap-1.5 mb-1.5 flex-wrap">
                     <Tag color={meta.tagColor}>{meta.badgeLabel}</Tag>
                     {p.type === "courte" && p.occupancyStatus === "occupe" && (
-                      <Tag color="red">🔴 Occupé</Tag>
+                      <Tag color="red">{t("tagOccupied")}</Tag>
                     )}
-                    {p.status === "blocked" && <Tag color="orange">🚫 Bloqué</Tag>}
-                    {p.status === "pending" && <Tag color="blue">⏳ En attente</Tag>}
+                    {p.status === "blocked" && <Tag color="orange">{t("tagBlocked")}</Tag>}
+                    {p.status === "pending" && <Tag color="blue">{t("tagPending")}</Tag>}
                   </div>
                   <div className="font-semibold text-base text-text mb-1 truncate">{p.title}</div>
                   <div className="text-[13px] text-muted">
@@ -237,7 +242,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
                 <div className="flex gap-2 shrink-0">
                   <button
                     onClick={() => router.push(`/publier?edit=${p.id}`)}
-                    title="Modifier l'annonce"
+                    title={t("editListing")}
                     className="w-9 h-9 rounded-lg border border-[rgba(59,130,246,.3)] bg-[rgba(59,130,246,.08)] flex items-center justify-center text-blue hover:bg-[rgba(59,130,246,.18)] transition-colors"
                   >
                     <Pencil size={15} />
@@ -245,7 +250,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
                   <button
                     onClick={() => toggleBlock(p)}
                     disabled={busyId === p.id}
-                    title={p.status === "blocked" ? "Débloquer l'annonce" : "Bloquer l'annonce"}
+                    title={t(p.status === "blocked" ? "unblockListing" : "blockListing")}
                     className={
                       p.status === "blocked"
                         ? "w-9 h-9 rounded-lg border border-[rgba(34,197,94,.3)] bg-[rgba(34,197,94,.08)] flex items-center justify-center text-green2 hover:bg-[rgba(34,197,94,.18)] transition-colors disabled:opacity-50"
@@ -257,7 +262,7 @@ export default function AdminAnnonces({ initialSearch = "" }: { initialSearch?: 
                   <button
                     onClick={() => handleDelete(p)}
                     disabled={busyId === p.id}
-                    title="Supprimer l'annonce"
+                    title={t("deleteListing")}
                     className="w-9 h-9 rounded-lg border border-[rgba(224,85,85,.3)] bg-[rgba(224,85,85,.08)] flex items-center justify-center text-red hover:bg-[rgba(224,85,85,.18)] transition-colors disabled:opacity-50"
                   >
                     <Trash2 size={15} />

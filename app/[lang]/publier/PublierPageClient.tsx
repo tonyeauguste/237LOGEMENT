@@ -18,6 +18,7 @@ import {
   FIELD_VISIBILITY_RULES,
   isSaleEligible,
   kindLabel,
+  PHOTO_MIN,
   PROPERTY_KINDS,
   propertyGroup,
   transactionMeta,
@@ -319,7 +320,7 @@ function PublierPageInner() {
       deposit,
       advance,
       landTitleStatus,
-    });
+    }, t);
     setErrors(result);
     return result;
   }
@@ -334,8 +335,8 @@ function PublierPageInner() {
       showToast(validation.surface || t("toastFillTitle"), "error");
       return;
     }
-    if (step === 3 && photos.length < 3) {
-      showToast(t("toastMinPhotos"), "error");
+    if (step === 3 && photos.length < PHOTO_MIN) {
+      showToast(t("toastMinPhotos", { min: PHOTO_MIN }), "error");
       return;
     }
     if (step === 4 && (validation.price || validation.deposit || validation.advance)) {

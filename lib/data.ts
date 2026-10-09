@@ -365,5 +365,15 @@ export const FAQ_CATEGORIES: { value: FaqCategory | "all" }[] = [
   { value: "securite" },
 ];
 
+// ── Contraintes photo du formulaire /publier ────────────────────
+// Ici plutôt que dans <PhotoUploader> : lib/validation.ts en a besoin
+// aussi, et un module de validation pur n'a pas à importer un composant
+// client. Les libellés affichés les interpolent (voir messages/*.json,
+// Publish.photoBadge*) — aucun de ces nombres ne doit être réécrit en
+// dur dans un texte.
+export const PHOTO_MAX = 10;
+export const PHOTO_SIZE_MB = 10;
+export const PHOTO_MIN = 3;
+
 export const DEFAULT_AVATAR =
   "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Crect width='80' height='80' fill='%231C2E40'/%3E%3Ccircle cx='40' cy='30' r='16' fill='%23243548'/%3E%3Cellipse cx='40' cy='72' rx='26' ry='20' fill='%23243548'/%3E%3C/svg%3E";

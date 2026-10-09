@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import clsx from "clsx";
+import { useTranslations } from "@/i18n/IntlProvider";
 
 /** Pagination simple (précédent / numéros / suivant) — utilisée par les listes admin (20 éléments/page). */
 export default function Pagination({
@@ -13,6 +14,8 @@ export default function Pagination({
   pageCount: number;
   onChange: (page: number) => void;
 }) {
+  const t = useTranslations("Pagination");
+
   if (pageCount <= 1) return null;
 
   // Fenêtre glissante de pages autour de la page courante, pour éviter
@@ -22,12 +25,12 @@ export default function Pagination({
   );
 
   return (
-    <div className="flex items-center justify-center gap-1.5 mt-6 flex-wrap">
+    <nav aria-label={t("label")} className="flex items-center justify-center gap-1.5 mt-6 flex-wrap">
       <button
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
         className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted hover:border-gold hover:text-gold transition-colors disabled:opacity-40 disabled:pointer-events-none"
-        aria-label="Page précédente"
+        aria-label={t("previous")}
       >
         <ChevronLeft size={15} />
       </button>
@@ -36,6 +39,10 @@ export default function Pagination({
           {i > 0 && pages[i - 1] !== p - 1 && <span className="text-muted text-xs px-1">…</span>}
           <button
             onClick={() => onChange(p)}
+            aria-label={t("goToPage", { page: p })}
+            // Signale la page courante aux lecteurs d'écran : la seule
+            // indication était la couleur, invisible pour eux.
+            aria-current={p === page ? "page" : undefined}
             className={clsx(
               "w-9 h-9 rounded-lg text-[13px] font-semibold transition-colors",
               p === page ? "bg-gold text-[#07111e]" : "border border-border text-muted hover:border-gold hover:text-gold"
@@ -49,10 +56,10 @@ export default function Pagination({
         onClick={() => onChange(page + 1)}
         disabled={page >= pageCount}
         className="w-9 h-9 rounded-lg border border-border flex items-center justify-center text-muted hover:border-gold hover:text-gold transition-colors disabled:opacity-40 disabled:pointer-events-none"
-        aria-label="Page suivante"
+        aria-label={t("next")}
       >
         <ChevronRight size={15} />
       </button>
-    </div>
+    </nav>
   );
 }

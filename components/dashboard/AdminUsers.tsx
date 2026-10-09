@@ -282,6 +282,7 @@ function UserDetailModal({
   busy: boolean;
 }) {
   const t = useTranslations("AdminUsers");
+  const tDate = useTranslations("RelativeDate");
   const showToast = useAppStore((s) => s.showToast);
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(user.phone || "");
@@ -349,12 +350,12 @@ function UserDetailModal({
         <div className="grid grid-cols-2 gap-3 mb-5 text-[13px]">
           <div className="bg-bg3 rounded-xl px-3.5 py-3">
             <div className="text-muted text-[11px] uppercase tracking-wide mb-1">{t("modalJoined")}</div>
-            <div className="text-text font-medium">{fmtRelativeDate(user.createdAt)}</div>
+            <div className="text-text font-medium">{fmtRelativeDate(user.createdAt, tDate)}</div>
           </div>
           <div className="bg-bg3 rounded-xl px-3.5 py-3">
             <div className="text-muted text-[11px] uppercase tracking-wide mb-1">{t("modalLastLogin")}</div>
             <div className="text-text font-medium">
-              {user.lastSignInAt ? fmtRelativeDate(user.lastSignInAt) : t("modalNever")}
+              {user.lastSignInAt ? fmtRelativeDate(user.lastSignInAt, tDate) : t("modalNever")}
             </div>
           </div>
           <div className="bg-bg3 rounded-xl px-3.5 py-3 col-span-2">

@@ -49,6 +49,22 @@
     "parking": "Parking",
     "chauffeEau": "Water heater"
   },
+  "Pagination": {
+    "previous": "Previous page",
+    "next": "Next page",
+    "goToPage": "Page {page}",
+    "label": "Pagination"
+  },
+  "RelativeDate": {
+    "recently": "recently",
+    "today": "today",
+    "dayOne": "1 day ago",
+    "days": "{count} days ago",
+    "monthOne": "1 month ago",
+    "months": "{count} months ago",
+    "yearOne": "1 year ago",
+    "years": "{count} years ago"
+  },
   "Property": {
     "notAvailable": "Not available",
     "occupied": "Occupied",
@@ -69,7 +85,8 @@
     "register": "Sign up",
     "logout": "Log out",
     "dashboard": "My account",
-    "menu": "Menu"
+    "menu": "Menu",
+    "toastSignedOut": "👋 Signed out. See you soon!"
   },
   "Footer": {
     "tagline": "Cameroon's first trusted real estate platform. Find your ideal home or rent out your property with ease.",
@@ -176,7 +193,8 @@
     "toastAccountCreatedWelcome": "🎉 Account created! Welcome {name}!",
     "toastEnterEmailFirst": "⚠️ Enter your email address above first.",
     "toastResetEmailSent": "📧 Reset email sent (if this account exists).",
-    "toastResetEmailError": "❌ An error occurred. Please try again."
+    "toastResetEmailError": "❌ An error occurred. Please try again.",
+    "toastLoginRequired": "🔒 Please sign in to access this page."
   },
   "About": {
     "metaTitle": "About us – 237Logement",
@@ -526,7 +544,8 @@
     "noSimilar": "No similar listings for now.",
     "backToTop": "Back to top",
     "toastLinkCopied": "🔗 Link copied to clipboard!",
-    "toastLinkCopyError": "❌ Could not copy the link."
+    "toastLinkCopyError": "❌ Could not copy the link.",
+    "postedAgo": "Posted {ago}"
   },
   "Publish": {
     "metaTitle": "Publish a listing – 237Logement",
@@ -633,12 +652,37 @@
     "continueButton": "Continue →",
     "toastFillLocation": "⚠️ Please enter the city and neighborhood.",
     "toastFillTitle": "⚠️ Please give your listing a title.",
-    "toastMinPhotos": "📸 Add at least 3 photos to continue.",
+    "toastMinPhotos": "📸 Add at least {min} photos to continue.",
     "toastCannotEdit": "⛔ Unable to edit this listing.",
     "toastUpdateSuccess": "✅ Listing updated successfully!",
     "toastPublishSuccess": "🚀 Listing published successfully!",
     "toastUpdateError": "❌ An error occurred while updating. Please try again.",
-    "toastPublishError": "❌ An error occurred while publishing. Please try again."
+    "toastPublishError": "❌ An error occurred while publishing. Please try again.",
+    "photosTitle": "Property photos",
+    "photoDropTitle": "Drag and drop your photos here",
+    "photoDropSubtitle": "or tap/click to select from your device",
+    "photoBadgeSize": "Max {size} MB / photo",
+    "photoBadgeMax": "{max} photos maximum",
+    "photoBadgeMin": "Minimum {min} photos",
+    "photoAlt": "Photo {index}",
+    "photoRemove": "Remove photo {index}",
+    "toastPhotoLimit": "⚠️ Limit reached: {max} photos maximum.",
+    "toastPhotoPartial": "⚠️ Only the first {count} photos were added (limit: {max}).",
+    "toastPhotoTooLarge": "❌ {name} exceeds {size} MB — max {size} MB per photo.",
+    "toastPhotoUnsupported": "❌ {count} file(s) skipped — accepted formats: JPG, PNG, WEBP.",
+    "errCity": "The city is required.",
+    "errQuartier": "The neighbourhood is required.",
+    "errTitle": "The title is required.",
+    "errPhotos": "Add at least {min} photos.",
+    "errRequired": "{label} is required.",
+    "errNotInteger": "{label} must be a positive whole number.",
+    "errTooHigh": "{label} looks unusually high — check the number of zeros.",
+    "errSurfaceRequired": "The area is required for a plot of land.",
+    "errSurfacePositive": "The area must be a positive number.",
+    "labelSalePrice": "The sale price",
+    "labelRent": "The monthly rent",
+    "labelDeposit": "The deposit",
+    "labelAdvance": "The advance payment"
   },
   "Dashboard": {
     "metaTitle": "My account – 237Logement",
@@ -767,6 +811,38 @@
     "toastError": "❌ Could not change the password. The link may have expired.",
     "toastSuccess": "✅ Password changed. You're logged in."
   },
+  "AdminAnnonces": {
+    "administration": "Administration",
+    "title": "All listings",
+    "loading": "Loading…",
+    "listingCount": "{count} listing{plural} on the platform.",
+    "searchPlaceholder": "Search by title, city or owner…",
+    "cityPlaceholder": "All cities",
+    "statusAll": "All statuses",
+    "statusActive": "Active",
+    "statusBlocked": "Blocked",
+    "statusPending": "Pending",
+    "loadingListings": "Loading listings…",
+    "noMatchTitle": "No listing matches",
+    "noMatchText": "Try widening your search or your filters.",
+    "tagOccupied": "🔴 Occupied",
+    "tagBlocked": "🚫 Blocked",
+    "tagPending": "⏳ Pending",
+    "editListing": "Edit listing",
+    "unblockListing": "Unblock listing",
+    "blockListing": "Block listing",
+    "deleteListing": "Delete listing",
+    "toastLoadError": "❌ Could not load the listings.",
+    "confirmBlockAction": "block",
+    "confirmUnblockAction": "unblock",
+    "confirmBlockText": "Do you really want to {action} the listing “{title}”?",
+    "toastActionError": "❌ Action failed. Please try again.",
+    "toastBlocked": "🚫 Listing blocked — hidden from the public site.",
+    "toastUnblocked": "✅ Listing unblocked.",
+    "confirmDeleteText": "Permanently delete the listing “{title}”? This action cannot be undone.",
+    "toastDeleteError": "❌ Could not delete the listing. Please try again.",
+    "toastDeleted": "🗑️ Listing permanently deleted."
+  },
   "AdminOverview": {
     "administration": "Administration",
     "title": "Overview",
@@ -785,7 +861,8 @@
     "roleOwner": "Owner",
     "roleAdmin": "Admin",
     "roleVisitor": "Visitor",
-    "defaultUserName": "User"
+    "defaultUserName": "User",
+    "postedAgo": "Posted {ago}"
   },
   "AdminUsers": {
     "administration": "Administration",

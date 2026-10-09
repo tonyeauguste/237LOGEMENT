@@ -60,7 +60,7 @@ export default function Navbar() {
   async function handleLogout() {
     await createClient().auth.signOut();
     setCurrentUser(null);
-    showToast("👋 Déconnexion réussie. À bientôt !", "info");
+    showToast(t("toastSignedOut"), "info");
     router.push("/");
   }
 
@@ -142,6 +142,12 @@ export default function Navbar() {
                   href={dashHref}
                   className="flex items-center gap-2 px-2.5 py-[5px] rounded-[10px] border border-border bg-card2 hover:border-gold transition-colors"
                 >
+                  {/* Avatar en <img> et non <Image /> : la source peut pointer vers
+                      n'importe quel hôte (photo importée par l'utilisateur, avatar
+                      par défaut), alors que next/image n'accepte que les domaines
+                      listés dans remotePatterns (next.config.ts) et échoue sur les
+                      autres. Même convention que PhotoUploader. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={currentUser.avatar || DEFAULT_AVATAR}
                     alt={currentUser.name}

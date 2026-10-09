@@ -70,7 +70,7 @@ export default function MobileMenu({ open, onClose }: { open: boolean; onClose: 
                   onClick={async () => {
                     await createClient().auth.signOut();
                     setCurrentUser(null);
-                    showToast("👋 Déconnexion réussie. À bientôt !", "info");
+                    showToast(t("toastSignedOut"), "info");
                     onClose();
                   }}
                 >
