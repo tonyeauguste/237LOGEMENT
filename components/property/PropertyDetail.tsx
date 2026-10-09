@@ -37,6 +37,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   const tTx = useTranslations("Transaction");
   const tAmenities = useTranslations("Amenities");
   const t = useTranslations("PropertyDetail");
+  const tDate = useTranslations("RelativeDate");
   const group = propertyGroup(p.kind);
   const typeMeta = transactionMeta(p.transactionType, p.type, group, tTx);
   const rules = FIELD_VISIBILITY_RULES[p.transactionType][group];
@@ -336,7 +337,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 </p>
                 <div className="bg-card2 border border-border rounded-xl px-[18px] py-4 mt-[18px] flex gap-5 flex-wrap text-[13px] text-muted">
                   <span>❤️ {p.favs} {t("favs")}</span>
-                  <span>📅 {fmtRelativeDate(p.createdAt)}</span>
+                  <span>📅 {t("postedAgo", { ago: fmtRelativeDate(p.createdAt, tDate) })}</span>
                 </div>
               </motion.div>
             )}
@@ -416,7 +417,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             {typeMeta.priceSuffix && (
               <div className="text-[13px] text-muted mt-1 mb-1">{typeMeta.priceSuffix}</div>
             )}
-            <div className="text-[12px] text-dim mb-4">{fmtRelativeDate(p.createdAt)}</div>
+            <div className="text-[12px] text-dim mb-4">{t("postedAgo", { ago: fmtRelativeDate(p.createdAt, tDate) })}</div>
 
             {/* Tâche 2 — Conditions financières : selon le type de
                 transaction, jamais les deux jeux de champs à la fois (voir

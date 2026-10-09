@@ -49,6 +49,22 @@
     "parking": "Parking",
     "chauffeEau": "Chauffe-eau"
   },
+  "Pagination": {
+    "previous": "Page précédente",
+    "next": "Page suivante",
+    "goToPage": "Page {page}",
+    "label": "Pagination"
+  },
+  "RelativeDate": {
+    "recently": "récemment",
+    "today": "aujourd'hui",
+    "dayOne": "il y a 1 jour",
+    "days": "il y a {count} jours",
+    "monthOne": "il y a 1 mois",
+    "months": "il y a {count} mois",
+    "yearOne": "il y a 1 an",
+    "years": "il y a {count} ans"
+  },
   "Property": {
     "notAvailable": "Non disponible",
     "occupied": "Occupé",
@@ -69,7 +85,8 @@
     "register": "Inscription",
     "logout": "Déconnexion",
     "dashboard": "Mon espace",
-    "menu": "Menu"
+    "menu": "Menu",
+    "toastSignedOut": "👋 Déconnexion réussie. À bientôt !"
   },
   "Footer": {
     "tagline": "La première plateforme immobilière de confiance au Cameroun. Trouvez votre logement idéal ou louez votre bien en toute simplicité.",
@@ -176,7 +193,8 @@
     "toastAccountCreatedWelcome": "🎉 Compte créé ! Bienvenue {name} !",
     "toastEnterEmailFirst": "⚠️ Renseignez d'abord votre adresse email ci-dessus.",
     "toastResetEmailSent": "📧 Email de réinitialisation envoyé (si ce compte existe).",
-    "toastResetEmailError": "❌ Une erreur est survenue. Réessayez."
+    "toastResetEmailError": "❌ Une erreur est survenue. Réessayez.",
+    "toastLoginRequired": "🔒 Veuillez vous connecter pour accéder à cette page."
   },
   "About": {
     "metaTitle": "À propos – 237Logement",
@@ -492,7 +510,8 @@
     "noSimilar": "Aucune annonce similaire pour le moment.",
     "backToTop": "Remonter en haut",
     "toastLinkCopied": "🔗 Lien copié dans le presse-papiers !",
-    "toastLinkCopyError": "❌ Impossible de copier le lien."
+    "toastLinkCopyError": "❌ Impossible de copier le lien.",
+    "postedAgo": "Publié {ago}"
   },
   "Publish": {
     "metaTitle": "Publier une annonce – 237Logement",
@@ -599,12 +618,37 @@
     "continueButton": "Continuer →",
     "toastFillLocation": "⚠️ Veuillez renseigner la ville et le quartier.",
     "toastFillTitle": "⚠️ Veuillez donner un titre à votre annonce.",
-    "toastMinPhotos": "📸 Ajoutez au minimum 3 photos pour continuer.",
+    "toastMinPhotos": "📸 Ajoutez au minimum {min} photos pour continuer.",
     "toastCannotEdit": "⛔ Impossible de modifier cette annonce.",
     "toastUpdateSuccess": "✅ Annonce mise à jour avec succès !",
     "toastPublishSuccess": "🚀 Annonce publiée avec succès !",
     "toastUpdateError": "❌ Une erreur est survenue lors de la mise à jour. Réessayez.",
-    "toastPublishError": "❌ Une erreur est survenue lors de la publication. Réessayez."
+    "toastPublishError": "❌ Une erreur est survenue lors de la publication. Réessayez.",
+    "photosTitle": "Photos du bien",
+    "photoDropTitle": "Glissez-déposez vos photos ici",
+    "photoDropSubtitle": "ou touchez/cliquez pour sélectionner depuis votre appareil",
+    "photoBadgeSize": "Max {size} Mo / photo",
+    "photoBadgeMax": "{max} photos maximum",
+    "photoBadgeMin": "Minimum {min} photos",
+    "photoAlt": "Photo {index}",
+    "photoRemove": "Supprimer la photo {index}",
+    "toastPhotoLimit": "⚠️ Limite atteinte : {max} photos maximum.",
+    "toastPhotoPartial": "⚠️ Seules les {count} premières photos ont été ajoutées (limite : {max}).",
+    "toastPhotoTooLarge": "❌ {name} dépasse {size} Mo — max {size} Mo par photo.",
+    "toastPhotoUnsupported": "❌ {count} fichier(s) ignoré(s) — formats acceptés : JPG, PNG, WEBP.",
+    "errCity": "La ville est obligatoire.",
+    "errQuartier": "Le quartier est obligatoire.",
+    "errTitle": "Le titre est obligatoire.",
+    "errPhotos": "Ajoutez au minimum {min} photos.",
+    "errRequired": "{label} est obligatoire.",
+    "errNotInteger": "{label} doit être un nombre entier positif.",
+    "errTooHigh": "{label} semble anormalement élevé — vérifiez le nombre de zéros.",
+    "errSurfaceRequired": "La surface est obligatoire pour un terrain.",
+    "errSurfacePositive": "La surface doit être un nombre positif.",
+    "labelSalePrice": "Le prix de vente",
+    "labelRent": "Le loyer mensuel",
+    "labelDeposit": "La caution",
+    "labelAdvance": "L'avance"
   },
   "Dashboard": {
     "metaTitle": "Mon compte – 237Logement",
@@ -733,6 +777,38 @@
     "toastError": "❌ Impossible de changer le mot de passe. Le lien a peut-être expiré.",
     "toastSuccess": "✅ Mot de passe modifié. Vous êtes connecté."
   },
+  "AdminAnnonces": {
+    "administration": "Administration",
+    "title": "Toutes les annonces",
+    "loading": "Chargement…",
+    "listingCount": "{count} annonce{plural} sur la plateforme.",
+    "searchPlaceholder": "Rechercher par titre, ville ou propriétaire…",
+    "cityPlaceholder": "Toutes les villes",
+    "statusAll": "Tous les statuts",
+    "statusActive": "Active",
+    "statusBlocked": "Bloquée",
+    "statusPending": "En attente",
+    "loadingListings": "Chargement des annonces…",
+    "noMatchTitle": "Aucune annonce ne correspond",
+    "noMatchText": "Essayez d'élargir votre recherche ou vos filtres.",
+    "tagOccupied": "🔴 Occupé",
+    "tagBlocked": "🚫 Bloqué",
+    "tagPending": "⏳ En attente",
+    "editListing": "Modifier l'annonce",
+    "unblockListing": "Débloquer l'annonce",
+    "blockListing": "Bloquer l'annonce",
+    "deleteListing": "Supprimer l'annonce",
+    "toastLoadError": "❌ Impossible de charger les annonces.",
+    "confirmBlockAction": "bloquer",
+    "confirmUnblockAction": "débloquer",
+    "confirmBlockText": "Voulez-vous vraiment {action} l'annonce « {title} » ?",
+    "toastActionError": "❌ Action impossible. Réessayez.",
+    "toastBlocked": "🚫 Annonce bloquée — masquée du site public.",
+    "toastUnblocked": "✅ Annonce débloquée.",
+    "confirmDeleteText": "Supprimer définitivement l'annonce « {title} » ? Cette action est irréversible.",
+    "toastDeleteError": "❌ Impossible de supprimer l'annonce. Réessayez.",
+    "toastDeleted": "🗑️ Annonce supprimée définitivement."
+  },
   "AdminOverview": {
     "administration": "Administration",
     "title": "Vue d'ensemble",
@@ -751,7 +827,8 @@
     "roleOwner": "Propriétaire",
     "roleAdmin": "Admin",
     "roleVisitor": "Visiteur",
-    "defaultUserName": "Utilisateur"
+    "defaultUserName": "Utilisateur",
+    "postedAgo": "Publié {ago}"
   },
   "AdminUsers": {
     "administration": "Administration",

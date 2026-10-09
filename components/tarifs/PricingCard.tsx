@@ -50,11 +50,21 @@ export default function PricingCard({
   // texte français si une traduction venait à manquer. Trouvé lors de
   // l'audit pré-déploiement : la page /tarifs en anglais montrait un
   // mélange anglais (habillage) / français (contenu des formules).
-  const nom = locale === "en" ? t(`plans.${formule.id}.nom`) : formule.nom;
-  const volume = locale === "en" ? t(`plans.${formule.id}.volume`) : formule.volume;
+  // useTranslations renvoie la clé elle-même quand la traduction manque
+  // (voir i18n/IntlProvider.tsx) : sans ce garde-fou, ajouter une
+  // fonctionnalité dans GRILLE_TARIFAIRE sans la traduire afficherait
+  // « plans.agence.feature7 » en clair sur la page anglaise. On retombe
+  // donc sur le texte français, qui reste la source de vérité.
+  const tr = (key: string, fallback: string) => {
+    const value = t(key);
+    return value === key ? fallback : value;
+  };
+
+  const nom = locale === "en" ? tr(`plans.${formule.id}.nom`, formule.nom) : formule.nom;
+  const volume = locale === "en" ? tr(`plans.${formule.id}.volume`, formule.volume) : formule.volume;
   const features =
     locale === "en"
-      ? formule.features.map((f, i) => t(`plans.${formule.id}.feature${i + 1}`))
+      ? formule.features.map((f, i) => tr(`plans.${formule.id}.feature${i + 1}`, f))
       : formule.features;
 
   return (

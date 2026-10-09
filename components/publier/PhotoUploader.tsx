@@ -29,9 +29,10 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import { Upload, X } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import type { UploadedPhoto } from "@/lib/types";
+import { PHOTO_MAX, PHOTO_MIN, PHOTO_SIZE_MB } from "@/lib/data";
+import { useTranslations } from "@/i18n/IntlProvider";
 
-const PHOTO_MAX = 10;
-const PHOTO_SIZE_MB = 10;
+
 
 interface PhotoUploaderProps {
   photos: UploadedPhoto[];
@@ -39,6 +40,7 @@ interface PhotoUploaderProps {
 }
 
 export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderProps) {
+  const t = useTranslations("Publish");
   const showToast = useAppStore((s) => s.showToast);
   const [photoDragOver, setPhotoDragOver] = useState(false);
 
@@ -76,7 +78,7 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
     if (filesArray.length === 0) return;
     const remaining = PHOTO_MAX - photos.length;
     if (remaining <= 0) {
-      showToast("⚠️ Limite atteinte : 10 photos maximum.", "error");
+      showToast(t("toastPhotoLimit", { max: PHOTO_MAX }), "error");
       return;
     }
     let error = "";
@@ -88,18 +90,18 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
         return;
       }
       if (file.size > PHOTO_SIZE_MB * 1024 * 1024) {
-        error = `${file.name} dépasse 10 Mo`;
+        error = t("toastPhotoTooLarge", { name: file.name, size: PHOTO_SIZE_MB });
         return;
       }
       added.push({ name: file.name, url: URL.createObjectURL(file), file });
     });
     if (added.length) onPhotosChange((prev) => [...prev, ...added]);
     if (filesArray.length > remaining) {
-      showToast(`⚠️ Seules les ${remaining} premières photos ont été ajoutées (limite : 10).`, "info");
+      showToast(t("toastPhotoPartial", { count: remaining, max: PHOTO_MAX }), "info");
     }
-    if (error) showToast(`❌ ${error} — max 10 Mo par photo.`, "error");
+    if (error) showToast(error, "error");
     if (unsupported > 0) {
-      showToast(`❌ ${unsupported} fichier(s) ignoré(s) — formats acceptés : JPG, PNG, WEBP.`, "error");
+      showToast(t("toastPhotoUnsupported", { count: unsupported }), "error");
     }
   }
 
@@ -116,7 +118,7 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
   return (
     <div>
       <div className="flex justify-between items-center mb-2.5">
-        <span className="font-semibold text-[15px] text-text">Photos du bien</span>
+        <span className="font-semibold text-[15px] text-text">{t("photosTitle")}</span>
         <span className="text-[13px] font-bold text-gold bg-gold3 border border-[rgba(200,155,60,.3)] px-3 py-0.5 rounded-full">
           {photos.length} / {PHOTO_MAX}
         </span>
@@ -155,13 +157,13 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
         <div className="flex justify-center mb-3 text-gold">
           <Upload size={36} />
         </div>
-        <div className="font-semibold text-base text-text mb-1.5">Glissez-déposez vos photos ici</div>
-        <div className="text-sm text-muted mb-2.5">ou touchez/cliquez pour sélectionner depuis votre appareil</div>
+        <div className="font-semibold text-base text-text mb-1.5">{t("photoDropTitle")}</div>
+        <div className="text-sm text-muted mb-2.5">{t("photoDropSubtitle")}</div>
         <div className="flex gap-2 flex-wrap justify-center mt-2.5">
           <span className="tag-pill gold">JPG, PNG, WEBP</span>
-          <span className="tag-pill blue">Max 10 Mo / photo</span>
-          <span className="tag-pill green">10 photos maximum</span>
-          <span className="tag-pill neutral">Minimum 3 photos</span>
+          <span className="tag-pill blue">{t("photoBadgeSize", { size: PHOTO_SIZE_MB })}</span>
+          <span className="tag-pill green">{t("photoBadgeMax", { max: PHOTO_MAX })}</span>
+          <span className="tag-pill neutral">{t("photoBadgeMin", { min: PHOTO_MIN })}</span>
         </div>
       </label>
       {photos.length > 0 && (
@@ -174,10 +176,10 @@ export default function PhotoUploader({ photos, onPhotosChange }: PhotoUploaderP
               className="relative rounded-[10px] overflow-hidden border-[1.5px] border-border aspect-[4/3] bg-card2"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+              <img src={p.url} alt={t("photoAlt", { index: i + 1 })} className="w-full h-full object-cover" />
               <button
                 onClick={() => removePhoto(i)}
-                aria-label={`Supprimer la photo ${i + 1}`}
+                aria-label={t("photoRemove", { index: i + 1 })}
                 // w-11 h-11 = 44×44px : zone tactile confortable au doigt,
                 // pas seulement au clic de souris précis.
                 className="absolute top-0 right-0 w-11 h-11 flex items-center justify-center"

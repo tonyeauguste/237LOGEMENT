@@ -45,6 +45,12 @@ export default function DashSidebar({
       <div className="text-center px-0 py-4 pb-[26px]">
         <div className="relative w-[72px] h-[72px] mx-auto mb-3">
           <div className="w-full h-full rounded-full border-2 border-gold overflow-hidden">
+            {/* Avatar en <img> et non <Image /> : la source peut pointer vers
+                n'importe quel hôte (photo importée par l'utilisateur, avatar
+                par défaut), alors que next/image n'accepte que les domaines
+                listés dans remotePatterns (next.config.ts) et échoue sur les
+                autres. Même convention que PhotoUploader. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={user.avatar || DEFAULT_AVATAR} alt={user.name} className="w-full h-full object-cover" />
             {avatarUploading && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">

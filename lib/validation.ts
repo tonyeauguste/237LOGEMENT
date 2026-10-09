@@ -13,7 +13,19 @@
 // ═══════════════════════════════════════════════
 
 import type { LandTitleStatus, TransactionType } from "./types";
-import type { PropertyGroup } from "./data";
+import { PHOTO_MIN, type PropertyGroup } from "./data";
+
+
+/**
+ * Traducteur du namespace "Publish" (voir i18n/IntlProvider.tsx). Les
+ * messages étaient auparavant écrits en français directement ici : ils
+ * s'affichent via showToast et sous les champs, donc un utilisateur en
+ * anglais voyait un formulaire anglais rejeter sa saisie en français.
+ */
+export type PublishTranslator = (
+  key: string,
+  vars?: Record<string, string | number>
+) => string;
 
 /** Plafond généreux (FCFA) pour intercepter une faute de frappe évidente (un zéro de trop), pas un vrai plafond de marché. */
 const MAX_REASONABLE_AMOUNT = 1_000_000_000;
@@ -39,14 +51,14 @@ export type PublishFormErrors = Partial<
 >;
 
 /** Entier positif dans une chaîne, dans une plage raisonnable — vide accepté (champ optionnel géré par l'appelant). */
-function amountError(raw: string, label: string): string | undefined {
+function amountError(raw: string, label: string, t: PublishTranslator): string | undefined {
   if (!raw.trim()) return undefined;
   const n = Number(raw);
   if (!Number.isFinite(n) || !Number.isInteger(n) || n < 0) {
-    return `${label} doit être un nombre entier positif.`;
+    return t("errNotInteger", { label });
   }
   if (n > MAX_REASONABLE_AMOUNT) {
-    return `${label} semble anormalement élevé — vérifiez le nombre de zéros.`;
+    return t("errTooHigh", { label });
   }
   return undefined;
 }
@@ -57,21 +69,27 @@ function amountError(raw: string, label: string): string | undefined {
  * réellement affichés pour cette combinaison (voir FIELD_VISIBILITY_RULES) —
  * un champ masqué n'est jamais requis, cohérent avec la Tâche 4.4.
  */
-export function validatePublishForm(input: PublishFormInput): PublishFormErrors {
+export function validatePublishForm(
+  input: PublishFormInput,
+  t: PublishTranslator
+): PublishFormErrors {
   const errors: PublishFormErrors = {};
 
-  if (!input.city.trim()) errors.city = "La ville est obligatoire.";
-  if (!input.quartier.trim()) errors.quartier = "Le quartier est obligatoire.";
-  if (!input.title.trim()) errors.title = "Le titre est obligatoire.";
-  if (input.photosCount < 3) errors.photos = "Ajoutez au minimum 3 photos.";
+  if (!input.city.trim()) errors.city = t("errCity");
+  if (!input.quartier.trim()) errors.quartier = t("errQuartier");
+  if (!input.title.trim()) errors.title = t("errTitle");
+  // PHOTO_MIN plutôt qu'un 3 en dur : le seuil était écrit à trois
+  // endroits différents (ici, le badge de l'uploader, la vérification
+  // d'étape), avec le risque qu'ils divergent.
+  if (input.photosCount < PHOTO_MIN) errors.photos = t("errPhotos", { min: PHOTO_MIN });
 
   // Prix — obligatoire dans les deux cas (loyer mensuel en location, prix
   // de vente total en vente), même champ, même contrainte.
-  const priceLabel = input.transactionType === "vente" ? "Le prix de vente" : "Le loyer mensuel";
+  const priceLabel = t(input.transactionType === "vente" ? "labelSalePrice" : "labelRent");
   if (!input.price.trim()) {
-    errors.price = `${priceLabel} est obligatoire.`;
+    errors.price = t("errRequired", { label: priceLabel });
   } else {
-    const err = amountError(input.price, priceLabel);
+    const err = amountError(input.price, priceLabel, t);
     if (err) errors.price = err;
   }
 
@@ -80,18 +98,18 @@ export function validatePublishForm(input: PublishFormInput): PublishFormErrors 
   // quand affichée (ex : vente résidentielle).
   if (input.surfaceVisible) {
     if (input.surfaceRequired && !input.surface.trim()) {
-      errors.surface = "La surface est obligatoire pour un terrain.";
+      errors.surface = t("errSurfaceRequired");
     } else if (input.surface.trim()) {
       const n = Number(input.surface);
-      if (!Number.isFinite(n) || n <= 0) errors.surface = "La surface doit être un nombre positif.";
+      if (!Number.isFinite(n) || n <= 0) errors.surface = t("errSurfacePositive");
     }
   }
 
   // Caution / Avance — uniquement pertinents (et donc validés) en location.
   if (input.transactionType === "location") {
-    const depositErr = amountError(input.deposit, "La caution");
+    const depositErr = amountError(input.deposit, t("labelDeposit"), t);
     if (depositErr) errors.deposit = depositErr;
-    const advanceErr = amountError(input.advance, "L'avance");
+    const advanceErr = amountError(input.advance, t("labelAdvance"), t);
     if (advanceErr) errors.advance = advanceErr;
   }
 

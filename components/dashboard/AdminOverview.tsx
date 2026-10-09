@@ -39,6 +39,7 @@ export default function AdminOverview({
   onNavigate: (section: "admin-annonces" | "admin-users") => void;
 }) {
   const t = useTranslations("AdminOverview");
+  const tDate = useTranslations("RelativeDate");
   const [loading, setLoading] = useState(true);
   const [counts, setCounts] = useState({ properties: 0, owners: 0, blockedProperties: 0, blockedAccounts: 0 });
   const [recentProperties, setRecentProperties] = useState<RecentProperty[]>([]);
@@ -73,7 +74,11 @@ export default function AdminOverview({
       setRecentUsers(
         (recentUsersRes.data ?? []).map((u) => ({
           id: u.id,
-          name: u.name || t("defaultUserName"),
+          // Nom brut conservé tel quel : le repli traduit est appliqué au
+          // rendu, sinon la valeur par défaut reste figée dans la langue
+          // active au moment du chargement et ne suit pas un changement
+          // de langue (l'effet ne se rejoue pas).
+          name: u.name,
           email: u.email,
           role: u.role,
           created_at: u.created_at,
@@ -168,7 +173,7 @@ export default function AdminOverview({
                   <div className="min-w-0">
                     <div className="text-[13px] font-semibold text-text truncate">{p.title}</div>
                     <div className="text-[11px] text-muted mt-0.5">
-                      {p.owner_name} · {p.city} · {fmtRelativeDate(p.created_at)}
+                      {p.owner_name} · {p.city} · {t("postedAgo", { ago: fmtRelativeDate(p.created_at, tDate) })}
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -200,7 +205,9 @@ export default function AdminOverview({
               {recentUsers.map((u) => (
                 <div key={u.id} className="flex items-center justify-between gap-3 px-3.5 py-3 bg-bg3 rounded-xl">
                   <div className="min-w-0">
-                    <div className="text-[13px] font-semibold text-text truncate">{u.name}</div>
+                    <div className="text-[13px] font-semibold text-text truncate">
+                      {u.name || t("defaultUserName")}
+                    </div>
                     <div className="text-[11px] text-muted mt-0.5 truncate">{u.email}</div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
