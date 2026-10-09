@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import type { Property } from "@/lib/types";
 import { fmtPrice, fmtRelativeDate } from "@/lib/format";
-import { useAppStore, getVisitorId } from "@/lib/store";
+import { useAppStore } from "@/lib/store";
 import { FIELD_VISIBILITY_RULES, amenityIcon, amenityLabel, kindLabel, propertyGroup, showsRoomCount, transactionMeta } from "@/lib/data";
 import { createClient } from "@/lib/supabase/client";
 import Tag from "@/components/ui/Tag";
@@ -66,19 +66,22 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   const [myRating, setMyRating] = useState<number | null>(null);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
-  // Pré-remplit l'étoile déjà donnée par ce visiteur (compte ou cookie
-  // anonyme), s'il en a déjà laissé une — sinon le widget repart de 0 et un
-  // nouveau clic crée la note (submit_owner_rating fait un upsert).
+  // Pré-remplit l'étoile déjà donnée par ce compte, s'il en a déjà laissé
+  // une — sinon le widget repart de 0 et un nouveau clic crée la note
+  // (submit_owner_rating fait un upsert).
+  //
+  // Réservé aux comptes connectés : noter exige désormais une identité
+  // vérifiable (voir la migration require_account_to_rate_owner). Plus de
+  // repli sur le cookie anonyme, qui n'identifiait rien.
   useEffect(() => {
-    if (isOwnListing || !p.ownerId) return;
-    const visitor = getVisitorId(currentUser);
-    if (!visitor) return;
+    if (isOwnListing || !p.ownerId || !currentUser) return;
+    const raterId = `user:${currentUser.id}`;
     let cancelled = false;
     createClient()
       .from("owner_ratings")
       .select("rating")
       .eq("owner_id", p.ownerId)
-      .eq("rater_id", visitor)
+      .eq("rater_id", raterId)
       .maybeSingle()
       .then(({ data }) => {
         if (!cancelled && data) setMyRating(data.rating);
@@ -89,14 +92,17 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   }, [p.ownerId, currentUser, isOwnListing]);
 
   async function submitRating(stars: number) {
-    if (!p.ownerId || ratingSubmitting) return;
-    const visitor = getVisitorId(currentUser);
-    if (!visitor) return;
+    // Le widget n'est pas rendu hors connexion ; ce garde couvre le cas
+    // d'une session expirée entre l'affichage et le clic.
+    if (!p.ownerId || !currentUser || ratingSubmitting) return;
     setRatingSubmitting(true);
     const { error } = await createClient().rpc("submit_owner_rating", {
       target_owner: p.ownerId,
       prop_id: p.id,
-      rater: visitor,
+      // Ignoré côté base (l'identité vient du jeton) mais toujours exigé
+      // par la signature de la RPC — conservée telle quelle pour ne pas
+      // casser les clients déjà déployés.
+      rater: `user:${currentUser.id}`,
       stars,
     });
     setRatingSubmitting(false);
@@ -551,23 +557,44 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
 
             {!isOwnListing && p.ownerId && (
               <div className="mt-3 pt-3 border-t border-border">
-                <div className="text-[12px] text-muted mb-1.5">
-                  {myRating ? t("rateOwnerUpdateLabel") : t("rateOwnerLabel")}
-                </div>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      disabled={ratingSubmitting}
-                      onClick={() => submitRating(n)}
-                      aria-label={t("rateOwnerStarAria", { n })}
-                      className="text-xl leading-none disabled:opacity-50"
+                {/* Noter exige un compte : sans identité vérifiable, un
+                    visiteur anonyme pouvait fabriquer autant
+                    d'identifiants que voulu et fausser la note d'un
+                    propriétaire (la base refuse désormais ces appels, voir
+                    la migration require_account_to_rate_owner). On montre
+                    donc une invitation à se connecter plutôt que des
+                    étoiles qui échoueraient au clic. */}
+                {currentUser ? (
+                  <>
+                    <div className="text-[12px] text-muted mb-1.5">
+                      {myRating ? t("rateOwnerUpdateLabel") : t("rateOwnerLabel")}
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          disabled={ratingSubmitting}
+                          onClick={() => submitRating(n)}
+                          aria-label={t("rateOwnerStarAria", { n })}
+                          className="text-xl leading-none disabled:opacity-50"
+                        >
+                          <span className={n <= (myRating ?? 0) ? "text-gold" : "text-dim"}>★</span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-[12px] text-muted">
+                    {t("rateOwnerSignInPrompt")}{" "}
+                    <Link
+                      href={`/connexion?tab=login&returnTo=/annonce/${p.id}`}
+                      className="text-gold font-semibold hover:underline"
                     >
-                      <span className={n <= (myRating ?? 0) ? "text-gold" : "text-dim"}>★</span>
-                    </button>
-                  ))}
-                </div>
+                      {t("rateOwnerSignInLink")}
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>

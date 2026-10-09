@@ -545,7 +545,9 @@
     "backToTop": "Back to top",
     "toastLinkCopied": "🔗 Link copied to clipboard!",
     "toastLinkCopyError": "❌ Could not copy the link.",
-    "postedAgo": "Posted {ago}"
+    "postedAgo": "Posted {ago}",
+    "rateOwnerSignInPrompt": "Sign in to rate this owner.",
+    "rateOwnerSignInLink": "Sign in"
   },
   "Publish": {
     "metaTitle": "Publish a listing – 237Logement",

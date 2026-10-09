@@ -511,7 +511,9 @@
     "backToTop": "Remonter en haut",
     "toastLinkCopied": "🔗 Lien copié dans le presse-papiers !",
     "toastLinkCopyError": "❌ Impossible de copier le lien.",
-    "postedAgo": "Publié {ago}"
+    "postedAgo": "Publié {ago}",
+    "rateOwnerSignInPrompt": "Connectez-vous pour noter ce propriétaire.",
+    "rateOwnerSignInLink": "Se connecter"
   },
   "Publish": {
     "metaTitle": "Publier une annonce – 237Logement",
