@@ -194,7 +194,8 @@
     "toastEnterEmailFirst": "⚠️ Enter your email address above first.",
     "toastResetEmailSent": "📧 Reset email sent (if this account exists).",
     "toastResetEmailError": "❌ An error occurred. Please try again.",
-    "toastLoginRequired": "🔒 Please sign in to access this page."
+    "toastLoginRequired": "🔒 Please sign in to access this page.",
+    "toastPasswordPwned": "🚨 This password appears in known data breaches ({count} times). Please choose another one."
   },
   "About": {
     "metaTitle": "About us – 237Logement",
@@ -791,7 +792,8 @@
     "toastPasswordMismatch": "⚠️ The two passwords do not match.",
     "toastPasswordSameAsOld": "⚠️ Choose a password different from your current one.",
     "toastPasswordChangeError": "❌ Could not change the password. Please try again.",
-    "toastPasswordChanged": "✅ Password changed."
+    "toastPasswordChanged": "✅ Password changed.",
+    "toastPasswordPwned": "🚨 This password appears in known data breaches ({count} times). Please choose another one."
   },
   "ResetPassword": {
     "metaTitle": "Reset password – 237Logement",
@@ -811,7 +813,8 @@
     "toastPasswordMismatch": "⚠️ The two passwords do not match.",
     "toastPasswordSameAsOld": "⚠️ Choose a password different from your current one.",
     "toastError": "❌ Could not change the password. The link may have expired.",
-    "toastSuccess": "✅ Password changed. You're logged in."
+    "toastSuccess": "✅ Password changed. You're logged in.",
+    "toastPasswordPwned": "🚨 This password appears in known data breaches ({count} times). Please choose another one."
   },
   "AdminAnnonces": {
     "administration": "Administration",
