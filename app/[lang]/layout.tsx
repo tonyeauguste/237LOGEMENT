@@ -6,7 +6,7 @@ import ConditionalFooter from "@/components/layout/ConditionalFooter";
 import Toaster from "@/components/layout/Toaster";
 import PageTransition from "@/components/layout/PageTransition";
 import { IntlProvider } from "@/i18n/IntlProvider";
-import { getMessages } from "@/i18n/dictionaries";
+import { getMessages, getPageMessages, SHARED_NAMESPACES } from "@/i18n/dictionaries";
 import { LOCALES, isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 const playfair = Playfair_Display({
@@ -69,7 +69,10 @@ export default async function RootLayout({
   // atteint jamais ce segment, mais on ne fait jamais confiance à une URL
   // brute (accès direct, lien externe mal formé...).
   const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
-  const messages = await getMessages(locale);
+  // Uniquement les namespaces transverses : le dictionnaire complet (~48 Ko)
+  // partait auparavant dans chaque page, panneaux admin compris. Chaque page
+  // ajoute les siens via son propre <IntlProvider> imbriqué.
+  const messages = await getPageMessages(locale, SHARED_NAMESPACES);
 
   return (
     <html

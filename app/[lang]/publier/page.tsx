@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { getMessages } from "@/i18n/dictionaries";
+import { getMessages, getPageMessages } from "@/i18n/dictionaries";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import PublierPageClient from "./PublierPageClient";
+import { IntlProvider } from "@/i18n/IntlProvider";
 
 export async function generateMetadata({
   params,
@@ -15,6 +16,20 @@ export async function generateMetadata({
   return { title: t.metaTitle, description: t.metaDescription };
 }
 
-export default function PublierPage() {
-  return <PublierPageClient />;
+// Namespaces propres à cette page — les transverses (navigation, pied
+// de page, cartes d'annonce…) viennent déjà de la mise en page.
+const NAMESPACES = ["Publish", "Auth"] as const;
+
+export default async function PublierPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
+  return (
+    <IntlProvider messages={await getPageMessages(locale, NAMESPACES)}>
+      <PublierPageClient />
+    </IntlProvider>
+  );
 }
