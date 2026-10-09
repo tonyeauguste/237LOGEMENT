@@ -5,9 +5,10 @@ import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyDetail from "@/components/property/PropertyDetail";
+import { IntlProvider } from "@/i18n/IntlProvider";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
-import { getMessages } from "@/i18n/dictionaries";
+import { getMessages, getPageMessages } from "@/i18n/dictionaries";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 type PageParams = { lang: string; id: string };
@@ -139,5 +140,12 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<Pa
 
   const similar = (similarResult.data ?? []).map(rowToProperty);
 
-  return <PropertyDetail p={property} similar={similar} />;
+  return (
+    // PropertyDetail (et les cartes « annonces similaires ») lisent
+    // PropertyDetail ; Amenities, PropertyKinds, RelativeDate, Transaction
+    // et Property sont transverses et viennent de la mise en page.
+    <IntlProvider messages={await getPageMessages(locale, ["PropertyDetail"])}>
+      <PropertyDetail p={property} similar={similar} />
+    </IntlProvider>
+  );
 }
