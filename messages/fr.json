@@ -651,7 +651,17 @@
     "labelSalePrice": "Le prix de vente",
     "labelRent": "Le loyer mensuel",
     "labelDeposit": "La caution",
-    "labelAdvance": "L'avance"
+    "labelAdvance": "L'avance",
+    "adminOwnerTitle": "Publier au nom d'un tiers",
+    "adminOwnerBadge": "Administration",
+    "adminOwnerHelp": "Réservé aux administrateurs. Renseignez le propriétaire réel : ce sont ces coordonnées qui apparaîtront sur l'annonce, pas les vôtres.",
+    "adminOwnerToggle": "Cette annonce appartient à quelqu'un d'autre",
+    "adminOwnerNameLabel": "Nom du propriétaire",
+    "adminOwnerNamePlaceholder": "Ex. M. Jean Mbarga",
+    "adminOwnerPhoneLabel": "Téléphone du propriétaire",
+    "adminOwnerPhonePlaceholder": "+237 6XX XXX XXX",
+    "adminOwnerPhoneHelp": "Utilisé pour le bouton WhatsApp de l'annonce. Laissez vide si le propriétaire ne souhaite pas être contacté directement.",
+    "toastAdminOwnerNameRequired": "⚠️ Indiquez le nom du propriétaire, ou décochez la publication au nom d'un tiers."
   },
   "Dashboard": {
     "metaTitle": "Mon compte – 237Logement",

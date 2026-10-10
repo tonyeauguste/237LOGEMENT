@@ -95,6 +95,14 @@ export interface Property {
   views: number;
   favs: number;
   owner: Owner;
+  /**
+   * true quand un administrateur a publié l'annonce pour le compte d'un
+   * tiers et saisi lui-même les coordonnées affichées. Dans ce cas
+   * `ownerId` désigne le compte administrateur, PAS la personne affichée :
+   * la note et le nombre d'annonces de ce compte ne doivent donc pas être
+   * présentés comme étant ceux du propriétaire indiqué.
+   */
+  ownerDetailsOverridden: boolean;
   ownerId?: string | null;
   status: ListingStatus;
   createdAt?: string;

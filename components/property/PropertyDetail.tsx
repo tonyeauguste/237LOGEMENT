@@ -534,28 +534,35 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 )}
               </div>
             </div>
-            <div className="flex gap-2 items-center text-[13px] text-muted flex-wrap">
-              {/* ratingCount à 0 -> aucune vraie note reçue, on l'affiche
-                  honnêtement comme "Nouveau" plutôt que d'inventer un 4.5
-                  (voir owner_ratings/submit_owner_rating). */}
-              {p.owner.ratingCount > 0 ? (
-                <>
-                  <Stars rating={p.owner.rating} />
-                  <span>
-                    {p.owner.rating} · {p.owner.ratingCount}{" "}
-                    {p.owner.ratingCount > 1 ? t("reviewsPlural") : t("reviewSingular")}
-                  </span>
-                </>
-              ) : (
-                <span className="text-dim">{t("newOwnerLabel")}</span>
-              )}
-              <span className="text-dim">·</span>
-              <span>
-                {p.owner.listings} {p.owner.listings > 1 ? t("listings") : t("listing")}
-              </span>
-            </div>
+            {/* Annonce publiée par un administrateur pour un tiers :
+                `ownerId` désigne le compte administrateur, pas la personne
+                affichée. Montrer ici sa note et son nombre d'annonces les
+                attribuerait à quelqu'un qui n'a jamais été noté — on les
+                masque donc plutôt que d'afficher un chiffre trompeur. */}
+            {!p.ownerDetailsOverridden && (
+              <div className="flex gap-2 items-center text-[13px] text-muted flex-wrap">
+                {/* ratingCount à 0 -> aucune vraie note reçue, on l'affiche
+                    honnêtement comme "Nouveau" plutôt que d'inventer un 4.5
+                    (voir owner_ratings/submit_owner_rating). */}
+                {p.owner.ratingCount > 0 ? (
+                  <>
+                    <Stars rating={p.owner.rating} />
+                    <span>
+                      {p.owner.rating} · {p.owner.ratingCount}{" "}
+                      {p.owner.ratingCount > 1 ? t("reviewsPlural") : t("reviewSingular")}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-dim">{t("newOwnerLabel")}</span>
+                )}
+                <span className="text-dim">·</span>
+                <span>
+                  {p.owner.listings} {p.owner.listings > 1 ? t("listings") : t("listing")}
+                </span>
+              </div>
+            )}
 
-            {!isOwnListing && p.ownerId && (
+            {!isOwnListing && p.ownerId && !p.ownerDetailsOverridden && (
               <div className="mt-3 pt-3 border-t border-border">
                 {/* Noter exige un compte : sans identité vérifiable, un
                     visiteur anonyme pouvait fabriquer autant

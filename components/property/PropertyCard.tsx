@@ -110,8 +110,11 @@ export default function PropertyCard({ p }: { p: Property }) {
               )}
             </div>
             {/* ratingCount à 0 -> pas de vraie note reçue, on ne montre pas
-                un chiffre inventé (voir owner_ratings côté base). */}
-            {p.owner.ratingCount > 0 ? (
+                un chiffre inventé (voir owner_ratings côté base).
+                Annonce publiée pour un tiers -> la note est celle du compte
+                administrateur, pas de la personne affichée : on n'affiche
+                rien (voir ownerDetailsOverridden dans lib/types.ts). */}
+            {p.ownerDetailsOverridden ? null : p.owner.ratingCount > 0 ? (
               <div className="flex items-center gap-1 text-xs text-muted">
                 <Stars rating={p.owner.rating} /> {p.owner.rating}
               </div>
