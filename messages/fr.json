@@ -596,9 +596,6 @@
     "duration1Week": "1 semaine",
     "duration2Weeks": "2 semaines",
     "duration1Month": "1 mois",
-    "duration3Months": "3 mois",
-    "duration6Months": "6 mois",
-    "duration1Year": "1 an",
     "pricingTip": "✅ Publication gratuite · Aucune commission sur les loyers · Modification de l'annonce gratuite à tout moment",
     "editReadyTitle": "Vos modifications sont prêtes !",
     "newReadyTitle": "Votre annonce est prête !",
@@ -668,7 +665,8 @@
     "adminOwnerPhoneLabel": "Téléphone du propriétaire",
     "adminOwnerPhonePlaceholder": "+237 6XX XXX XXX",
     "adminOwnerPhoneHelp": "Utilisé pour le bouton WhatsApp de l'annonce. Laissez vide si le propriétaire ne souhaite pas être contacté directement.",
-    "toastAdminOwnerNameRequired": "⚠️ Indiquez le nom du propriétaire, ou décochez la publication au nom d'un tiers."
+    "toastAdminOwnerNameRequired": "⚠️ Indiquez le nom du propriétaire, ou décochez la publication au nom d'un tiers.",
+    "durationMonths": "{count} mois"
   },
   "Dashboard": {
     "metaTitle": "Mon compte – 237Logement",

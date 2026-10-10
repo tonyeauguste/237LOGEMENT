@@ -37,6 +37,13 @@ import type {
 } from "@/lib/types";
 import { useTranslations } from "@/i18n/IntlProvider";
 
+/**
+ * Durées minimales proposées en location longue durée : tous les mois de
+ * 1 à 12. Remplace les anciens paliers 1/3/6 mois + « 1 an » — un bail de
+ * 4 ou 9 mois est courant et n'avait aucune case où se ranger.
+ */
+const LONG_TERM_MONTHS = Array.from({ length: 12 }, (_, i) => i + 1);
+
 function PublierPageInner() {
   const tKind = useTranslations("PropertyKinds");
   const tTx = useTranslations("Transaction");
@@ -901,12 +908,15 @@ function PublierPageInner() {
                               <option>{t("duration1Month")}</option>
                             </>
                           ) : (
-                            <>
-                              <option>{t("duration1Month")}</option>
-                              <option>{t("duration3Months")}</option>
-                              <option>{t("duration6Months")}</option>
-                              <option>{t("duration1Year")}</option>
-                            </>
+                            // Longue durée : tous les mois de 1 à 12, au lieu
+                            // des quatre paliers 1/3/6 mois et 1 an. « 1 an »
+                            // disparaît au profit de « 12 mois », pour que
+                            // toute la liste s'exprime dans la même unité.
+                            LONG_TERM_MONTHS.map((n) => (
+                              <option key={n}>
+                                {n === 1 ? t("duration1Month") : t("durationMonths", { count: n })}
+                              </option>
+                            ))
                           )}
                         </select>
                       </Field>
