@@ -769,7 +769,8 @@
     "toastPasswordSameAsOld": "⚠️ Choisissez un mot de passe différent de l'actuel.",
     "toastPasswordChangeError": "❌ Impossible de changer le mot de passe. Réessayez.",
     "toastPasswordChanged": "✅ Mot de passe modifié.",
-    "toastPasswordPwned": "🚨 Ce mot de passe figure dans des fuites de données connues ({count} fois). Choisissez-en un autre."
+    "toastPasswordPwned": "🚨 Ce mot de passe figure dans des fuites de données connues ({count} fois). Choisissez-en un autre.",
+    "adminStats": "Statistiques"
   },
   "ResetPassword": {
     "metaTitle": "Réinitialiser le mot de passe – 237Logement",
@@ -844,6 +845,33 @@
     "roleVisitor": "Visiteur",
     "defaultUserName": "Utilisateur",
     "postedAgo": "Publié {ago}"
+  },
+  "AdminStats": {
+    "administration": "Administration",
+    "title": "Statistiques",
+    "subtitle": "Audience de toutes les annonces du site, quel que soit leur auteur.",
+    "loading": "Chargement des statistiques…",
+    "cardViews": "Vues cumulées",
+    "cardFavs": "Favoris",
+    "cardListings": "Annonces",
+    "cardOwners": "Propriétaires",
+    "cardListingsActive": "{count} active{plural}",
+    "periodAll": "Depuis le début",
+    "periodMonth": "30 derniers jours",
+    "periodWeek": "7 derniers jours",
+    "rankingTitle": "Classement par vues",
+    "periodNote": "Sur une période, seuls les visiteurs horodatés sont comptés : les vues antérieures à la mise en place du comptage détaillé n'apparaissent que dans « Depuis le début ».",
+    "colRank": "#",
+    "colListing": "Annonce",
+    "colViews": "Vues",
+    "colFavs": "Favoris",
+    "emptyTitle": "Aucune annonce",
+    "emptyText": "Les statistiques apparaîtront dès la première annonce publiée.",
+    "statusBlocked": "🚫 Bloquée",
+    "statusPending": "⏳ En attente",
+    "viewsLabel": "vues",
+    "favsLabel": "favoris",
+    "toastLoadError": "❌ Impossible de charger les statistiques."
   },
   "AdminUsers": {
     "administration": "Administration",

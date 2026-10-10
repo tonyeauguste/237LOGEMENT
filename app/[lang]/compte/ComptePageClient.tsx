@@ -46,6 +46,7 @@ import PropertyCard from "@/components/property/PropertyCard";
 import AdminOverview from "@/components/dashboard/AdminOverview";
 import AdminAnnonces from "@/components/dashboard/AdminAnnonces";
 import AdminUsers from "@/components/dashboard/AdminUsers";
+import AdminStats from "@/components/dashboard/AdminStats";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
@@ -57,7 +58,7 @@ import type { Property } from "@/lib/types";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 type UserSection = "favoris" | "listings" | "stats" | "settings";
-type AdminSection = "admin-overview" | "admin-annonces" | "admin-users";
+type AdminSection = "admin-overview" | "admin-annonces" | "admin-users" | "admin-stats";
 type Section = UserSection | AdminSection;
 
 function isAdminSection(s: Section): s is AdminSection {
@@ -934,6 +935,7 @@ export default function AccountDashboard() {
                       { key: "admin-overview", label: t("adminOverview"), icon: <LayoutDashboard size={14} /> },
                       { key: "admin-annonces", label: t("adminListings"), icon: <Building2 size={14} /> },
                       { key: "admin-users", label: t("adminAccounts"), icon: <Users2 size={14} /> },
+                      { key: "admin-stats", label: t("adminStats"), icon: <BarChart3 size={14} /> },
                     ] as const
                   ).map((tab) => (
                     <button
@@ -955,6 +957,7 @@ export default function AccountDashboard() {
                   <AdminAnnonces key={adminAnnoncesKey} initialSearch={adminAnnoncesSearch} />
                 )}
                 {section === "admin-users" && <AdminUsers onViewListings={goToOwnerListings} />}
+                {section === "admin-stats" && <AdminStats />}
               </>
             )}
           </motion.div>

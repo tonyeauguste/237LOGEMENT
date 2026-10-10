@@ -22,7 +22,14 @@ export async function generateMetadata({
 
 // Namespaces propres à cette page — les transverses (navigation, pied
 // de page, cartes d'annonce…) viennent déjà de la mise en page.
-const NAMESPACES = ["Dashboard", "Auth", "AdminOverview", "AdminAnnonces", "AdminUsers"] as const;
+const NAMESPACES = [
+  "Dashboard",
+  "Auth",
+  "AdminOverview",
+  "AdminAnnonces",
+  "AdminUsers",
+  "AdminStats",
+] as const;
 
 export default async function ComptePage({
   params,
