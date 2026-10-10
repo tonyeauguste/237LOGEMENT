@@ -46,6 +46,45 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   // rules.baths sont vrais pour le groupe résidentiel.
   const showRooms = rules.rooms && showsRoomCount(p.kind);
   const showBaths = rules.baths && showsRoomCount(p.kind);
+
+  // Cases réellement affichées, construites en liste plutôt que rendues une
+  // par une : la grille était figée à 3 colonnes dès qu'il y en avait plus
+  // d'une, si bien qu'un bien à 2 cases (chambres + salles de bain, surface
+  // masquée en location) laissait une colonne vide avec une bordure
+  // flottante. Le nombre de colonnes et la bordure de séparation se
+  // déduisent maintenant du nombre réel de cases.
+  const statCells: { key: string; icon: React.ReactNode; value: React.ReactNode; label: string }[] = [];
+  if (showRooms) {
+    statCells.push({
+      key: "rooms",
+      icon: <Bed size={16} />,
+      value: p.rooms,
+      label: p.rooms > 1 ? t("rooms") : t("room"),
+    });
+  }
+  if (showBaths) {
+    statCells.push({
+      key: "baths",
+      icon: <Bath size={16} />,
+      value: p.baths,
+      label: p.baths > 1 ? t("bathrooms") : t("bathroom"),
+    });
+  }
+  if (rules.surface) {
+    statCells.push({
+      key: "surface",
+      icon: <Ruler size={16} />,
+      value: p.surface || "—",
+      label: t("surfaceM2"),
+    });
+  }
+  // Classes littérales : Tailwind ne génère pas les noms construits
+  // dynamiquement (`grid-cols-${n}` ne produirait aucun style).
+  const STAT_GRID_COLS: Record<number, string> = {
+    1: "grid-cols-1",
+    2: "grid-cols-2",
+    3: "grid-cols-3",
+  };
   // B.2/B.4 — voir le commentaire équivalent dans PropertyCard.tsx : ne
   // concerne que le court séjour, le longue durée supprime l'annonce.
   const isOccupied = p.type === "courte" && p.occupancyStatus === "occupe";
@@ -284,35 +323,26 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               chambre où ce nombre est toujours 1 et n'apporte donc aucune
               information (voir showsRoomCount) ; surface masquée en
               location sauf pour un terrain. */}
-          {(showRooms || showBaths || rules.surface) && (
+          {statCells.length > 0 && (
             <div
               className={`grid mb-7 bg-card border border-border rounded-2xl overflow-hidden ${
-                [showRooms, showBaths, rules.surface].filter(Boolean).length > 1
-                  ? "grid-cols-3"
-                  : "grid-cols-1"
+                STAT_GRID_COLS[statCells.length]
               }`}
             >
-              {showRooms && (
-                <div className="p-[18px] text-center border-r border-border">
-                  <div className="flex justify-center mb-1.5 text-gold"><Bed size={16} /></div>
-                  <div className="font-semibold text-[15px] text-text">{p.rooms}</div>
-                  <div className="text-xs text-muted">{p.rooms > 1 ? t("rooms") : t("room")}</div>
+              {statCells.map((cell, i) => (
+                <div
+                  key={cell.key}
+                  // Séparateur entre les cases seulement : la dernière n'en
+                  // porte pas, sinon le trait flotte contre le bord de la carte.
+                  className={`p-[18px] text-center ${
+                    i < statCells.length - 1 ? "border-r border-border" : ""
+                  }`}
+                >
+                  <div className="flex justify-center mb-1.5 text-gold">{cell.icon}</div>
+                  <div className="font-semibold text-[15px] text-text">{cell.value}</div>
+                  <div className="text-xs text-muted">{cell.label}</div>
                 </div>
-              )}
-              {showBaths && (
-                <div className="p-[18px] text-center border-r border-border">
-                  <div className="flex justify-center mb-1.5 text-gold"><Bath size={16} /></div>
-                  <div className="font-semibold text-[15px] text-text">{p.baths}</div>
-                  <div className="text-xs text-muted">{p.baths > 1 ? t("bathrooms") : t("bathroom")}</div>
-                </div>
-              )}
-              {rules.surface && (
-                <div className="p-[18px] text-center">
-                  <div className="flex justify-center mb-1.5 text-gold"><Ruler size={16} /></div>
-                  <div className="font-semibold text-[15px] text-text">{p.surface || "—"}</div>
-                  <div className="text-xs text-muted">{t("surfaceM2")}</div>
-                </div>
-              )}
+              ))}
             </div>
           )}
 
