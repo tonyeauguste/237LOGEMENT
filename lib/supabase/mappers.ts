@@ -56,6 +56,7 @@ export function rowToProperty(row: PropertyRow): Property {
       listings: row.owner_listings ?? 1,
       phone: row.owner_phone || "",
     },
+    ownerDetailsOverridden: row.owner_details_overridden ?? false,
     ownerId: row.owner_id,
     status: (row.status as ListingStatus) ?? "active",
     createdAt: row.created_at,

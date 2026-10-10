@@ -64,6 +64,17 @@ function PublierPageInner() {
   const [step, setStep] = useState(1);
   const [dir, setDir] = useState(1);
 
+  // Publication au nom d'un tiers — administrateurs uniquement.
+  // Permet de saisir les coordonnées du vrai propriétaire pour qu'elles
+  // s'affichent sur l'annonce à la place de celles de l'administrateur.
+  // Le rôle n'est ici qu'un filtre d'affichage : c'est le déclencheur
+  // enforce_owner_contact_fields (base) qui décide réellement si ces
+  // valeurs sont retenues ou réécrites depuis le profil.
+  const isAdmin = user?.role === "admin";
+  const [onBehalf, setOnBehalf] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+
   // Step 1
   const [city, setCity] = useState("");
   const [quartier, setQuartier] = useState("");
@@ -264,6 +275,11 @@ function PublierPageInner() {
         setMinDuration(data.min_duration || "1 mois");
         setLandTitleStatus((data.land_title_status as LandTitleStatus) || "en_cours");
         setPriceNegotiable(data.price_negotiable ?? false);
+        if (data.owner_details_overridden) {
+          setOnBehalf(true);
+          setOwnerName(data.owner_name || "");
+          setOwnerPhone(data.owner_phone || "");
+        }
         setLoadingExisting(false);
       });
     return () => {
@@ -371,6 +387,14 @@ function PublierPageInner() {
       return;
     }
 
+    // Publication pour un tiers : sans nom, l'annonce s'afficherait sans
+    // interlocuteur identifiable. La base refuse déjà ce cas — on évite
+    // juste à l'administrateur un aller-retour pour rien.
+    if (isAdmin && onBehalf && !ownerName.trim()) {
+      showToast(t("toastAdminOwnerNameRequired"), "error");
+      return;
+    }
+
     setPublishing(true);
     const supabase = createClient();
 
@@ -451,18 +475,35 @@ function PublierPageInner() {
         amenities,
       };
 
+      // Coordonnées du propriétaire : celles saisies par l'administrateur
+      // quand il publie pour un tiers, sinon rien (la base réécrit alors
+      // depuis le profil — voir enforce_owner_contact_fields).
+      const ownerFields =
+        isAdmin && onBehalf
+          ? {
+              owner_details_overridden: true,
+              owner_name: ownerName.trim(),
+              owner_phone: ownerPhone.trim() || null,
+            }
+          : { owner_details_overridden: false };
+
       if (isEditMode) {
         const { error: updateError } = await supabase
           .from("properties")
-          .update(payload)
+          .update({ ...payload, ...ownerFields })
           .eq("id", editId as number);
         if (updateError) throw updateError;
         showToast(t("toastUpdateSuccess"), "success");
       } else {
         const { error: insertError } = await supabase.from("properties").insert({
           ...payload,
+          ...ownerFields,
           owner_id: user?.id,
-          owner_name: user?.name || "Propriétaire",
+          // Valeurs de repli : la base les remplace par celles du profil
+          // dès que `owner_details_overridden` est faux.
+          owner_name: ownerFields.owner_details_overridden
+            ? ownerName.trim()
+            : user?.name || "Propriétaire",
           owner_avatar: user?.avatar || DEFAULT_AVATAR,
           owner_phone: user?.phone || "",
         });
@@ -977,6 +1018,65 @@ function PublierPageInner() {
                     last
                   />
                 </div>
+                {/* Administrateurs uniquement : publier pour le compte de
+                    quelqu'un d'autre, sans faire apparaître ses propres
+                    coordonnées. Le rôle est aussi vérifié côté base — voir
+                    enforce_owner_contact_fields. */}
+                {isAdmin && (
+                  <div className="mt-6 rounded-2xl border border-[rgba(200,155,60,.3)] bg-gold3/10 p-5">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[10px] tracking-[2px] uppercase text-gold font-semibold">
+                        {t("adminOwnerBadge")}
+                      </span>
+                    </div>
+                    <h4 className="text-[15px] font-semibold text-text mb-1">{t("adminOwnerTitle")}</h4>
+                    <p className="text-[12.5px] text-muted leading-relaxed mb-4">{t("adminOwnerHelp")}</p>
+
+                    <label className="flex items-center gap-2.5 cursor-pointer mb-4">
+                      <input
+                        type="checkbox"
+                        checked={onBehalf}
+                        onChange={(e) => setOnBehalf(e.target.checked)}
+                        className="w-4 h-4 accent-[#c89b3c]"
+                      />
+                      <span className="text-[13.5px] text-text">{t("adminOwnerToggle")}</span>
+                    </label>
+
+                    {onBehalf && (
+                      <div className="flex flex-col gap-3.5">
+                        <div>
+                          <label className="block text-[12.5px] text-muted mb-1.5" htmlFor="admin-owner-name">
+                            {t("adminOwnerNameLabel")}
+                          </label>
+                          <input
+                            id="admin-owner-name"
+                            className="form-control"
+                            value={ownerName}
+                            onChange={(e) => setOwnerName(e.target.value)}
+                            placeholder={t("adminOwnerNamePlaceholder")}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[12.5px] text-muted mb-1.5" htmlFor="admin-owner-phone">
+                            {t("adminOwnerPhoneLabel")}
+                          </label>
+                          <input
+                            id="admin-owner-phone"
+                            type="tel"
+                            className="form-control"
+                            value={ownerPhone}
+                            onChange={(e) => setOwnerPhone(e.target.value)}
+                            placeholder={t("adminOwnerPhonePlaceholder")}
+                          />
+                          <p className="text-[11.5px] text-dim mt-1.5 leading-relaxed">
+                            {t("adminOwnerPhoneHelp")}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <Button variant="gold" full size="lg" loading={publishing} onClick={publish} className="mt-6">
                   {isEditMode ? t("saveChangesButton") : t("publishButton")}
                 </Button>

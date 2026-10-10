@@ -139,6 +139,7 @@ export type Database = {
           min_duration: string | null
           occupancy_status: string | null
           owner_avatar: string | null
+          owner_details_overridden: boolean
           owner_id: string | null
           owner_listings: number
           owner_name: string
@@ -180,6 +181,7 @@ export type Database = {
           min_duration?: string | null
           occupancy_status?: string | null
           owner_avatar?: string | null
+          owner_details_overridden?: boolean
           owner_id?: string | null
           owner_listings?: number
           owner_name?: string
@@ -221,6 +223,7 @@ export type Database = {
           min_duration?: string | null
           occupancy_status?: string | null
           owner_avatar?: string | null
+          owner_details_overridden?: boolean
           owner_id?: string | null
           owner_listings?: number
           owner_name?: string

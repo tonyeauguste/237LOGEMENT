@@ -685,7 +685,17 @@
     "labelSalePrice": "The sale price",
     "labelRent": "The monthly rent",
     "labelDeposit": "The deposit",
-    "labelAdvance": "The advance payment"
+    "labelAdvance": "The advance payment",
+    "adminOwnerTitle": "Publish on behalf of someone else",
+    "adminOwnerBadge": "Administration",
+    "adminOwnerHelp": "Administrators only. Enter the real owner: these are the details that will appear on the listing, not yours.",
+    "adminOwnerToggle": "This listing belongs to someone else",
+    "adminOwnerNameLabel": "Owner's name",
+    "adminOwnerNamePlaceholder": "e.g. Mr Jean Mbarga",
+    "adminOwnerPhoneLabel": "Owner's phone",
+    "adminOwnerPhonePlaceholder": "+237 6XX XXX XXX",
+    "adminOwnerPhoneHelp": "Used for the listing's WhatsApp button. Leave empty if the owner does not want to be contacted directly.",
+    "toastAdminOwnerNameRequired": "⚠️ Enter the owner's name, or untick publishing on behalf of someone else."
   },
   "Dashboard": {
     "metaTitle": "My account – 237Logement",
