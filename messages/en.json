@@ -630,9 +630,6 @@
     "duration1Week": "1 week",
     "duration2Weeks": "2 weeks",
     "duration1Month": "1 month",
-    "duration3Months": "3 months",
-    "duration6Months": "6 months",
-    "duration1Year": "1 year",
     "pricingTip": "✅ Free listing · No commission on rents · Free listing edits anytime",
     "editReadyTitle": "Your changes are ready!",
     "newReadyTitle": "Your listing is ready!",
@@ -702,7 +699,8 @@
     "adminOwnerPhoneLabel": "Owner's phone",
     "adminOwnerPhonePlaceholder": "+237 6XX XXX XXX",
     "adminOwnerPhoneHelp": "Used for the listing's WhatsApp button. Leave empty if the owner does not want to be contacted directly.",
-    "toastAdminOwnerNameRequired": "⚠️ Enter the owner's name, or untick publishing on behalf of someone else."
+    "toastAdminOwnerNameRequired": "⚠️ Enter the owner's name, or untick publishing on behalf of someone else.",
+    "durationMonths": "{count} months"
   },
   "Dashboard": {
     "metaTitle": "My account – 237Logement",
