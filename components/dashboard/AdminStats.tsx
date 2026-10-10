@@ -13,13 +13,14 @@
 // ═══════════════════════════════════════════════
 
 import { useEffect, useState } from "react";
-import { Eye, Heart, Building2, Users2 } from "lucide-react";
+import { Eye, Heart, Building2, Users2, Download } from "lucide-react";
 import Tag from "@/components/ui/Tag";
 import Pagination from "@/components/ui/Pagination";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { kindLabel } from "@/lib/data";
 import { useTranslations } from "@/i18n/IntlProvider";
+import { dateDuJour, downloadCsv, toCsv } from "@/lib/csv";
 
 const PAGE_SIZE = 20;
 
@@ -57,6 +58,7 @@ export default function AdminStats() {
   const [total, setTotal] = useState(0);
   const [totals, setTotals] = useState<SiteTotals | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   // Changer de période ou de page relance l'indicateur de chargement ici,
   // pas dans l'effet : la règle react-hooks/set-state-in-effect interdit un
@@ -70,6 +72,67 @@ export default function AdminStats() {
   function handlePageChange(p: number) {
     setPage(p);
     setLoading(true);
+  }
+
+  /**
+   * Exporte le classement complet, pas seulement la page affichée : un
+   * export tronqué à 20 lignes n'aurait aucun intérêt. On repagine donc
+   * jusqu'à avoir tout récupéré, en se fiant au total_count renvoyé.
+   */
+  async function handleExport() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const supabase = createClient();
+      const LOT = 200;
+      const tout: StatRow[] = [];
+      let offset = 0;
+      let attendu = Infinity;
+
+      while (tout.length < attendu) {
+        const { data, error } = await supabase.rpc("admin_property_stats", {
+          p_period: period,
+          p_limit: LOT,
+          p_offset: offset,
+        });
+        if (error) throw error;
+        const lot = (data ?? []) as StatRow[];
+        if (lot.length === 0) break;
+        attendu = Number(lot[0].total_count);
+        tout.push(...lot);
+        offset += LOT;
+      }
+
+      if (tout.length === 0) {
+        showToast(t("exportEmpty"), "info");
+        return;
+      }
+
+      const statut = (s: string) =>
+        s === "blocked" ? t("csvStatusBlocked") : s === "pending" ? t("csvStatusPending") : t("csvStatusActive");
+
+      const contenu = toCsv(
+        [
+          t("csvRank"), t("csvTitle"), t("csvKind"), t("csvCity"),
+          t("csvOwner"), t("csvStatus"), t("csvPeriodViews"),
+          t("csvTotalViews"), t("csvFavs"),
+        ],
+        tout.map((r, i) => [
+          i + 1, r.title, kindLabel(r.kind, tKind), r.city,
+          r.owner_name, statut(r.status), Number(r.period_views),
+          r.views, r.favs,
+        ])
+      );
+
+      const periodeLabel =
+        period === "7d" ? t("fileLabelWeek") : period === "30d" ? t("fileLabelMonth") : t("fileLabelAll");
+      downloadCsv(`237logement-statistiques-${periodeLabel}-${dateDuJour()}.csv`, contenu);
+      showToast(t("exportDone", { count: tout.length }), "success");
+    } catch {
+      showToast(t("exportError"), "error");
+    } finally {
+      setExporting(false);
+    }
   }
 
   useEffect(() => {
@@ -155,7 +218,7 @@ export default function AdminStats() {
       {/* Sélecteur de période */}
       <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
         <h3 className="text-[15px] font-semibold text-text">{t("rankingTitle")}</h3>
-        <div className="flex gap-1.5 flex-wrap">
+        <div className="flex gap-1.5 flex-wrap items-center">
           {PERIODS.map((p) => (
             <button
               key={p.key}
@@ -169,6 +232,16 @@ export default function AdminStats() {
               {p.label}
             </button>
           ))}
+          {/* Exporte toujours le classement complet pour la période
+              choisie, pas la page affichée. */}
+          <button
+            onClick={handleExport}
+            disabled={exporting || loading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-semibold bg-card border border-border text-muted hover:border-gold hover:text-gold transition-colors disabled:opacity-50 disabled:pointer-events-none"
+          >
+            <Download size={13} />
+            {exporting ? t("exportPreparing") : t("exportButton")}
+          </button>
         </div>
       </div>
 
