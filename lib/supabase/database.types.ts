@@ -342,6 +342,31 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_property_stats: {
+        Args: { p_limit?: number; p_offset?: number; p_period?: string }
+        Returns: {
+          city: string
+          favs: number
+          id: number
+          kind: string
+          owner_name: string
+          period_views: number
+          status: string
+          title: string
+          total_count: number
+          views: number
+        }[]
+      }
+      admin_site_stats: {
+        Args: never
+        Returns: {
+          active_properties: number
+          total_favs: number
+          total_owners: number
+          total_properties: number
+          total_views: number
+        }[]
+      }
       admin_delete_user: { Args: { p_id: string }; Returns: undefined }
       admin_list_users: {
         Args: { p_limit?: number; p_offset?: number; p_search?: string }

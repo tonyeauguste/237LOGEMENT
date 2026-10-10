@@ -803,7 +803,8 @@
     "toastPasswordSameAsOld": "⚠️ Choose a password different from your current one.",
     "toastPasswordChangeError": "❌ Could not change the password. Please try again.",
     "toastPasswordChanged": "✅ Password changed.",
-    "toastPasswordPwned": "🚨 This password appears in known data breaches ({count} times). Please choose another one."
+    "toastPasswordPwned": "🚨 This password appears in known data breaches ({count} times). Please choose another one.",
+    "adminStats": "Statistics"
   },
   "ResetPassword": {
     "metaTitle": "Reset password – 237Logement",
@@ -878,6 +879,33 @@
     "roleVisitor": "Visitor",
     "defaultUserName": "User",
     "postedAgo": "Posted {ago}"
+  },
+  "AdminStats": {
+    "administration": "Administration",
+    "title": "Statistics",
+    "subtitle": "Audience of every listing on the site, whoever published it.",
+    "loading": "Loading statistics…",
+    "cardViews": "Total views",
+    "cardFavs": "Favourites",
+    "cardListings": "Listings",
+    "cardOwners": "Owners",
+    "cardListingsActive": "{count} active",
+    "periodAll": "All time",
+    "periodMonth": "Last 30 days",
+    "periodWeek": "Last 7 days",
+    "rankingTitle": "Ranking by views",
+    "periodNote": "Over a period, only time-stamped visitors are counted: views recorded before detailed tracking began appear under “All time” only.",
+    "colRank": "#",
+    "colListing": "Listing",
+    "colViews": "Views",
+    "colFavs": "Favourites",
+    "emptyTitle": "No listings",
+    "emptyText": "Statistics will appear as soon as a listing is published.",
+    "statusBlocked": "🚫 Blocked",
+    "statusPending": "⏳ Pending",
+    "viewsLabel": "views",
+    "favsLabel": "favourites",
+    "toastLoadError": "❌ Could not load the statistics."
   },
   "AdminUsers": {
     "administration": "Administration",
