@@ -18,7 +18,7 @@ export async function generateMetadata({
 
 // Namespaces propres à cette page — les transverses (navigation, pied
 // de page, cartes d'annonce…) viennent déjà de la mise en page.
-const NAMESPACES = ["Auth", "AuthHero"] as const;
+const NAMESPACES = ["Auth", "AuthHero", "Password"] as const;
 
 export default async function ConnexionPage({
   params,

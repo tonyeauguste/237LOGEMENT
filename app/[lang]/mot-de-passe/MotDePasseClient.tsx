@@ -24,10 +24,12 @@ import { useAppStore } from "@/lib/store";
 import { useAuthSession } from "@/lib/useAuthSession";
 import { createClient } from "@/lib/supabase/client";
 import { isPasswordPwned } from "@/lib/pwned";
+import { weakPasswordMessage, weakPasswordReasons } from "@/lib/password-errors";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 export default function NouveauMotDePassePage() {
   const t = useTranslations("ResetPassword");
+  const tPwd = useTranslations("Password");
   const ready = useAuthSession();
   const currentUser = useAppStore((s) => s.currentUser);
   const showToast = useAppStore((s) => s.showToast);
@@ -61,10 +63,13 @@ export default function NouveauMotDePassePage() {
     setSaving(false);
 
     if (error) {
+      const weak = weakPasswordReasons(error);
       showToast(
-        error.message.toLowerCase().includes("should be different")
-          ? t("toastPasswordSameAsOld")
-          : t("toastError"),
+        weak
+          ? weakPasswordMessage(weak, tPwd)
+          : error.message.toLowerCase().includes("should be different")
+            ? t("toastPasswordSameAsOld")
+            : t("toastError"),
         "error"
       );
       return;

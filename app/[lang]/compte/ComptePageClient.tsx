@@ -51,6 +51,7 @@ import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { isPasswordPwned } from "@/lib/pwned";
+import { weakPasswordMessage, weakPasswordReasons } from "@/lib/password-errors";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import { fmtPrice } from "@/lib/format";
 import { propertyGroup, transactionMeta, DEFAULT_AVATAR } from "@/lib/data";
@@ -68,6 +69,7 @@ function isAdminSection(s: Section): s is AdminSection {
 export default function AccountDashboard() {
   const tTx = useTranslations("Transaction");
   const t = useTranslations("Dashboard");
+  const tPwd = useTranslations("Password");
   // Plus de rôle requis : tout compte connecté accède au même espace.
   const user = useAuthGuard();
   const showToast = useAppStore((s) => s.showToast);
@@ -424,10 +426,13 @@ export default function AccountDashboard() {
     setSavingPwd(false);
 
     if (error) {
+      const weak = weakPasswordReasons(error);
       showToast(
-        error.message.toLowerCase().includes("should be different")
-          ? t("toastPasswordSameAsOld")
-          : t("toastPasswordChangeError"),
+        weak
+          ? weakPasswordMessage(weak, tPwd)
+          : error.message.toLowerCase().includes("should be different")
+            ? t("toastPasswordSameAsOld")
+            : t("toastPasswordChangeError"),
         "error"
       );
       return;

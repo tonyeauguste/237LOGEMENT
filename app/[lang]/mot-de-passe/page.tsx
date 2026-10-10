@@ -20,7 +20,7 @@ export async function generateMetadata({
 
 // Namespaces propres à cette page — les transverses (navigation, pied
 // de page, cartes d'annonce…) viennent déjà de la mise en page.
-const NAMESPACES = ["ResetPassword"] as const;
+const NAMESPACES = ["ResetPassword", "Password"] as const;
 
 export default async function MotDePassePage({
   params,
