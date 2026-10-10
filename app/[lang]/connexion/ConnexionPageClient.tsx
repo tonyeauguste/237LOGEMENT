@@ -12,6 +12,7 @@ import PasswordStrength from "@/components/auth/PasswordStrength";
 import { buildUserFromSession, useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import { isPasswordPwned } from "@/lib/pwned";
+import { weakPasswordMessage, weakPasswordReasons } from "@/lib/password-errors";
 import { DEFAULT_AVATAR } from "@/lib/data";
 import { useTranslations } from "@/i18n/IntlProvider";
 
@@ -23,6 +24,7 @@ const REGISTER_STEPS = 4;
 
 function AuthPageInner() {
   const t = useTranslations("Auth");
+  const tPwd = useTranslations("Password");
   const STEP_LABELS = [t("step1Label"), t("step2Label"), t("step3Label"), t("step4Label")];
   const params = useSearchParams();
   const router = useRouter();
@@ -175,10 +177,15 @@ function AuthPageInner() {
     });
     setLoading(false);
     if (error) {
+      // Mot de passe refuse par les exigences Supabase : message explicite
+      // plutot que le generique, qui laissait l'utilisateur sans piste.
+      const weak = weakPasswordReasons(error);
       showToast(
-        error.message.toLowerCase().includes("already registered")
-          ? t("toastAccountExists")
-          : t("toastGenericError"),
+        weak
+          ? weakPasswordMessage(weak, tPwd)
+          : error.message.toLowerCase().includes("already registered")
+            ? t("toastAccountExists")
+            : t("toastGenericError"),
         "error"
       );
       return;

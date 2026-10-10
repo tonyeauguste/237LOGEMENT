@@ -65,6 +65,13 @@
     "yearOne": "1 year ago",
     "years": "{count} years ago"
   },
+  "Password": {
+    "weakGeneric": "🔒 Password rejected: too weak. Make it longer and mix digits, lowercase and uppercase letters.",
+    "weakShort": "🔒 Password too short. Please choose a longer one.",
+    "weakSimple": "🔒 Password too simple. Mix digits, lowercase and uppercase letters.",
+    "weakShortAndSimple": "🔒 Password too weak: it must be longer and mix digits, lowercase and uppercase letters.",
+    "weakLeaked": "🚨 This password appears in known data breaches. Please choose another one."
+  },
   "Property": {
     "notAvailable": "Not available",
     "occupied": "Occupied",

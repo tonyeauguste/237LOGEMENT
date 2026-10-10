@@ -65,6 +65,13 @@
     "yearOne": "il y a 1 an",
     "years": "il y a {count} ans"
   },
+  "Password": {
+    "weakGeneric": "🔒 Mot de passe refusé : trop faible. Allongez-le et mêlez chiffres, minuscules et majuscules.",
+    "weakShort": "🔒 Mot de passe trop court. Choisissez-en un plus long.",
+    "weakSimple": "🔒 Mot de passe trop simple. Mêlez chiffres, minuscules et majuscules.",
+    "weakShortAndSimple": "🔒 Mot de passe trop faible : il doit être plus long et mêler chiffres, minuscules et majuscules.",
+    "weakLeaked": "🚨 Ce mot de passe figure dans des fuites de données connues. Choisissez-en un autre."
+  },
   "Property": {
     "notAvailable": "Non disponible",
     "occupied": "Occupé",

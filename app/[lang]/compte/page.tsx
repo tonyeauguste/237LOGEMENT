@@ -29,6 +29,7 @@ const NAMESPACES = [
   "AdminAnnonces",
   "AdminUsers",
   "AdminStats",
+  "Password",
 ] as const;
 
 export default async function ComptePage({
