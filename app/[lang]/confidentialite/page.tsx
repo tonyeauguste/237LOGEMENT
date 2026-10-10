@@ -23,9 +23,10 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
         title: "Who we are",
         body: (
           <p>
-            237Logement is a Cameroonian platform that connects owners directly with tenants and
-            buyers, with no middleman and no agency fees. This policy applies to all visitors,
-            tenants and owners using the 237logement.org website (&quot;the Site&quot;).
+            237Logement is a Cameroonian platform that connects owners, agencies and property
+            professionals directly with tenants and buyers, with no commission charged by the
+            Site. This policy applies to all visitors, tenants, owners and professionals using the
+            237logement.org website (&quot;the Site&quot;).
           </p>
         ),
       },
@@ -221,9 +222,10 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
       body: (
         <p>
           237Logement est une plateforme camerounaise de mise en relation directe entre
-          propriétaires et locataires/acheteurs, sans intermédiaire ni frais d&apos;agence. Cette
-          politique s&apos;applique à tous les visiteurs, locataires et propriétaires utilisant le
-          site 237logement.org (« le Site »).
+          propriétaires, agences et professionnels de l&apos;immobilier d&apos;une part, et
+          locataires/acheteurs d&apos;autre part, sans commission prélevée par le Site. Cette
+          politique s&apos;applique à tous les visiteurs, locataires, propriétaires et
+          professionnels utilisant le site 237logement.org (« le Site »).
         </p>
       ),
     },
@@ -310,9 +312,9 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
           <ul className="list-disc pl-5 space-y-1.5">
             <li>
               <strong className="text-text">Publiquement, avec les autres utilisateurs</strong> :
-              si vous publiez une annonce, votre nom et votre numéro de téléphone sont visibles par
-              toute personne consultant cette annonce — c&apos;est nécessaire pour permettre le
-              contact direct, sans intermédiaire.
+              si vous publiez une annonce, le nom et le numéro de téléphone affichés sont visibles
+              par toute personne consultant cette annonce — c&apos;est nécessaire pour permettre le
+              contact direct.
             </li>
             <li>
               <strong className="text-text">Avec nos prestataires techniques</strong>, qui
