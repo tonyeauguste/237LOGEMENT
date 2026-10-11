@@ -7,8 +7,8 @@ import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 
 // Date affichée en bas de page et dans l'intro — à mettre à jour à la main
 // si le contenu de cette page est modifié plus tard.
-const LAST_UPDATED = "8 septembre 2026";
-const LAST_UPDATED_EN = "September 8, 2026";
+const LAST_UPDATED = "11 octobre 2026";
+const LAST_UPDATED_EN = "October 11, 2026";
 
 // ═══════════════════════════════════════════════
 // Contenu légal directement ici (pas dans messages/*.json) : chaque
@@ -110,13 +110,20 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
             <ul className="list-disc pl-5 space-y-1.5">
               <li>
                 <strong className="text-text">Publicly, with other users</strong>: if you publish
-                a listing, your name and phone number are visible to anyone viewing that listing —
-                this is necessary to enable direct, middleman-free contact.
+                a listing, the name and phone number shown are visible to anyone viewing that
+                listing — this is necessary to enable direct contact.
               </li>
               <li>
                 <strong className="text-text">With our technical providers</strong>, who host the
                 Site and its database and are not allowed to use your data for any purpose other
                 than running the Site.
+              </li>
+              <li>
+                <strong className="text-text">With the HaveIBeenPwned service</strong>, only when
+                you create or change a password, to check that it does not appear in a known data
+                breach. Your password never leaves your browser: only the first five characters of
+                its cryptographic fingerprint are sent, which is not enough to reconstruct or
+                identify it.
               </li>
               <li>
                 <strong className="text-text">If required by law</strong>, for example in response
@@ -320,6 +327,13 @@ function getSections(locale: Locale): { title: string; body: ReactNode }[] {
               <strong className="text-text">Avec nos prestataires techniques</strong>, qui
               hébergent le Site et sa base de données et n&apos;ont pas le droit d&apos;utiliser vos
               données à d&apos;autres fins que le fonctionnement du Site.
+            </li>
+            <li>
+              <strong className="text-text">Avec le service HaveIBeenPwned</strong>, uniquement au
+              moment où vous créez ou modifiez un mot de passe, afin de vérifier qu&apos;il ne
+              figure pas dans une fuite de données connue. Votre mot de passe ne quitte jamais
+              votre navigateur : seuls les cinq premiers caractères de son empreinte chiffrée sont
+              transmis, ce qui ne permet ni de le reconstituer ni de l&apos;identifier.
             </li>
             <li>
               <strong className="text-text">Si la loi l&apos;exige</strong>, par exemple en réponse
