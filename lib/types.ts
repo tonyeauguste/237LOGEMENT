@@ -75,8 +75,6 @@ export interface Property {
   deposit: number | null;
   /** Avance de loyer — distincte de la caution, pertinente uniquement en location. */
   advancePayment: number | null;
-  /** Charges incluses dans le loyer — pertinent uniquement en location. */
-  charges: "non" | "oui" | "partiel" | null;
   /** Durée minimale de location (ex: "1 mois") — pertinent uniquement en location. */
   minDuration: string | null;
   /** Disponibilité du titre foncier — pertinent uniquement en vente. */
@@ -191,6 +189,5 @@ export interface ListingDraft {
   amenities: string[];
   price: string;
   deposit: string;
-  charges: "non" | "oui" | "partiel";
   minDuration: string;
 }

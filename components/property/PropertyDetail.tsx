@@ -460,7 +460,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 le payload envoyé par le formulaire /publier). Chaque ligne
                 n'apparaît que si le champ correspondant est renseigné. */}
             {p.transactionType === "location" ? (
-              (p.deposit || p.advancePayment || p.charges || p.minDuration) && (
+              (p.deposit || p.advancePayment || p.minDuration) && (
                 <div className="border-t border-border pt-3 mb-4 flex flex-col gap-1.5 text-[13px]">
                   {p.deposit != null && (
                     <div className="flex justify-between">
@@ -472,18 +472,6 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                     <div className="flex justify-between">
                       <span className="text-muted">{t("advance")}</span>
                       <span className="text-text font-medium">{fmtPrice(p.advancePayment)}</span>
-                    </div>
-                  )}
-                  {p.charges && (
-                    <div className="flex justify-between">
-                      <span className="text-muted">{t("charges")}</span>
-                      <span className="text-text font-medium">
-                        {p.charges === "oui"
-                          ? t("chargesIncluded")
-                          : p.charges === "partiel"
-                            ? t("chargesPartial")
-                            : t("chargesExcluded")}
-                      </span>
                     </div>
                   )}
                   {p.minDuration && (
