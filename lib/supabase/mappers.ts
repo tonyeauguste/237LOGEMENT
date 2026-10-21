@@ -30,7 +30,6 @@ export function rowToProperty(row: PropertyRow): Property {
     price: Number(row.price) || 0,
     deposit: row.deposit != null ? Number(row.deposit) : null,
     advancePayment: row.advance_payment != null ? Number(row.advance_payment) : null,
-    charges: (row.charges as "non" | "oui" | "partiel" | null) ?? null,
     minDuration: row.min_duration ?? null,
     landTitleStatus: (row.land_title_status as LandTitleStatus | null) ?? null,
     priceNegotiable: row.price_negotiable ?? null,

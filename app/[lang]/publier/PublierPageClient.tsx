@@ -160,7 +160,6 @@ function PublierPageInner() {
   // la Caution : "custom" dès que l'utilisateur tape lui-même une valeur.
   const [depositMode, setDepositMode] = useState<"1mois" | "2mois" | "custom">("custom");
   const [advance, setAdvance] = useState("");
-  const [charges, setCharges] = useState<"non" | "oui" | "partiel">("non");
   const [minDuration, setMinDuration] = useState("1 mois");
   // Tâche 4.2 — uniquement pertinents en vente.
   const [landTitleStatus, setLandTitleStatus] = useState<LandTitleStatus>("en_cours");
@@ -193,7 +192,6 @@ function PublierPageInner() {
       setDeposit("");
       setDepositMode("custom");
       setAdvance("");
-      setCharges("non");
       setMinDuration("1 mois");
     } else {
       setLandTitleStatus("en_cours");
@@ -278,7 +276,6 @@ function PublierPageInner() {
         setPrice(data.price != null ? String(data.price) : "");
         setDeposit(data.deposit != null ? String(data.deposit) : "");
         setAdvance(data.advance_payment != null ? String(data.advance_payment) : "");
-        setCharges((data.charges as "non" | "oui" | "partiel") || "non");
         setMinDuration(data.min_duration || "1 mois");
         setLandTitleStatus((data.land_title_status as LandTitleStatus) || "en_cours");
         setPriceNegotiable(data.price_negotiable ?? false);
@@ -466,12 +463,13 @@ function PublierPageInner() {
         occupancy_status: submittedOccupancy,
         price: price ? Number(price) : 0,
         // Tâche 4.4 — un champ masqué est retiré du payload, pas seulement
-        // de l'affichage : les champs Location (caution/avance/charges/
-        // durée min.) n'ont pas de sens en Vente, et inversement pour le
-        // titre foncier/prix négociable — jamais les deux à la fois.
+        // de l'affichage : les champs Location (caution/avance/durée min.)
+        // n'ont pas de sens en Vente, et inversement pour le titre
+        // foncier/prix négociable — jamais les deux à la fois. Le champ
+        // "charges incluses" a été retiré du site : la colonne `charges`
+        // reste en base mais n'est plus ni écrite ni lue.
         deposit: submittedTransaction === "location" && deposit ? Number(deposit) : null,
         advance_payment: submittedTransaction === "location" && advance ? Number(advance) : null,
-        charges: submittedTransaction === "location" ? charges : null,
         min_duration: submittedTransaction === "location" ? minDuration : null,
         land_title_status: submittedTransaction === "vente" ? landTitleStatus : null,
         price_negotiable: submittedTransaction === "vente" ? priceNegotiable : null,
@@ -885,17 +883,6 @@ function PublierPageInner() {
                       </Field>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                      <Field label={t("chargesLabel")}>
-                        <select
-                          className="form-control"
-                          value={charges}
-                          onChange={(e) => setCharges(e.target.value as typeof charges)}
-                        >
-                          <option value="non">{t("chargesNo")}</option>
-                          <option value="oui">{t("chargesYes")}</option>
-                          <option value="partiel">{t("chargesPartial")}</option>
-                        </select>
-                      </Field>
                       <Field label={t("minDurationLabel")}>
                         <select className="form-control" value={minDuration} onChange={(e) => setMinDuration(e.target.value)}>
                           {listingType === "courte" ? (
@@ -924,7 +911,7 @@ function PublierPageInner() {
                   </>
                 ) : (
                   // Tâche 4.2 — champs propres à la Vente : ni loyer/
-                  // caution/avance/charges (masqués ci-dessus), ni "Type de
+                  // caution/avance (masqués ci-dessus), ni "Type de
                   // location" (masqué à l'étape 2, voir rules.listingDuration).
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                     <Field label={t("landTitleLabel")}>
@@ -944,8 +931,8 @@ function PublierPageInner() {
                         value={priceNegotiable ? "oui" : "non"}
                         onChange={(e) => setPriceNegotiable(e.target.value === "oui")}
                       >
-                        <option value="non">{t("chargesNo")}</option>
-                        <option value="oui">{t("chargesYes")}</option>
+                        <option value="non">{t("no")}</option>
+                        <option value="oui">{t("yes")}</option>
                       </select>
                     </Field>
                   </div>
@@ -1000,10 +987,6 @@ function PublierPageInner() {
                     <>
                       {deposit && <PreviewRow k={t("depositLabel")} v={`${fmtMoneyInput(deposit)} FCFA`} />}
                       {advance && <PreviewRow k={t("advanceLabel")} v={`${fmtMoneyInput(advance)} FCFA`} />}
-                      <PreviewRow
-                        k={t("chargesLabel")}
-                        v={charges === "oui" ? t("chargesYes") : charges === "partiel" ? t("chargesPartial") : t("chargesNo")}
-                      />
                       <PreviewRow k={t("minDurationLabel")} v={minDuration} />
                     </>
                   ) : (
@@ -1018,7 +1001,7 @@ function PublierPageInner() {
                               : t("landTitleInProgress")
                         }
                       />
-                      <PreviewRow k={t("negotiableLabel")} v={priceNegotiable ? t("chargesYes") : t("chargesNo")} />
+                      <PreviewRow k={t("negotiableLabel")} v={priceNegotiable ? t("yes") : t("no")} />
                     </>
                   )}
                   <PreviewRow
