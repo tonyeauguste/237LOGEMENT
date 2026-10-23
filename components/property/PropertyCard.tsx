@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import Image from "next/image";
 import { Heart, Bed, Bath, Ruler, MapPin } from "lucide-react";
 import type { Property } from "@/lib/types";

@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import CameroonFlag from "@/components/ui/CameroonFlag";
 import { CONTACT } from "@/lib/data";
 import { useTranslations } from "@/i18n/IntlProvider";

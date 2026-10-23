@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Reveal } from "@/components/ui/Reveal";

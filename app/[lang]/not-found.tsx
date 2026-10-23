@@ -10,7 +10,7 @@
 // IntlProvider déjà posé par app/[lang]/layout.tsx, exactement comme
 // n'importe quelle autre page cliente du site (Tarifs, FAQ…).
 
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
 import { useTranslations } from "@/i18n/IntlProvider";
