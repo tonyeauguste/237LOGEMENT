@@ -468,11 +468,11 @@
     "emptyBadge": "🚀 Launching soon"
   },
   "AnnonceNotFound": {
-    "title": "This listing isn't available yet",
-    "line1": "The platform is being rolled out and this page doesn't exist yet.",
-    "line2": "Explore our other pages while we prepare the official launch.",
-    "badge": "🚀 Launching soon",
-    "backButton": "Back to listings"
+    "title": "This listing is no longer available",
+    "line1": "It may have been rented or removed by its owner, or the link may be incorrect.",
+    "line2": "Browse the other available homes.",
+    "badge": "🔎 Listing not found",
+    "backButton": "See available listings"
   },
   "NotFound": {
     "title": "Page not found",

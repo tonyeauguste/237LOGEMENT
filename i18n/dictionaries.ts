@@ -31,14 +31,18 @@ export async function getMessages(locale: Locale) {
 // ~3 Ko au total — donc les garder globaux évite un oubli silencieux sur
 // une route pour un gain négligeable.
 //
-// Absents volontairement : Meta, About, HowItWorks et AnnonceNotFound,
-// lus directement côté serveur via getMessages() et jamais via le
-// contexte React — les inclure n'aurait fait que les envoyer au
-// navigateur pour rien.
+// Absents volontairement : Meta, About et HowItWorks, lus directement côté
+// serveur via getMessages() et jamais via le contexte React — les inclure
+// n'aurait fait que les envoyer au navigateur pour rien.
+//
+// AnnonceNotFound, lui, est transverse (quelques lignes) : la page « annonce
+// introuvable » (annonce/[id]/not-found.tsx) est un composant client qui ne
+// reçoit aucune donnée de la page et doit pourtant s'afficher dans la langue.
 export const SHARED_NAMESPACES = [
   "Nav",
   "Footer",
   "NotFound",
+  "AnnonceNotFound",
   "Pagination",
   "Property",
   "PropertyKinds",
