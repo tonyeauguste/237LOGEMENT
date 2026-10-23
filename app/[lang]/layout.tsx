@@ -4,6 +4,7 @@ import "../globals.css";
 import Navbar from "@/components/layout/Navbar";
 import ConditionalFooter from "@/components/layout/ConditionalFooter";
 import Toaster from "@/components/layout/Toaster";
+import CampaignTracker from "@/components/layout/CampaignTracker";
 import PageTransition from "@/components/layout/PageTransition";
 import { IntlProvider } from "@/i18n/IntlProvider";
 import { getMessages, getPageMessages, SHARED_NAMESPACES } from "@/i18n/dictionaries";
@@ -100,6 +101,7 @@ export default async function RootLayout({
     >
       <body className="font-body bg-bg text-text min-h-screen overflow-x-hidden antialiased">
         <IntlProvider locale={locale} messages={messages}>
+          <CampaignTracker />
           <Navbar />
           <Toaster />
           <main>

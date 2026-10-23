@@ -29,6 +29,7 @@ const NAMESPACES = [
   "AdminAnnonces",
   "AdminUsers",
   "AdminStats",
+  "Marketing",
   "Password",
 ] as const;
 

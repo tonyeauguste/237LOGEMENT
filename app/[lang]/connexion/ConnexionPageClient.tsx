@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isPasswordPwned } from "@/lib/pwned";
 import { weakPasswordMessage, weakPasswordReasons } from "@/lib/password-errors";
 import { DEFAULT_AVATAR } from "@/lib/data";
+import { readAcquisition } from "@/lib/marketing";
 import { useTranslations } from "@/i18n/IntlProvider";
 
 type AuthTab = "login" | "register";
@@ -168,11 +169,21 @@ function AuthPageInner() {
     // souhaite publier, il est "owner" (seul rôle autorisé à créer des
     // annonces côté RLS). Le tableau de bord, lui, est le même pour tous.
     const role = goals.includes("publish") ? "owner" : "visitor";
+    // Provenance (lien de campagne ?utm_…) mémorisée à l'arrivée sur le site :
+    // rattachée au compte pour que le marketing sache quelle campagne a
+    // réellement amené des inscriptions (voir CampaignTracker).
+    const acq = readAcquisition();
     const { data, error } = await supabase.auth.signUp({
       email: regEmail.trim(),
       password: regPwd,
       options: {
-        data: { role, name, phone: phone.trim() || null, avatar: DEFAULT_AVATAR },
+        data: {
+          role,
+          name,
+          phone: phone.trim() || null,
+          avatar: DEFAULT_AVATAR,
+          ...(acq && { acq_source: acq.source, acq_medium: acq.medium, acq_campaign: acq.campaign }),
+        },
       },
     });
     setLoading(false);
