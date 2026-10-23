@@ -106,7 +106,7 @@ export interface Property {
   createdAt?: string;
 }
 
-export type UserRole = "visitor" | "owner" | "admin";
+export type UserRole = "visitor" | "owner" | "admin" | "marketing";
 
 /** 'active' = peut se connecter. 'blocked' = accès refusé (compte suspendu par un admin). */
 export type AccountStatus = "active" | "blocked";

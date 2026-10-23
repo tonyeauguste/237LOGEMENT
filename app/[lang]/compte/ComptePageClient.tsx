@@ -24,6 +24,7 @@ import {
   Trash2,
   Pencil,
   Shield,
+  Megaphone,
   LayoutDashboard,
   Building2,
   Users2,
@@ -47,6 +48,7 @@ import AdminOverview from "@/components/dashboard/AdminOverview";
 import AdminAnnonces from "@/components/dashboard/AdminAnnonces";
 import AdminUsers from "@/components/dashboard/AdminUsers";
 import AdminStats from "@/components/dashboard/AdminStats";
+import MarketingDashboard from "@/components/marketing/MarketingDashboard";
 import { useAuthGuard } from "@/lib/useAuthGuard";
 import { useAppStore } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
@@ -58,7 +60,7 @@ import { propertyGroup, transactionMeta, DEFAULT_AVATAR } from "@/lib/data";
 import type { Property } from "@/lib/types";
 import { useTranslations } from "@/i18n/IntlProvider";
 
-type UserSection = "favoris" | "listings" | "stats" | "settings";
+type UserSection = "favoris" | "listings" | "stats" | "settings" | "marketing";
 type AdminSection = "admin-overview" | "admin-annonces" | "admin-users" | "admin-stats";
 type Section = UserSection | AdminSection;
 
@@ -78,6 +80,11 @@ export default function AccountDashboard() {
   const router = useRouter();
   const [section, setSection] = useState<Section>("favoris");
   const isAdmin = user?.role === "admin";
+  // DG Marketing : accès à l'espace marketing uniquement (pas à l'administration).
+  // Ce test ne fait qu'afficher ou non l'onglet : l'accès réel aux données est
+  // vérifié côté base par can_view_marketing() dans chaque fonction marketing_*.
+  const isMarketing = user?.role === "marketing";
+  const marketingNavItem = { key: "marketing", label: t("navMarketing"), icon: <Megaphone size={15} /> };
 
   // Passerelle "Voir ses annonces" depuis la fiche d'un compte (onglet
   // Comptes) vers l'onglet Annonces, avec la recherche déjà pré-remplie.
@@ -123,6 +130,8 @@ export default function AccountDashboard() {
     setFormEmail(user.email ?? "");
     setFormPhone(user.phone ?? "");
     setFormCity(user.city ?? "");
+    // Le DG Marketing arrive directement sur son espace de travail.
+    if (user.role === "marketing") setSection("marketing");
   }
 
   // Annonces publiées par cet utilisateur.
@@ -457,11 +466,11 @@ export default function AccountDashboard() {
         avatarUploading={uploadingAvatar}
         avatarEditLabel={t("changePhotoButton")}
         roleBadge={
-          isAdmin ? (
+          isAdmin || isMarketing ? (
             <div className="flex flex-col items-center gap-1.5">
               <Tag color="gold">{t("myAccount")}</Tag>
               <span className="text-[10px] font-bold tracking-[1px] bg-gold text-[#07111e] px-2.5 py-[3px] rounded-full">
-                ADMIN
+                {isAdmin ? "ADMIN" : t("marketingBadge")}
               </span>
             </div>
           ) : (
@@ -471,12 +480,17 @@ export default function AccountDashboard() {
         active={isAdminSection(section) ? "admin" : section}
         onSelect={(k) => setSection(k === "admin" ? "admin-overview" : (k as Section))}
         items={[
+          // Le DG Marketing retrouve son espace en tête de menu ; l'admin le
+          // consulte juste avant la section Administration.
+          ...(isMarketing ? [marketingNavItem] : []),
           { key: "favoris", label: t("navFavorites"), icon: <Heart size={15} />, badge: favorites.length },
           { key: "listings", label: t("navListings"), icon: <List size={15} /> },
           { key: "stats", label: t("navStats"), icon: <BarChart3 size={15} /> },
           { key: "settings", label: t("navSettings"), icon: <Settings size={15} /> },
           // Visible UNIQUEMENT pour l'admin.
-          ...(isAdmin ? [{ key: "admin", label: t("navAdmin"), icon: <Shield size={15} /> }] : []),
+          ...(isAdmin
+            ? [marketingNavItem, { key: "admin", label: t("navAdmin"), icon: <Shield size={15} /> }]
+            : []),
         ]}
         footer={
           <button
@@ -783,6 +797,8 @@ export default function AccountDashboard() {
                 )}
               </>
             )}
+
+            {section === "marketing" && (isMarketing || isAdmin) && <MarketingDashboard />}
 
             {section === "settings" && (
               <>

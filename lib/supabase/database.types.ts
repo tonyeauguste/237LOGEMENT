@@ -87,6 +87,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          acq_campaign: string | null
+          acq_medium: string | null
+          acq_source: string | null
           avatar: string | null
           city: string | null
           created_at: string
@@ -97,6 +100,9 @@ export type Database = {
           status: string
         }
         Insert: {
+          acq_campaign?: string | null
+          acq_medium?: string | null
+          acq_source?: string | null
           avatar?: string | null
           city?: string | null
           created_at?: string
@@ -107,6 +113,9 @@ export type Database = {
           status?: string
         }
         Update: {
+          acq_campaign?: string | null
+          acq_medium?: string | null
+          acq_source?: string | null
           avatar?: string | null
           city?: string | null
           created_at?: string
@@ -386,6 +395,87 @@ export type Database = {
       }
       is_active_user: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
+      can_view_marketing: { Args: never; Returns: boolean }
+      log_campaign_visit: {
+        Args: { camp: string; med: string; path: string; src: string; visitor: string }
+        Returns: undefined
+      }
+      marketing_overview: { Args: never; Returns: Json }
+      marketing_timeseries: {
+        Args: { p_days?: number }
+        Returns: {
+          campaign_visits: number
+          day: string
+          new_accounts: number
+          new_listings: number
+          unique_views: number
+        }[]
+      }
+      marketing_by_city: {
+        Args: never
+        Returns: {
+          active_listings: number
+          avg_price: number
+          city: string
+          favs: number
+          listings: number
+          owners: number
+          views: number
+        }[]
+      }
+      marketing_by_kind: {
+        Args: never
+        Returns: {
+          avg_price: number
+          favs: number
+          kind: string
+          listing_type: string
+          listings: number
+          transaction_type: string
+          views: number
+        }[]
+      }
+      marketing_top_listings: {
+        Args: { p_limit?: number; p_period?: string }
+        Returns: {
+          city: string
+          created_at: string
+          favs: number
+          id: number
+          kind: string
+          listing_type: string
+          owner_name: string
+          period_views: number
+          price: number
+          title: string
+          transaction_type: string
+          views: number
+        }[]
+      }
+      marketing_owners: {
+        Args: { p_limit?: number }
+        Returns: {
+          favs: number
+          joined_at: string
+          listings: number
+          owner_id: string
+          owner_name: string
+          rating: number
+          rating_count: number
+          views: number
+        }[]
+      }
+      marketing_campaigns: {
+        Args: { p_days?: number }
+        Returns: {
+          campaign: string
+          medium: string
+          signups: number
+          source: string
+          unique_visitors: number
+          visits: number
+        }[]
+      }
       register_property_view: {
         Args: { prop_id: number; visitor: string }
         Returns: undefined
