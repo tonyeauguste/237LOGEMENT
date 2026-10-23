@@ -8,6 +8,7 @@ import PageTransition from "@/components/layout/PageTransition";
 import { IntlProvider } from "@/i18n/IntlProvider";
 import { getMessages, getPageMessages, SHARED_NAMESPACES } from "@/i18n/dictionaries";
 import { LOCALES, isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import { SITE_URL, SITE_NAME, ogLocale, defaultOgImage } from "@/lib/seo";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -44,7 +45,24 @@ export async function generateMetadata({
   const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
   const messages = await getMessages(locale);
   const meta = (messages as { Meta: { title: string; description: string } }).Meta;
-  return { title: meta.title, description: meta.description };
+  return {
+    // metadataBase : rend absolues les URLs relatives (image d'aperçu, liens
+    // canoniques) — WhatsApp et Facebook n'acceptent que des URLs absolues.
+    metadataBase: new URL(SITE_URL),
+    title: meta.title,
+    description: meta.description,
+    // Volontairement SANS title/description dans openGraph : Next.js les
+    // reprend alors du title/description propres à chaque page (voir
+    // inheritFromMetadata). Les fixer ici donnerait le titre de l'accueil à
+    // l'aperçu de toutes les pages.
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: ogLocale(locale),
+      images: [defaultOgImage(locale)],
+    },
+    twitter: { card: "summary_large_image" },
+  };
 }
 
 export const viewport: Viewport = {

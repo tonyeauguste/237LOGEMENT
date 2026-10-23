@@ -10,6 +10,10 @@ import ComingSoon from "@/components/ui/ComingSoon";
 import Button from "@/components/ui/Button";
 import { getMessages, getPageMessages } from "@/i18n/dictionaries";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import { SITE_NAME, ogLocale, defaultOgImage, listingOgImageUrl } from "@/lib/seo";
+import { fmtPrice } from "@/lib/format";
+import { propertyGroup, transactionMeta } from "@/lib/data";
+import type { ListingKind, TransactionType } from "@/lib/types";
 
 type PageParams = { lang: string; id: string };
 
@@ -51,9 +55,49 @@ export async function generateMetadata({
       ? desc.slice(0, 155).trimEnd() + "…"
       : desc || `${row.title} à ${row.quartier}, ${row.city} — à découvrir sur 237Logement.`;
 
+  // ── Aperçu de partage (WhatsApp, Facebook…) ──
+  // Titre = nom du bien + prix : c'est ce qui donne envie de cliquer dans
+  // une conversation. Le suffixe (/nuit, /mois) vient des mêmes traductions
+  // que la fiche, pour rester cohérent avec ce que le visiteur verra.
+  const messages = await getMessages(locale);
+  const tTx = (key: string) =>
+    ((messages as { Transaction: Record<string, string> }).Transaction ?? {})[key] ?? key;
+  const meta = transactionMeta(
+    row.transaction_type as TransactionType,
+    row.type as ListingKind | null,
+    propertyGroup(row.kind),
+    tTx
+  );
+  const price = `${fmtPrice(Number(row.price) || 0)}${meta.priceSuffix}`;
+  const ogTitle = `${row.title.trim()} – ${price}`;
+  const where = `${row.quartier}, ${row.city}`;
+  const shortDesc = desc.length > 110 ? desc.slice(0, 110).trimEnd() + "…" : desc;
+  const ogDescription = shortDesc ? `${where} · ${shortDesc}` : where;
+
+  // Un bien « occupé » (court séjour) a ses photos floutées sur la fiche :
+  // l'aperçu ne doit pas les montrer en clair, on retombe sur l'image du site.
+  const photosHidden = row.type === "courte" && row.occupancy_status === "occupe";
+  const firstPhoto = row.images?.[0];
+  const image =
+    firstPhoto && !photosHidden
+      ? { ...listingOgImageUrl(row.id, firstPhoto), alt: row.title }
+      : defaultOgImage(locale);
+  const path = `/${locale}/annonce/${row.id}`;
+
   return {
     title: `${row.title} à ${row.city} – 237Logement`,
     description,
+    alternates: { canonical: path },
+    openGraph: {
+      type: "website",
+      siteName: SITE_NAME,
+      locale: ogLocale(locale),
+      url: path,
+      title: ogTitle,
+      description: ogDescription,
+      images: [image],
+    },
+    twitter: { card: "summary_large_image" },
   };
 }
 
