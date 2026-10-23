@@ -7,7 +7,7 @@
 // ═══════════════════════════════════════════════
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import { Building2, Users2, ShieldOff, UserX, ArrowRight } from "lucide-react";
 import Tag from "@/components/ui/Tag";
 import { createClient } from "@/lib/supabase/client";

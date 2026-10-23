@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import ComingSoon from "@/components/ui/ComingSoon";
 import { Reveal, Stagger, StaggerItem } from "@/components/ui/Reveal";
 import PropertyCard from "@/components/property/PropertyCard";

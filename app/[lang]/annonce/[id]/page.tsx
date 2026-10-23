@@ -1,5 +1,5 @@
 import { cache } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";

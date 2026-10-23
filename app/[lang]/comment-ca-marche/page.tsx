@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { Check } from "lucide-react";

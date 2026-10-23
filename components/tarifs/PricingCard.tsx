@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import clsx from "clsx";

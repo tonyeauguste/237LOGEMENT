@@ -14,7 +14,7 @@
 // ═══════════════════════════════════════════════
 
 import { useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
 import Button from "@/components/ui/Button";

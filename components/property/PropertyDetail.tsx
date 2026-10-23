@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import Link from "@/components/ui/LocalizedLink";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
