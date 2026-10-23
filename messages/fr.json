@@ -434,11 +434,11 @@
     "emptyBadge": "🚀 Bientôt opérationnel"
   },
   "AnnonceNotFound": {
-    "title": "Cette annonce n'est pas encore disponible",
-    "line1": "La plateforme est en cours de déploiement et cette fiche n'existe pas encore.",
-    "line2": "Explorez nos autres pages en attendant le lancement officiel.",
-    "badge": "🚀 Bientôt opérationnel",
-    "backButton": "Retour aux annonces"
+    "title": "Cette annonce n'est plus disponible",
+    "line1": "Elle a peut-être été louée ou retirée par son propriétaire, ou le lien est incorrect.",
+    "line2": "Découvrez les autres logements disponibles.",
+    "badge": "🔎 Annonce introuvable",
+    "backButton": "Voir les annonces disponibles"
   },
   "NotFound": {
     "title": "Page introuvable",

@@ -221,8 +221,14 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8 items-start">
-        {/* ─── Colonne principale ─── */}
-        <div>
+        {/* ─── Colonne principale ───
+            min-w-0 : un élément de grille a par défaut min-width:auto, donc
+            la colonne « 1fr » ne peut pas rétrécir en dessous de la largeur
+            de son contenu. Avec beaucoup de photos, la bande de miniatures
+            (overflow-x-auto) élargissait toute la colonne et faisait
+            déborder la page de 88 à 188 px sur ordinateur (7 annonces sur
+            25, trouvé lors d'un scan de toutes les fiches). */}
+        <div className="min-w-0">
           {/* Galerie : grande image + flèches + compteur */}
           <div className="relative rounded-2xl overflow-hidden bg-card2 aspect-[16/10] mb-3">
             <AnimatePresence mode="wait">

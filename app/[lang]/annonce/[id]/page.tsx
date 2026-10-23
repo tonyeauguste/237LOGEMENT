@@ -1,13 +1,11 @@
 import { cache } from "react";
-import Link from "@/components/ui/LocalizedLink";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { rowToProperty } from "@/lib/supabase/mappers";
 import PropertyDetail from "@/components/property/PropertyDetail";
 import { IntlProvider } from "@/i18n/IntlProvider";
-import ComingSoon from "@/components/ui/ComingSoon";
-import Button from "@/components/ui/Button";
 import { getMessages, getPageMessages } from "@/i18n/dictionaries";
 import { isLocale, DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import { SITE_NAME, ogLocale, defaultOgImage, listingOgImageUrl } from "@/lib/seo";
@@ -106,36 +104,15 @@ export default async function AnnonceDetailPage({ params }: { params: Promise<Pa
   const numericId = Number(id);
 
   const locale: Locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
-  const messages = await getMessages(locale);
-  const t = (messages as {
-    AnnonceNotFound: { title: string; line1: string; line2: string; badge: string; backButton: string };
-  }).AnnonceNotFound;
 
   const supabase = await createClient();
 
-  const notFoundBlock = (
-    <div className="pt-[110px] px-[5%] pb-[80px] flex justify-center">
-      <ComingSoon
-        title={t.title}
-        text={
-          <>
-            {t.line1}
-            <br />
-            {t.line2}
-          </>
-        }
-        badge={t.badge}
-        action={
-          <Link href="/recherche">
-            <Button variant="gold">{t.backButton}</Button>
-          </Link>
-        }
-      />
-    </div>
-  );
-
+  // notFound() plutôt que de rendre un bloc « introuvable » avec un statut
+  // 200 : un moteur de recherche (ou un robot de partage) prenait sinon
+  // chaque numéro inexistant pour une vraie page (« soft 404 »). Le message
+  // affiché reste celui d'avant, traduit — voir ./not-found.tsx.
   const row = await getPropertyRow(numericId);
-  if (!row) return notFoundBlock;
+  if (!row) notFound();
 
   // Compteur de vues, dédupliqué par visiteur (voir le prompt
   // "corriger-compteur-vues" — l'ancien increment_property_views
