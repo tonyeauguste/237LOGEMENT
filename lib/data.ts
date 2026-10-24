@@ -74,6 +74,9 @@ export const CONTACT = {
   /** Même numéro sans espaces, pour les liens tel: et WhatsApp. */
   phoneRaw: "+237681240210",
   whatsapp: "237681240210",
+  /** Second numéro du service client. */
+  phone2: "+237 659 671 212",
+  phone2Raw: "+237659671212",
   /** Version courte, pour le pied de page et les listes. */
   hoursShort: "Lun – Ven, 9h00 – 17h00",
   /** Version détaillée, pour la page Contact. */

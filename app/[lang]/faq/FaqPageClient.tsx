@@ -118,6 +118,12 @@ export default function FaqPage() {
           >
             📞 {CONTACT.phone}
           </a>
+          <a
+            href={`tel:${CONTACT.phone2Raw}`}
+            className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 cursor-pointer px-[22px] py-[11px] text-sm rounded-[10px] bg-transparent border border-border2 text-muted hover:border-gold hover:text-gold"
+          >
+            📞 {CONTACT.phone2}
+          </a>
         </div>
       </div>
     </div>

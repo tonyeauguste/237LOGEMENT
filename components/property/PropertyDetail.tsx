@@ -353,7 +353,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
           )}
 
           {/* Onglets */}
-          <div className="flex border-b border-border mb-6">
+          <div className="flex overflow-x-auto border-b border-border mb-6">
             {([
               ["desc", t("tabDesc")],
               ["amenities", t("tabAmenities")],
@@ -362,7 +362,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               <button
                 key={key}
                 onClick={() => setTab(key)}
-                className={`px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                className={`px-3.5 sm:px-5 py-3 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors ${
                   tab === key ? "text-gold border-gold" : "text-muted border-transparent hover:text-text"
                 }`}
               >
