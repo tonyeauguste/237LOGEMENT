@@ -32,6 +32,10 @@ export default function ContactPage() {
             {CONTACT.phone}
           </a>
           <br />
+          <a href={`tel:${CONTACT.phone2Raw}`} className="hover:text-gold transition-colors">
+            {CONTACT.phone2}
+          </a>
+          <br />
           {CONTACT.hoursShort}
         </>
       ),
