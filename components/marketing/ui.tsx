@@ -89,7 +89,14 @@ export function StatCard({
   );
 }
 
-/** Histogramme minimal en SVG (aucune dépendance) : une barre par point, infobulle native au survol. */
+// Largeur minimale d'une barre : de quoi afficher son nombre (jusqu'à 3-4
+// chiffres) au-dessus d'elle. Au-delà de ce que la carte peut contenir
+// (30 et 90 jours, surtout sur mobile), le graphique défile horizontalement
+// plutôt que d'écraser les nombres les uns sur les autres.
+const BAR_SLOT = 22;
+const BAR_AREA = 110;
+
+/** Histogramme minimal (aucune dépendance) : une barre par point, son nombre affiché au-dessus. */
 export function BarChart({
   title,
   points,
@@ -101,10 +108,7 @@ export function BarChart({
 }) {
   const max = Math.max(1, ...points.map((p) => p.value));
   const total = points.reduce((s, p) => s + p.value, 0);
-  const W = 600;
-  const H = 120;
-  const gap = points.length > 45 ? 1 : 3;
-  const bw = Math.max(2, (W - gap * (points.length - 1)) / Math.max(points.length, 1));
+  const minWidth = points.length * BAR_SLOT;
 
   return (
     <div className="bg-card border border-border rounded-2xl p-5">
@@ -112,28 +116,33 @@ export function BarChart({
         <h4 className="text-[13px] font-semibold text-text">{title}</h4>
         <span className="text-[12px] text-muted shrink-0">{total.toLocaleString("fr-FR")}</span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[120px]" role="img" aria-label={title} preserveAspectRatio="none">
-        {points.map((p, i) => {
-          const h = p.value === 0 ? 2 : Math.max(3, (p.value / max) * (H - 4));
-          return (
-            <rect
-              key={p.label}
-              x={i * (bw + gap)}
-              y={H - h}
-              width={bw}
-              height={h}
-              rx={1.5}
-              fill={color}
-              opacity={p.value === 0 ? 0.25 : 0.9}
-            >
-              <title>{`${p.label} : ${p.value}`}</title>
-            </rect>
-          );
-        })}
-      </svg>
-      <div className="flex justify-between text-[10px] text-dim mt-1.5">
-        <span>{points[0]?.label}</span>
-        <span>{points[points.length - 1]?.label}</span>
+      <div className="overflow-x-auto pb-1">
+        <div role="img" aria-label={title} className="flex items-end gap-[3px]" style={{ minWidth }}>
+          {points.map((p) => {
+            const h = p.value === 0 ? 2 : Math.max(3, (p.value / max) * BAR_AREA);
+            return (
+              <div
+                key={p.label}
+                title={`${p.label} : ${p.value}`}
+                className="flex-1 min-w-0 flex flex-col items-center justify-end"
+              >
+                <span
+                  className={`text-[10px] leading-none mb-1 font-semibold ${p.value === 0 ? "text-dim" : "text-text"}`}
+                >
+                  {p.value.toLocaleString("fr-FR")}
+                </span>
+                <div
+                  className="w-full rounded-[2px]"
+                  style={{ height: h, background: color, opacity: p.value === 0 ? 0.25 : 0.9 }}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div className="flex justify-between text-[10px] text-dim mt-1.5" style={{ minWidth }}>
+          <span>{points[0]?.label}</span>
+          <span>{points[points.length - 1]?.label}</span>
+        </div>
       </div>
     </div>
   );
