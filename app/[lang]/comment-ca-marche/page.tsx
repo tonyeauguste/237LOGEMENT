@@ -49,7 +49,6 @@ type HowItWorksMessages = {
   ownerFeature3: string;
   ownerFeature4: string;
   ownerFeature5: string;
-  ownerFeature6: string;
   createAccountButton: string;
 };
 
@@ -138,7 +137,6 @@ export default async function HowItWorksPage({ params }: { params: Promise<{ lan
         t.ownerFeature3,
         t.ownerFeature4,
         t.ownerFeature5,
-        t.ownerFeature6,
       ],
     },
   ];

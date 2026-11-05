@@ -36,7 +36,6 @@ import {
 import DashSidebar from "@/components/dashboard/DashSidebar";
 import Tag from "@/components/ui/Tag";
 import Button from "@/components/ui/Button";
-import ToggleRow from "@/components/ui/ToggleRow";
 import Toggle from "@/components/ui/Toggle";
 import Modal from "@/components/ui/Modal";
 import PasswordField from "@/components/auth/PasswordField";
@@ -934,13 +933,6 @@ export default function AccountDashboard() {
                       {t("changePasswordButton")}
                     </Button>
                     <p className="text-[12px] text-dim mt-3 leading-relaxed">{t("passwordHint")}</p>
-                  </div>
-
-                  <div className="bg-card border border-border rounded-2xl p-5">
-                    <h4 className="text-[15px] font-semibold text-text mb-[18px]">{t("notificationsTitle")}</h4>
-                    <ToggleRow label={t("notifNewListings")} defaultOn />
-                    <ToggleRow label={t("notifFavorite")} />
-                    <ToggleRow label={t("notifNewsletter")} last />
                   </div>
                 </div>
               </>
