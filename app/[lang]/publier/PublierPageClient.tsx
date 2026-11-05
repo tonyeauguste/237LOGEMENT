@@ -32,6 +32,7 @@ import type {
   LandTitleStatus,
   ListingKind,
   OccupancyStatus,
+  PublisherType,
   TransactionType,
   UploadedPhoto,
 } from "@/lib/types";
@@ -81,6 +82,11 @@ function PublierPageInner() {
   const [onBehalf, setOnBehalf] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
+
+  // Publié par le propriétaire lui-même, ou par un agent pour son compte.
+  // Pour un agent, le contact affiché sur la fiche reste celui du compte qui
+  // publie : le numéro du propriétaire n'est jamais demandé ni montré.
+  const [publisherType, setPublisherType] = useState<PublisherType>("owner");
 
   // Step 1
   const [city, setCity] = useState("");
@@ -270,6 +276,7 @@ function PublierPageInner() {
         setListingType((data.type as ListingKind) || "longue");
         setInitialOccupancyStatus((data.occupancy_status as OccupancyStatus | null) ?? null);
         setKind(data.kind || "appartement");
+        setPublisherType(data.publisher_type === "agent" ? "agent" : "owner");
         setDesc(data.description || "");
         setPhotos((data.images || []).map((url) => ({ name: url.split("/").pop() || "photo", url })));
         setAmenities(data.amenities || []);
@@ -478,6 +485,7 @@ function PublierPageInner() {
         surface: rules.surface && surface ? Number(surface) : null,
         images: imageUrls,
         amenities,
+        publisher_type: publisherType,
       };
 
       // Coordonnées du propriétaire : celles saisies par l'administrateur
@@ -508,7 +516,7 @@ function PublierPageInner() {
           // dès que `owner_details_overridden` est faux.
           owner_name: ownerFields.owner_details_overridden
             ? ownerName.trim()
-            : user?.name || "Propriétaire",
+            : user?.name || (publisherType === "agent" ? "Agent" : "Propriétaire"),
           owner_avatar: user?.avatar || DEFAULT_AVATAR,
           owner_phone: user?.phone || "",
         });
@@ -556,6 +564,31 @@ function PublierPageInner() {
           >
             {step === 1 && (
               <div>
+                {/* Propriétaire ou agent : décide de ce que le visiteur voit
+                    sur la fiche (« Contacter le propriétaire » / « Contacter
+                    l'agent ») — d'où sa place en tout début de formulaire. */}
+                <div className="mb-6">
+                  <label className="block text-[13px] text-muted mb-[7px] font-medium">{t("publisherLabel")}</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
+                    <RoleCard
+                      icon="🔑"
+                      title={t("publisherOwnerTitle")}
+                      desc={t("publisherOwnerDesc")}
+                      active={publisherType === "owner"}
+                      onClick={() => setPublisherType("owner")}
+                    />
+                    <RoleCard
+                      icon="🤝"
+                      title={t("publisherAgentTitle")}
+                      desc={t("publisherAgentDesc")}
+                      active={publisherType === "agent"}
+                      onClick={() => setPublisherType("agent")}
+                    />
+                  </div>
+                  {publisherType === "agent" && (
+                    <p className="text-[12px] text-muted mt-2.5 leading-relaxed">{t("publisherAgentHint")}</p>
+                  )}
+                </div>
                 <StepTitle icon="📍" text={t("step1Title")} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <Field label={t("cityLabel")} error={errors.city}>
@@ -956,6 +989,10 @@ function PublierPageInner() {
                   </p>
                 </div>
                 <div className="bg-bg3 rounded-2xl p-5 border border-border">
+                  <PreviewRow
+                    k={t("previewPublisher")}
+                    v={publisherType === "agent" ? t("publisherAgentTitle") : t("publisherOwnerTitle")}
+                  />
                   <PreviewRow k={t("previewTitle")} v={title || t("emptyValue")} />
                   <PreviewRow k={t("previewKind")} v={kindLabel(kind, tKind)} />
                   <PreviewRow k={t("previewCity")} v={city || t("emptyValue")} />

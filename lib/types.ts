@@ -40,6 +40,14 @@ export type PropertyKind = string;
 /** Disponibilité du titre foncier — pertinent uniquement en vente. */
 export type LandTitleStatus = "oui" | "non" | "en_cours";
 
+/**
+ * Qui a publié l'annonce : le propriétaire du bien, ou un agent qui le
+ * propose pour son compte. Pour une annonce d'agent, `owner` (nom, avatar,
+ * téléphone, note) décrit l'agent — le numéro du propriétaire n'est jamais
+ * affiché, c'est l'agent qu'il faut contacter.
+ */
+export type PublisherType = "owner" | "agent";
+
 export interface Owner {
   name: string;
   avatar: string;
@@ -101,6 +109,7 @@ export interface Property {
    * présentés comme étant ceux du propriétaire indiqué.
    */
   ownerDetailsOverridden: boolean;
+  publisherType: PublisherType;
   ownerId?: string | null;
   status: ListingStatus;
   createdAt?: string;

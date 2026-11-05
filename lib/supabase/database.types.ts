@@ -158,6 +158,7 @@ export type Database = {
           precision_desc: string | null
           price: number
           price_negotiable: boolean | null
+          publisher_type: string
           quartier: string
           rooms: number
           status: string
@@ -200,6 +201,7 @@ export type Database = {
           precision_desc?: string | null
           price?: number
           price_negotiable?: boolean | null
+          publisher_type?: string
           quartier: string
           rooms?: number
           status?: string
@@ -242,6 +244,7 @@ export type Database = {
           precision_desc?: string | null
           price?: number
           price_negotiable?: boolean | null
+          publisher_type?: string
           quartier?: string
           rooms?: number
           status?: string

@@ -102,6 +102,10 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
   // submit_owner_rating côté base). Un propriétaire ne peut pas se noter
   // lui-même : le widget de notation reste masqué sur ses propres annonces.
   const isOwnListing = !!currentUser && !!p.ownerId && currentUser.id === p.ownerId;
+  // Annonce publiée par un agent : tous les libellés qui parlent de la
+  // personne à contacter (badge, note, contact) passent de « propriétaire » à
+  // « agent » — c'est lui, et non le propriétaire, qu'on joint.
+  const isAgent = p.publisherType === "agent";
   const [myRating, setMyRating] = useState<number | null>(null);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
@@ -313,7 +317,8 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
             <div className="flex gap-2 items-center mb-3 flex-wrap">
               <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
               {isOccupied && <Tag color="red">🔴 {t("occupied")}</Tag>}
-              {p.verified && <Tag color="blue">{t("verifiedOwner")}</Tag>}
+              {isAgent && <Tag color="gold">{t("agentTag")}</Tag>}
+              {p.verified && <Tag color="blue">{isAgent ? t("verifiedAgent") : t("verifiedOwner")}</Tag>}
               {p.available ? <Tag color="green">{t("available")}</Tag> : <Tag color="red">{t("notAvailable")}</Tag>}
             </div>
             <h1 className="font-display text-[clamp(22px,3vw,36px)] font-bold text-text mb-2">{p.title}</h1>
@@ -551,9 +556,10 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               </div>
               <div className="min-w-0">
                 <div className="font-semibold text-[15px] text-text truncate">{p.owner.name}</div>
+                {isAgent && <div className="text-[12px] text-gold">{t("publishedByAgent")}</div>}
                 {p.verified && (
                   <div className="text-[12px] text-green2 flex items-center gap-1">
-                    <Check size={12} strokeWidth={3} /> {t("verifiedOwnerShort")}
+                    <Check size={12} strokeWidth={3} /> {isAgent ? t("verifiedAgentShort") : t("verifiedOwnerShort")}
                   </div>
                 )}
               </div>
@@ -598,7 +604,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                 {currentUser ? (
                   <>
                     <div className="text-[12px] text-muted mb-1.5">
-                      {myRating ? t("rateOwnerUpdateLabel") : t("rateOwnerLabel")}
+                      {myRating ? t("rateOwnerUpdateLabel") : isAgent ? t("rateAgentLabel") : t("rateOwnerLabel")}
                     </div>
                     <div className="flex gap-1">
                       {[1, 2, 3, 4, 5].map((n) => (
@@ -617,7 +623,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
                   </>
                 ) : (
                   <div className="text-[12px] text-muted">
-                    {t("rateOwnerSignInPrompt")}{" "}
+                    {isAgent ? t("rateAgentSignInPrompt") : t("rateOwnerSignInPrompt")}{" "}
                     <Link
                       href={`/connexion?tab=login&returnTo=/annonce/${p.id}`}
                       className="text-gold font-semibold hover:underline"
@@ -636,7 +642,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               la fiche (demande explicite) : voir ContactOwnerButton pour le
               format du lien wa.me et le message pré-rempli. */}
           <div className="bg-card border border-border rounded-2xl p-5 mb-5">
-            <ContactOwnerButton phone={p.owner.phone} propertyTitle={p.title} />
+            <ContactOwnerButton phone={p.owner.phone} propertyTitle={p.title} publisherType={p.publisherType} />
           </div>
 
           {/* Conseils de sécurité — repris du modèle Rent237 : rassure le
@@ -646,7 +652,7 @@ export default function PropertyDetail({ p, similar = [] }: { p: Property; simil
               <ShieldCheck size={13} className="text-gold" /> {t("securityTipsTitle")}
             </div>
             <div className="flex gap-1.5 flex-wrap mb-3">
-              <Tag color="gold">{t("verifiedOwnerTag")}</Tag>
+              <Tag color="gold">{isAgent ? t("verifiedAgentTag") : t("verifiedOwnerTag")}</Tag>
               <Tag color="green">{t("verifiedListingTag")}</Tag>
             </div>
             <ul className="text-[13px] text-muted leading-relaxed flex flex-col gap-1.5">
