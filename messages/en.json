@@ -233,7 +233,7 @@
     "value3Title": "Transparency",
     "value3Desc": "No hidden fees, no surprise commission. Displayed prices are accurate and contact happens directly between the parties.",
     "value4Title": "Innovation",
-    "value4Desc": "We keep investing in technology to deliver the best experience: smart search, interactive map, real-time notifications.",
+    "value4Desc": "We keep investing in technology to deliver the best experience: smart search, interactive map.",
     "kicker3": "Our commitment",
     "missionTitleLine1": "Building the future of",
     "missionTitleLine2Prefix": "real estate in",
@@ -284,7 +284,6 @@
     "ownerFeature3": "Dashboard with detailed statistics",
     "ownerFeature4": "Direct WhatsApp contact with tenants",
     "ownerFeature5": "Verified owner badge",
-    "ownerFeature6": "Real-time notifications",
     "createAccountButton": "Create my free account"
   },
   "Contact": {
@@ -915,10 +914,6 @@
     "passwordMismatch": "The two passwords do not match.",
     "changePasswordButton": "Change password",
     "passwordHint": "At least 8 characters. You'll stay logged in after the change.",
-    "notificationsTitle": "Notifications",
-    "notifNewListings": "New listings matching my criteria",
-    "notifFavorite": "Added to favorites alert",
-    "notifNewsletter": "Monthly newsletter",
     "adminOverview": "Overview",
     "adminListings": "Listings",
     "adminAccounts": "Accounts",

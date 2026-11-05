@@ -233,7 +233,7 @@
     "value3Title": "Transparence",
     "value3Desc": "Aucun frais caché, aucune commission surprise. Les prix affichés sont exacts et le contact se fait directement entre les parties.",
     "value4Title": "Innovation",
-    "value4Desc": "Nous investissons constamment dans la technologie pour offrir la meilleure expérience : recherche intelligente, carte interactive, notifications en temps réel.",
+    "value4Desc": "Nous investissons constamment dans la technologie pour offrir la meilleure expérience : recherche intelligente, carte interactive.",
     "kicker3": "Notre engagement",
     "missionTitleLine1": "Construire l'avenir de",
     "missionTitleLine2Prefix": "l'immobilier",
@@ -284,7 +284,6 @@
     "ownerFeature3": "Tableau de bord avec statistiques détaillées",
     "ownerFeature4": "Contact direct par WhatsApp avec les locataires",
     "ownerFeature5": "Badge propriétaire vérifié",
-    "ownerFeature6": "Notifications en temps réel",
     "createAccountButton": "Créer mon compte gratuitement"
   },
   "Contact": {
@@ -881,10 +880,6 @@
     "passwordMismatch": "Les deux mots de passe ne correspondent pas.",
     "changePasswordButton": "Changer le mot de passe",
     "passwordHint": "Au moins 8 caractères. Vous resterez connecté après le changement.",
-    "notificationsTitle": "Notifications",
-    "notifNewListings": "Nouvelles annonces correspondant à mes critères",
-    "notifFavorite": "Alerte ajouté aux favoris",
-    "notifNewsletter": "Newsletter mensuelle",
     "adminOverview": "Vue d'ensemble",
     "adminListings": "Annonces",
     "adminAccounts": "Comptes",
