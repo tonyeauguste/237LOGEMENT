@@ -938,7 +938,6 @@ export default function AccountDashboard() {
 
                   <div className="bg-card border border-border rounded-2xl p-5">
                     <h4 className="text-[15px] font-semibold text-text mb-[18px]">{t("notificationsTitle")}</h4>
-                    <ToggleRow label={t("notifNewMessage")} defaultOn />
                     <ToggleRow label={t("notifNewListings")} defaultOn />
                     <ToggleRow label={t("notifFavorite")} />
                     <ToggleRow label={t("notifNewsletter")} last />
