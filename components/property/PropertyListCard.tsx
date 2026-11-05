@@ -42,6 +42,7 @@ export default function PropertyListCard({ p }: { p: Property }) {
             <div className="flex gap-1.5 mb-1.5">
               <Tag color={typeMeta.tagColor}>{typeMeta.badgeLabel}</Tag>
               {isOccupied && <Tag color="red">🔴 {t("occupied")}</Tag>}
+              {p.publisherType === "agent" && <Tag color="gold">{t("agent")}</Tag>}
               {p.verified && <Tag color="blue">🛡 {t("verified")}</Tag>}
             </div>
             <div className="font-semibold text-[15px] text-text mb-1">{p.title}</div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslations } from "@/i18n/IntlProvider";
+import type { PublisherType } from "@/lib/types";
 
 /**
  * Glyphe WhatsApp en SVG inline — lucide-react (seule librairie d'icônes du
@@ -17,15 +18,21 @@ function WhatsAppIcon({ size = 18 }: { size?: number }) {
 
 /**
  * Remplace l'ancien système de chat interne (property_messages) : un simple
- * lien wa.me vers le propriétaire, message pré-rempli. Aucune donnée n'est
- * écrite en base — le contact se fait entièrement sur WhatsApp.
+ * lien wa.me vers la personne qui a publié l'annonce, message pré-rempli.
+ * Aucune donnée n'est écrite en base — le contact se fait entièrement sur
+ * WhatsApp.
+ *
+ * Annonce d'agent : le bouton devient « Contacter l'agent » et une mention
+ * précise que le numéro du propriétaire n'est pas communiqué.
  */
 export default function ContactOwnerButton({
   phone,
   propertyTitle,
+  publisherType = "owner",
 }: {
   phone?: string | null;
   propertyTitle: string;
+  publisherType?: PublisherType;
 }) {
   const t = useTranslations("PropertyDetail");
   // wa.me n'accepte que des chiffres (indicatif pays inclus, sans "+" ni
@@ -37,18 +44,22 @@ export default function ContactOwnerButton({
     return <p className="text-center text-xs text-dim italic">{t("contactNotAvailable")}</p>;
   }
 
+  const isAgent = publisherType === "agent";
   const message = t("whatsappMessageTemplate", { title: propertyTitle });
   const href = `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 w-full px-[22px] py-[14px] text-[15px] rounded-xl bg-[#25D366] border border-[#25D366] text-[#07120A] hover:bg-[#1FBD5A] hover:border-[#1FBD5A]"
-    >
-      <WhatsAppIcon size={19} />
-      {t("contactOwnerWhatsapp")}
-    </a>
+    <>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center gap-2 font-semibold tracking-[.2px] transition-colors duration-300 w-full px-[22px] py-[14px] text-[15px] rounded-xl bg-[#25D366] border border-[#25D366] text-[#07120A] hover:bg-[#1FBD5A] hover:border-[#1FBD5A]"
+      >
+        <WhatsAppIcon size={19} />
+        {isAgent ? t("contactAgentWhatsapp") : t("contactOwnerWhatsapp")}
+      </a>
+      {isAgent && <p className="text-center text-xs text-dim mt-3 leading-relaxed">{t("ownerPhoneUnavailable")}</p>}
+    </>
   );
 }

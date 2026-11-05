@@ -44,7 +44,7 @@ export function rowToProperty(row: PropertyRow): Property {
     views: row.views,
     favs: row.favs,
     owner: {
-      name: row.owner_name || "Propriétaire",
+      name: row.owner_name || (row.publisher_type === "agent" ? "Agent" : "Propriétaire"),
       avatar: row.owner_avatar || DEFAULT_AVATAR,
       // Plus de repli fictif à 4.5 : owner_rating/owner_rating_count sont la
       // vraie moyenne + le vrai nombre d'avis (table owner_ratings, tenus à
@@ -56,6 +56,7 @@ export function rowToProperty(row: PropertyRow): Property {
       phone: row.owner_phone || "",
     },
     ownerDetailsOverridden: row.owner_details_overridden ?? false,
+    publisherType: row.publisher_type === "agent" ? "agent" : "owner",
     ownerId: row.owner_id,
     status: (row.status as ListingStatus) ?? "active",
     createdAt: row.created_at,
