@@ -916,7 +916,6 @@
     "changePasswordButton": "Change password",
     "passwordHint": "At least 8 characters. You'll stay logged in after the change.",
     "notificationsTitle": "Notifications",
-    "notifNewMessage": "New message received",
     "notifNewListings": "New listings matching my criteria",
     "notifFavorite": "Added to favorites alert",
     "notifNewsletter": "Monthly newsletter",
