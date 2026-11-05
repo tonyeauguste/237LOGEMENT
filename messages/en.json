@@ -730,7 +730,7 @@
     "kpiCampaignVisits": "Campaign visits (30 d)",
     "kpiCampaignVisitsHint": "Arrivals through a link with campaign parameters (see the Toolkit tab).",
     "evolutionTitle": "Trends",
-    "evolutionSub": "Day by day. Hover (or tap) a bar to see the exact value.",
+    "evolutionSub": "Day by day. Each bar shows its number; scroll on the 30 and 90-day views.",
     "chartUniqueViews": "Unique views per day",
     "chartNewAccounts": "New accounts per day",
     "chartNewListings": "New listings per day",

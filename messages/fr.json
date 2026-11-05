@@ -696,7 +696,7 @@
     "kpiCampaignVisits": "Visites via campagnes (30 j)",
     "kpiCampaignVisitsHint": "Arrivées sur le site par un lien contenant des paramètres de campagne (voir l'onglet Outils).",
     "evolutionTitle": "Évolution",
-    "evolutionSub": "Jour par jour. Survolez (ou touchez) une barre pour voir la valeur exacte.",
+    "evolutionSub": "Jour par jour. Le nombre est affiché sur chaque barre ; faites défiler sur 30 et 90 jours.",
     "chartUniqueViews": "Vues uniques par jour",
     "chartNewAccounts": "Nouveaux comptes par jour",
     "chartNewListings": "Nouvelles annonces par jour",
