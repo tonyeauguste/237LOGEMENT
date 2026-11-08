@@ -428,10 +428,10 @@
     "budgetPlaceholder": "Budget approx.",
     "budgetTitle": "Affiche les biens autour de ce montant (± 25 %)",
     "resetButton": "Réinitialiser",
-    "emptyTitle": "Aucune annonce disponible pour le moment",
-    "emptyLine1": "La plateforme est en cours de déploiement. Nos équipes référencent actuellement les biens à travers tout le Cameroun.",
-    "emptyLine2": "Revenez très bientôt — les premières annonces seront publiées dans les prochains jours.",
-    "emptyBadge": "🚀 Bientôt opérationnel"
+    "emptyTitle": "Aucune annonce ne correspond à votre recherche",
+    "emptyLine1": "Essayez d'élargir vos critères : une autre ville, un autre quartier ou un budget plus large.",
+    "emptyLine2": "De nouvelles annonces sont publiées régulièrement.",
+    "emptyBadge": "🔎 Modifiez vos filtres"
   },
   "AnnonceNotFound": {
     "title": "Cette annonce n'est plus disponible",
@@ -1111,11 +1111,11 @@
     "featured": {
       "kicker": "Annonces à la une",
       "title": "Propriétés {highlight}",
-      "titleHighlight": "bientôt disponibles",
-      "emptyTitle": "Annonces bientôt disponibles",
-      "emptyLine1": "Nous préparons une sélection de biens vérifiés à travers tout le Cameroun.",
-      "emptyLine2": "Revenez très bientôt — la plateforme sera opérationnelle d'ici quelques jours.",
-      "emptyBadge": "🚀 Lancement imminent",
+      "titleHighlight": "disponibles",
+      "emptyTitle": "Aucune annonce à la une pour le moment",
+      "emptyLine1": "Découvrez toutes nos annonces disponibles à travers le Cameroun.",
+      "emptyLine2": "De nouvelles annonces sont publiées régulièrement.",
+      "emptyBadge": "✨ De nouvelles annonces arrivent",
       "viewAll": "Voir toutes les annonces"
     },
     "howItWorks": {
@@ -1144,7 +1144,7 @@
       "kicker": "Communauté",
       "title": "Soyez parmi les {highlight}",
       "titleHighlight": "premiers",
-      "subtitle": "237Logement sera bientôt opérationnel. Inscrivez-vous maintenant pour accéder en avant-première à toutes les annonces dès le lancement.",
+      "subtitle": "237Logement est en ligne. Créez votre compte gratuitement pour publier vos biens, retrouver vos favoris et noter les annonceurs.",
       "value1Title": "Annonceurs vérifiés",
       "value1Desc": "Chaque annonceur est contrôlé avant publication, particulier comme professionnel. Zéro arnaque, zéro annonce fantôme.",
       "value2Title": "Aucune commission prélevée",
