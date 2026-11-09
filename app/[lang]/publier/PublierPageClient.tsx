@@ -79,6 +79,8 @@ function PublierPageInner() {
   // enforce_owner_contact_fields (base) qui décide réellement si ces
   // valeurs sont retenues ou réécrites depuis le profil.
   const isAdmin = user?.role === "admin";
+  // L'administrateur et le DG Marketing peuvent publier pour un tiers.
+  const canPublishForOthers = isAdmin || user?.role === "marketing";
   const [onBehalf, setOnBehalf] = useState(false);
   const [ownerName, setOwnerName] = useState("");
   const [ownerPhone, setOwnerPhone] = useState("");
@@ -401,7 +403,7 @@ function PublierPageInner() {
     // Publication pour un tiers : sans nom, l'annonce s'afficherait sans
     // interlocuteur identifiable. La base refuse déjà ce cas — on évite
     // juste à l'administrateur un aller-retour pour rien.
-    if (isAdmin && onBehalf && !ownerName.trim()) {
+    if (canPublishForOthers && onBehalf && !ownerName.trim()) {
       showToast(t("toastAdminOwnerNameRequired"), "error");
       return;
     }
@@ -492,7 +494,7 @@ function PublierPageInner() {
       // quand il publie pour un tiers, sinon rien (la base réécrit alors
       // depuis le profil — voir enforce_owner_contact_fields).
       const ownerFields =
-        isAdmin && onBehalf
+        canPublishForOthers && onBehalf
           ? {
               owner_details_overridden: true,
               owner_name: ownerName.trim(),
@@ -1048,11 +1050,11 @@ function PublierPageInner() {
                     last
                   />
                 </div>
-                {/* Administrateurs uniquement : publier pour le compte de
+                {/* Administrateur et DG Marketing : publier pour le compte de
                     quelqu'un d'autre, sans faire apparaître ses propres
                     coordonnées. Le rôle est aussi vérifié côté base — voir
-                    enforce_owner_contact_fields. */}
-                {isAdmin && (
+                    enforce_owner_contact_fields / can_publish_for_others. */}
+                {canPublishForOthers && (
                   <div className="mt-6 rounded-2xl border border-[rgba(200,155,60,.3)] bg-gold3/10 p-5">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span className="text-[10px] tracking-[2px] uppercase text-gold font-semibold">
